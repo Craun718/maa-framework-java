@@ -39,6 +39,7 @@ class MaaDefTest {
         assertNull(MaaDef.Algorithm.of("Missing"));
 
         assertEquals(MaaDef.Action.CLICK, MaaDef.Action.of("Click"));
+        assertEquals(MaaDef.Action.SCREENCAP, MaaDef.Action.of("Screencap"));
         assertEquals(MaaDef.Action.CUSTOM, MaaDef.Action.of("Custom"));
         assertNull(MaaDef.Action.of("Missing"));
     }

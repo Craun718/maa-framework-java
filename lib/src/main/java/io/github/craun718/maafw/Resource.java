@@ -2,6 +2,8 @@ package io.github.craun718.maafw;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import io.github.craun718.maafw.pipeline.JPipelineData;
+import io.github.craun718.maafw.pipeline.JPipelineParser;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -107,6 +109,12 @@ public class Resource implements AutoCloseable {
                 return null;
             }
         }
+    }
+
+    /** Returns the current pipeline node as a typed object, or {@code null} if the node does not exist. */
+    public JPipelineData getNodeObject(String name) {
+        Map<String, Object> data = getNodeData(name);
+        return data == null ? null : JPipelineParser.parse(data);
     }
 
     /** Returns the default recognition parameter JSON for a native algorithm name. */

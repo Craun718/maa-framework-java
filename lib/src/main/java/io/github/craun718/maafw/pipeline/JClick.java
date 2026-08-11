@@ -1,0 +1,14 @@
+package io.github.craun718.maafw.pipeline;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+
+/** Click action parameters. */
+public final class JClick implements JActionParam {
+
+    public Object target = true;
+    @JsonProperty("target_offset")
+    public List<Integer> targetOffset = List.of(0, 0, 0, 0);
+    public long contact;
+    public int pressure = 1;
+}

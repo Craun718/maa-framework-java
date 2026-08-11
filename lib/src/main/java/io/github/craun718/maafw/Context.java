@@ -2,6 +2,8 @@ package io.github.craun718.maafw;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.LongByReference;
+import io.github.craun718.maafw.pipeline.JPipelineData;
+import io.github.craun718.maafw.pipeline.JPipelineParser;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -134,6 +136,12 @@ public final class Context {
                 return null;
             }
         }
+    }
+
+    /** Returns the current pipeline node as a typed object, or {@code null} if the node does not exist. */
+    public JPipelineData getNodeObject(String name) {
+        Map<String, Object> data = getNodeData(name);
+        return data == null ? null : JPipelineParser.parse(data);
     }
 
     public Tasker tasker() {

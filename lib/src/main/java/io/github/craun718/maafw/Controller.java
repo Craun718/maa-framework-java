@@ -119,6 +119,10 @@ public class Controller implements AutoCloseable {
         return new JobWithResult<>(id, this::status, this::waitFor, ignored -> cachedImage());
     }
 
+    public JobWithResult<String> postShell(String command) {
+        return postShell(command, 20_000L);
+    }
+
     public JobWithResult<String> postShell(String command, long timeout) {
         long id = MaaLibrary.framework().MaaControllerPostShell(handle, command, timeout);
         return new JobWithResult<>(id, this::status, this::waitFor, ignored -> shellOutput());

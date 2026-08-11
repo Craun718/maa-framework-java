@@ -312,6 +312,7 @@ public final class MaaDef {
         STOP_TASK("StopTask"),
         COMMAND("Command"),
         SHELL("Shell"),
+        SCREENCAP("Screencap"),
         CUSTOM("Custom");
 
         private final String nativeName;
