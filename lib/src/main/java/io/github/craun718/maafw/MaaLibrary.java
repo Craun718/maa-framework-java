@@ -72,10 +72,10 @@ public final class MaaLibrary {
         open(directory, false);
     }
 
-    /** Returns the MaaFramework library for client mode. */
+    /** Returns the MaaFramework-compatible library for the current mode. */
     public static MaaFrameworkLibrary framework() {
         if (agentServerMode) {
-            throw new IllegalStateException("MaaFramework is not available in AgentServer mode");
+            return require(agentServer, "MaaLibrary.open must be called before framework access");
         }
         return require(framework, "MaaLibrary.open must be called before framework access");
     }

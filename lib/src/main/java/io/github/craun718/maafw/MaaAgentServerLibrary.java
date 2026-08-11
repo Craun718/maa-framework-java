@@ -4,7 +4,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 
 /** FFI surface of MaaAgentServer dynamic library. */
-public interface MaaAgentServerLibrary extends Library {
+public interface MaaAgentServerLibrary extends MaaFrameworkLibrary {
 
     byte MaaAgentServerRegisterCustomRecognition(
             String name,
