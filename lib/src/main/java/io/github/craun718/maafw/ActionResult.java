@@ -9,7 +9,7 @@ public final class ActionResult {
     private final Map<String, Object> raw;
 
     public ActionResult(Map<String, Object> raw) {
-        this.raw = raw == null ? Map.of() : Map.copyOf(raw);
+        this.raw = MaaResultParsers.unmodifiableMap(raw);
     }
 
     public Map<String, Object> raw() {

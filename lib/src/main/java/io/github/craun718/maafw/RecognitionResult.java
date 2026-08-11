@@ -19,7 +19,7 @@ public final class RecognitionResult {
     private final List<RecognitionDetail> subResults;
 
     public RecognitionResult(Map<String, Object> raw) {
-        this.raw = raw == null ? Map.of() : Map.copyOf(raw);
+        this.raw = MaaResultParsers.unmodifiableMap(raw);
         this.box = MaaResultParsers.rect(this.raw.get("box"));
         this.score = MaaResultParsers.number(this.raw.get("score"));
         this.count = MaaResultParsers.integer(this.raw.get("count"));
@@ -31,7 +31,7 @@ public final class RecognitionResult {
     }
 
     public RecognitionResult(Map<String, Object> raw, List<RecognitionDetail> subResults) {
-        this.raw = raw == null ? Map.of() : Map.copyOf(raw);
+        this.raw = MaaResultParsers.unmodifiableMap(raw);
         this.box = null;
         this.score = null;
         this.count = null;

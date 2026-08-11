@@ -27,7 +27,7 @@ public final class ActionDetail {
         this.box = box;
         this.success = success;
         this.result = result;
-        this.rawDetail = rawDetail == null ? Map.of() : Map.copyOf(rawDetail);
+        this.rawDetail = MaaResultParsers.unmodifiableMap(rawDetail);
     }
 
     public long actionId() {

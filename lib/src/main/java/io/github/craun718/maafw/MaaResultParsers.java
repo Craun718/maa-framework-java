@@ -1,5 +1,7 @@
 package io.github.craun718.maafw;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +75,13 @@ public final class MaaResultParsers {
 
     static String string(Object value) {
         return value == null ? null : value.toString();
+    }
+
+    static Map<String, Object> unmodifiableMap(Map<String, Object> value) {
+        if (value == null) {
+            return Map.of();
+        }
+        return Collections.unmodifiableMap(new LinkedHashMap<>(value));
     }
 
     @SuppressWarnings("unchecked")

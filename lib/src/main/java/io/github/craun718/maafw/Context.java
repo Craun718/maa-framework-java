@@ -1,0 +1,192 @@
+package io.github.craun718.maafw;
+
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.LongByReference;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/** Context passed into custom recognizers/actions and context event sinks. */
+public final class Context {
+
+    private final Pointer handle;
+
+    /** Wraps a borrowed native context handle. */
+    public Context(Pointer handle) {
+        this.handle = Objects.requireNonNull(handle, "handle");
+    }
+
+    public Pointer handle() {
+        return handle;
+    }
+
+    public TaskDetail runTask(String entry, Map<String, Object> pipelineOverride) {
+        long taskId = MaaLibrary.framework()
+                .MaaContextRunTask(handle, entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+        return taskId == 0 ? null : tasker().getTaskDetail(taskId);
+    }
+
+    public RecognitionDetail runRecognition(
+            String entry, MaaImage image, Map<String, Object> pipelineOverride) {
+        try (MaaImageBuffer imageBuffer = new MaaImageBuffer()) {
+            imageBuffer.set(image);
+            long recoId = MaaLibrary.framework()
+                    .MaaContextRunRecognition(
+                            handle,
+                            entry,
+                            MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride),
+                            imageBuffer.handle());
+            return recoId == 0 ? null : tasker().getRecognitionDetail(recoId);
+        }
+    }
+
+    public ActionDetail runAction(
+            String entry, MaaRect box, String recoDetail, Map<String, Object> pipelineOverride) {
+        try (MaaRectBuffer rectBuffer = new MaaRectBuffer()) {
+            rectBuffer.set(box == null ? MaaRect.of(0, 0, 0, 0) : box);
+            long actionId = MaaLibrary.framework()
+                    .MaaContextRunAction(
+                            handle,
+                            entry,
+                            MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride),
+                            rectBuffer.handle(),
+                            recoDetail == null ? "" : recoDetail);
+            return actionId == 0 ? null : tasker().getActionDetail(actionId);
+        }
+    }
+
+    public RecognitionDetail runRecognitionDirect(
+            String recoType, Map<String, Object> recoParam, MaaImage image) {
+        try (MaaImageBuffer imageBuffer = new MaaImageBuffer()) {
+            imageBuffer.set(image);
+            long recoId = MaaLibrary.framework()
+                    .MaaContextRunRecognitionDirect(
+                            handle,
+                            recoType,
+                            MaaJson.write(recoParam == null ? Map.of() : recoParam),
+                            imageBuffer.handle());
+            return recoId == 0 ? null : tasker().getRecognitionDetail(recoId);
+        }
+    }
+
+    public ActionDetail runActionDirect(
+            String actionType, Map<String, Object> actionParam, MaaRect box, String recoDetail) {
+        try (MaaRectBuffer rectBuffer = new MaaRectBuffer()) {
+            rectBuffer.set(box == null ? MaaRect.of(0, 0, 0, 0) : box);
+            long actionId = MaaLibrary.framework()
+                    .MaaContextRunActionDirect(
+                            handle,
+                            actionType,
+                            MaaJson.write(actionParam == null ? Map.of() : actionParam),
+                            rectBuffer.handle(),
+                            recoDetail == null ? "" : recoDetail);
+            return actionId == 0 ? null : tasker().getActionDetail(actionId);
+        }
+    }
+
+    public boolean waitFreezes(long time, MaaRect box, Map<String, Object> waitFreezesParam) {
+        String paramJson = MaaJson.write(waitFreezesParam == null ? Map.of() : waitFreezesParam);
+        if (box == null) {
+            return MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaContextWaitFreezes(handle, time, null, paramJson));
+        }
+        try (MaaRectBuffer rectBuffer = new MaaRectBuffer()) {
+            rectBuffer.set(box);
+            return MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaContextWaitFreezes(handle, time, rectBuffer.handle(), paramJson));
+        }
+    }
+
+    public boolean overridePipeline(Map<String, Object> pipelineOverride) {
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework()
+                .MaaContextOverridePipeline(handle, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride)));
+    }
+
+    public boolean overrideNext(String name, List<String> nextList) {
+        try (MaaStringListBuffer listBuffer = new MaaStringListBuffer()) {
+            listBuffer.set(nextList == null ? List.of() : nextList);
+            return MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaContextOverrideNext(handle, name, listBuffer.handle()));
+        }
+    }
+
+    public boolean overrideImage(String imageName, MaaImage image) {
+        try (MaaImageBuffer imageBuffer = new MaaImageBuffer()) {
+            imageBuffer.set(image);
+            return MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaContextOverrideImage(handle, imageName, imageBuffer.handle()));
+        }
+    }
+
+    /** Returns the current pipeline node definition, or {@code null} if the node does not exist. */
+    public Map<String, Object> getNodeData(String name) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaContextGetNodeData(handle, name, buffer.handle()))) {
+                return null;
+            }
+            String json = buffer.get();
+            if (json == null || json.isBlank()) {
+                return null;
+            }
+            try {
+                return MaaJson.parseObject(json);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
+    public Tasker tasker() {
+        Pointer taskerHandle = MaaLibrary.framework().MaaContextGetTasker(handle);
+        if (taskerHandle == null || taskerHandle == Pointer.NULL) {
+            throw new IllegalStateException("Failed to get tasker");
+        }
+        return new Tasker(taskerHandle, false);
+    }
+
+    public TaskJob getTaskJob() {
+        long taskId = MaaLibrary.framework().MaaContextGetTaskId(handle);
+        if (taskId == 0) {
+            throw new IllegalStateException("Context has no task id");
+        }
+        return tasker().taskJob(taskId);
+    }
+
+    @Override
+    public Context clone() {
+        Pointer cloned = MaaLibrary.framework().MaaContextClone(handle);
+        if (cloned == null || cloned == Pointer.NULL) {
+            throw new IllegalStateException("Failed to clone context");
+        }
+        return new Context(cloned);
+    }
+
+    public boolean setAnchor(String anchorName, String nodeName) {
+        return MaaStringBuffer.toBoolean(
+                MaaLibrary.framework().MaaContextSetAnchor(handle, anchorName, nodeName));
+    }
+
+    /** Returns the anchor's node name, or {@code null} when the anchor does not exist. */
+    public String getAnchor(String anchorName) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaContextGetAnchor(handle, anchorName, buffer.handle()))) {
+                return null;
+            }
+            return buffer.get();
+        }
+    }
+
+    public long getHitCount(String nodeName) {
+        LongByReference count = new LongByReference();
+        if (!MaaStringBuffer.toBoolean(
+                MaaLibrary.framework().MaaContextGetHitCount(handle, nodeName, count))) {
+            return 0;
+        }
+        return count.getValue();
+    }
+
+    public boolean clearHitCount(String nodeName) {
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaContextClearHitCount(handle, nodeName));
+    }
+}
