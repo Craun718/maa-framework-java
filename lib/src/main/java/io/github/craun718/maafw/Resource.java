@@ -14,6 +14,8 @@ public class Resource implements AutoCloseable {
     private final Pointer handle;
     private final boolean owned;
     private final Map<Long, ResourceEventSink> sinks = new HashMap<>();
+    private final Map<String, CustomRecognition> customRecognitions = new HashMap<>();
+    private final Map<String, CustomAction> customActions = new HashMap<>();
 
     public Resource() {
         this(MaaLibrary.framework().MaaResourceCreate(), true);
@@ -198,6 +200,43 @@ public class Resource implements AutoCloseable {
             MaaStringBuffer.requireOk(MaaLibrary.framework().MaaResourceGetCustomActionList(handle, buffer.handle()));
             return buffer.get();
         }
+    }
+
+    public boolean registerCustomRecognition(String name, CustomRecognition recognition) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(recognition, "recognition");
+        customRecognitions.put(name, recognition);
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework()
+                .MaaResourceRegisterCustomRecognition(handle, name, recognition.callback(), null));
+    }
+
+    public boolean unregisterCustomRecognition(String name) {
+        customRecognitions.remove(name);
+        return MaaStringBuffer.toBoolean(
+                MaaLibrary.framework().MaaResourceUnregisterCustomRecognition(handle, name));
+    }
+
+    public boolean clearCustomRecognition() {
+        customRecognitions.clear();
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceClearCustomRecognition(handle));
+    }
+
+    public boolean registerCustomAction(String name, CustomAction action) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(action, "action");
+        customActions.put(name, action);
+        return MaaStringBuffer.toBoolean(
+                MaaLibrary.framework().MaaResourceRegisterCustomAction(handle, name, action.callback(), null));
+    }
+
+    public boolean unregisterCustomAction(String name) {
+        customActions.remove(name);
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceUnregisterCustomAction(handle, name));
+    }
+
+    public boolean clearCustomAction() {
+        customActions.clear();
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceClearCustomAction(handle));
     }
 
     public String hash() {
