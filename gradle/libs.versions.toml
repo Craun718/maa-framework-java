@@ -2,11 +2,11 @@
 # https://docs.gradle.org/current/userguide/version_catalogs.html#sec::toml-dependencies-format
 
 [versions]
-commons-math3 = "3.6.1"
-guava = "33.5.0-jre"
+jna = "5.17.0"
+jackson-databind = "2.18.3"
 junit-jupiter = "6.0.1"
 
 [libraries]
-commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
