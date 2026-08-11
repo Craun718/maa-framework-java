@@ -10,6 +10,7 @@ public final class MaaJson {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
+    private static final TypeReference<Object> ANY_TYPE = new TypeReference<>() {};
 
     private MaaJson() {}
 
@@ -38,5 +39,28 @@ public final class MaaJson {
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse JSON object list", e);
         }
+    }
+
+    /** Parses arbitrary JSON, returning {@code null} for blank input. */
+    public static Object parse(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return MAPPER.readValue(json, ANY_TYPE);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse JSON", e);
+        }
+    }
+
+    /** Parses arbitrary JSON and returns an empty map on blank or invalid input. */
+    public static Map<String, Object> parseObjectOrEmpty(String json) {
+        Object value = parse(json);
+        if (value instanceof Map<?, ?> map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typed = (Map<String, Object>) map;
+            return typed;
+        }
+        return Map.of();
     }
 }

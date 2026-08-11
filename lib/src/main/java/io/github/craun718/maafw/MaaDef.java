@@ -140,6 +140,22 @@ public final class MaaDef {
             return this == SUCCEEDED || this == FAILED;
         }
 
+        public boolean succeeded() {
+            return this == SUCCEEDED;
+        }
+
+        public boolean failed() {
+            return this == FAILED;
+        }
+
+        public boolean pending() {
+            return this == PENDING;
+        }
+
+        public boolean running() {
+            return this == RUNNING;
+        }
+
         public static Status of(int code) {
             for (Status status : values()) {
                 if (status.code == code) {
@@ -176,6 +192,7 @@ public final class MaaDef {
         LOG_DIR(1),
         SAVE_DRAW(2),
         STDOUT_LEVEL(4),
+        SHOW_HIT_DRAW(5),
         DEBUG_MODE(6),
         SAVE_ON_ERROR(7),
         DRAW_QUALITY(8),
