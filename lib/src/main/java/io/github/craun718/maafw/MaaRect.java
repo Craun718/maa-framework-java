@@ -1,23 +1,14 @@
 package io.github.craun718.maafw;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import java.util.Objects;
 
-/** MaaRect native structure. */
-@Structure.FieldOrder({"x", "y", "width", "height"})
-public class MaaRect extends Structure {
+/** Rectangle data exchanged with MaaFramework. */
+public final class MaaRect {
 
-    public int x;
-    public int y;
-    public int width;
-    public int height;
-
-    public MaaRect() {}
-
-    public MaaRect(Pointer pointer) {
-        super(pointer);
-        read();
-    }
+    private final int x;
+    private final int y;
+    private final int width;
+    private final int height;
 
     public MaaRect(int x, int y, int width, int height) {
         this.x = x;
@@ -26,14 +17,40 @@ public class MaaRect extends Structure {
         this.height = height;
     }
 
+    public static MaaRect of(int x, int y, int width, int height) {
+        return new MaaRect(x, y, width, height);
+    }
+
     public static MaaRect from(int[] values) {
-        if (values == null || values.length != 4) {
-            return new MaaRect();
+        Objects.requireNonNull(values, "values");
+        if (values.length != 4) {
+            throw new IllegalArgumentException("Rect array must contain 4 values");
         }
         return new MaaRect(values[0], values[1], values[2], values[3]);
     }
 
+    public int x() {
+        return x;
+    }
+
+    public int y() {
+        return y;
+    }
+
+    public int width() {
+        return width;
+    }
+
+    public int height() {
+        return height;
+    }
+
     public int[] toArray() {
         return new int[] {x, y, width, height};
+    }
+
+    @Override
+    public String toString() {
+        return "MaaRect(" + x + ", " + y + ", " + width + ", " + height + ")";
     }
 }
