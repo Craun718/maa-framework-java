@@ -34,21 +34,23 @@ public final class MaaLibrary {
     private MaaLibrary() {}
 
     /** Loads the official MaaFramework release libraries from {@code directory}. */
-    public static synchronized void open(Path directory, boolean agentServer) {
+    public static synchronized void open(Path directory, boolean agentServerMode) {
         Objects.requireNonNull(directory, "directory");
         if (!Files.isDirectory(directory)) {
             throw new IllegalArgumentException("MaaFramework library directory does not exist: " + directory);
         }
 
-        agentServerMode = agentServer;
+        MaaLibrary.agentServerMode = agentServerMode;
         String platform = platform();
 
-        if (agentServer) {
+        if (agentServerMode) {
             agentServerPath = resolve(directory, "MaaAgentServer", platform);
             if (!Files.isRegularFile(agentServerPath)) {
                 throw new IllegalArgumentException("MaaAgentServer library not found: " + agentServerPath);
             }
-            agentServer = Native.load(agentServerPath.toString(), MaaAgentServerLibrary.class, LIBRARY_OPTIONS);
+            MaaAgentServerLibrary loadedAgentServer = Native.loadLibrary(
+                    agentServerPath.toString(), MaaAgentServerLibrary.class, LIBRARY_OPTIONS);
+            MaaLibrary.agentServer = loadedAgentServer;
         } else {
             frameworkPath = resolve(directory, "MaaFramework", platform);
             toolkitPath = resolve(directory, "MaaToolkit", platform);
@@ -70,10 +72,10 @@ public final class MaaLibrary {
         open(directory, false);
     }
 
-    /** Returns the MaaFramework or MaaAgentServer library for the current mode. */
+    /** Returns the MaaFramework library for client mode. */
     public static MaaFrameworkLibrary framework() {
         if (agentServerMode) {
-            return agentServer();
+            throw new IllegalStateException("MaaFramework is not available in AgentServer mode");
         }
         return require(framework, "MaaLibrary.open must be called before framework access");
     }
