@@ -32,4 +32,16 @@ public final class JNodeAttr {
         this.anchor = anchor;
         return this;
     }
+
+    /** Returns the native node reference string, e.g. {@code [JumpBack][Anchor]NodeA}. */
+    public String formatName() {
+        String prefix = "";
+        if (jumpBack) {
+            prefix += "[JumpBack]";
+        }
+        if (anchor) {
+            prefix += "[Anchor]";
+        }
+        return prefix + (name == null ? "" : name);
+    }
 }

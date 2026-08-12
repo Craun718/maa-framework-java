@@ -97,6 +97,14 @@ class JPipelineTest {
     }
 
     @Test
+    void formatsNodeNamesInGoPrefixOrder() {
+        assertEquals("Idle", JNodeAttr.of("Idle").formatName());
+        assertEquals("[JumpBack]Retry", JNodeAttr.of("Retry", true, false).formatName());
+        assertEquals("[Anchor]Retry", JNodeAttr.of("Retry", false, true).formatName());
+        assertEquals("[JumpBack][Anchor]Retry", JNodeAttr.of("Retry", true, true).formatName());
+    }
+
+    @Test
     void fromJsonRoundTripsBuilderOutput() {
         JPipeline original = new JPipeline();
         original.add(
