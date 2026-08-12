@@ -6,9 +6,9 @@ import com.sun.jna.Pointer;
  * Base class for custom MaaFramework pipeline actions.
  *
  * <p>The native callback resolves the current {@link TaskDetail} and {@link RecognitionDetail}
- * before invoking {@link #run}. Missing details, including an unavailable or zero {@code reco_id},
- * cause the callback to return failure without calling {@code run}. This matches the Python
- * binding's behavior.
+ * before invoking {@link #run}. The recognition detail is nullable because action-only pipeline
+ * nodes use a zero {@code reco_id}; a missing task detail still causes the callback to return
+ * failure without calling {@code run}.
  */
 public abstract class CustomAction {
 
@@ -56,8 +56,9 @@ public abstract class CustomAction {
             }
             Context context = new Context(contextHandle);
             TaskDetail taskDetail = context.tasker().getTaskDetail(taskId);
-            RecognitionDetail recoDetail = context.tasker().getRecognitionDetail(recoId);
-            if (taskDetail == null || recoDetail == null) {
+            RecognitionDetail recoDetail =
+                    recoId == 0 ? null : context.tasker().getRecognitionDetail(recoId);
+            if (taskDetail == null || (recoId != 0 && recoDetail == null)) {
                 return 0;
             }
 

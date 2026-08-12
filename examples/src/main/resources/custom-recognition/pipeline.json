@@ -1,0 +1,13 @@
+{
+    "Startup": {
+        "recognition": "Custom",
+        "custom_recognition": "MyRec",
+        "action": "DoNothing"
+    },
+    "TaskA": {
+        "action": "DoNothing"
+    },
+    "TaskB": {
+        "action": "DoNothing"
+    }
+}

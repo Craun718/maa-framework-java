@@ -12,3 +12,4 @@ plugins {
 
 rootProject.name = "maa-framework-java"
 include("lib")
+include("examples")

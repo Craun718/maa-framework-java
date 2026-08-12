@@ -1,0 +1,6 @@
+{
+    "Test": {
+        "action": "Custom",
+        "custom_action": "TestAgentServer"
+    }
+}

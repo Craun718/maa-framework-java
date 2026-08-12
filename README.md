@@ -23,6 +23,26 @@ dependencies {
 ./gradlew :lib:build
 ```
 
+## Examples
+
+The `examples` Gradle project contains runnable Java samples under
+`examples/src/main/java/io/github/craun718/maafw/examples`. The first argument is the MaaFramework
+release `bin` directory; the agent server example also accepts the connection identifier as the
+second argument.
+
+```bash
+./gradlew :examples:run --args="/path/to/MaaFramework/bin"
+./gradlew :examples:runQuickStart --args="/path/to/MaaFramework/bin"
+./gradlew :examples:runCustomRecognition --args="/path/to/MaaFramework/bin"
+./gradlew :examples:runCustomAction --args="/path/to/MaaFramework/bin"
+./gradlew :examples:runAgentClient --args="/path/to/MaaFramework/bin"
+./gradlew :examples:runAgentServer --args="/path/to/MaaFramework/bin my-agent"
+```
+
+`QuickStart`, `CustomRecognitionExample`, `CustomActionExample`, and `AgentClientExample` expect an
+ADB device or a running `AgentServerExample`. The resource JSON files are loaded from the example
+classpath.
+
 ## Official Release Distribution
 
 The Java jar itself is platform-neutral and does not bundle native binaries. To distribute it
@@ -314,9 +334,9 @@ automatically selected port.
 - `AgentServer` holds registered callbacks and sinks internally so JVM garbage collection cannot
   remove native callbacks. `AgentClient` similarly holds the resource and sinks passed to it.
 - Custom recognition and action callbacks resolve current task/recognition details before invoking
-  Java code. If those details are unavailable, including a zero or missing recognition id for a
-  custom action, the native callback returns failure without calling the Java method. This mirrors
-  the Python binding.
+  Java code. Custom actions receive a nullable recognition detail because action-only pipeline
+  nodes use a zero recognition id; missing task details still cause the callback to return failure
+  without calling the Java method.
 - In agent server mode, the official `MaaAgentServer` library is a stub for local resource,
   controller, and tasker creation and for plugin loading. Use that mode only to host callbacks
   and sinks.
