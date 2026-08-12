@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +45,7 @@ class RuntimeSmokeTest {
         exerciseBuffers();
         exerciseResourceAndTasker();
         exerciseCustomController();
+        exerciseToolkit();
         exerciseAgentClient();
     }
 
@@ -204,6 +207,37 @@ class RuntimeSmokeTest {
             assertTrue(controller.setScreenshotTargetLongSide(1280));
             assertTrue(controller.setScreenshotTargetShortSide(720));
             assertTrue(controller.setScreenshotResizeMethod(1));
+        }
+    }
+
+    private static void exerciseToolkit() throws Exception {
+        Path configDir = Files.createTempDirectory("maa-java-toolkit-");
+        try {
+            assertTrue(Toolkit.initOption(configDir));
+            if (!isMacOs() || Toolkit.macosCheckPermission(MaaDef.MacOSPermission.SCREEN_CAPTURE)) {
+                assertNotNull(Toolkit.findDesktopWindows());
+            }
+        } finally {
+            deleteRecursively(configDir);
+        }
+    }
+
+    private static boolean isMacOs() {
+        return System.getProperty("os.name", "").toLowerCase().contains("mac");
+    }
+
+    private static void deleteRecursively(Path path) throws IOException {
+        if (!Files.exists(path)) {
+            return;
+        }
+        if (Files.isDirectory(path)) {
+            try (var paths = Files.walk(path)) {
+                for (Path child : paths.sorted(Comparator.reverseOrder()).toList()) {
+                    Files.deleteIfExists(child);
+                }
+            }
+        } else {
+            Files.deleteIfExists(path);
         }
     }
 
