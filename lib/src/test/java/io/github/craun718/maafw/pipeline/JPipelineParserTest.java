@@ -230,6 +230,14 @@ class JPipelineParserTest {
         assertEquals(Map.of(), MaaJson.parseObject(MaaJson.write(new JStopTask())));
     }
 
+    @Test
+    void typedDirectApiEnumsUseNativeNames() {
+        assertEquals("\"TemplateMatch\"", MaaJson.write(JRecognitionType.TEMPLATE_MATCH));
+        assertEquals("\"OCR\"", MaaJson.write(JRecognitionType.OCR));
+        assertEquals("\"Click\"", MaaJson.write(JActionType.CLICK));
+        assertEquals("\"Shell\"", MaaJson.write(JActionType.SHELL));
+    }
+
     private static JRecognitionParam parseRecognition(JRecognitionType type, Map<String, Object> params) {
         return JPipelineParser.parseRecognitionParam(type, params);
     }
