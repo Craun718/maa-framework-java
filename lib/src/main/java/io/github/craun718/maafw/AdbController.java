@@ -10,8 +10,67 @@ public class AdbController extends Controller {
         this(adbPath, address, MaaDef.ADB_SCREENCAP_DEFAULT, MaaDef.ADB_INPUT_DEFAULT, Map.of(), "MaaAgentBinary");
     }
 
+    public AdbController(Path adbPath, String address) {
+        this(
+                adbPath.toString(),
+                address,
+                MaaDef.ADB_SCREENCAP_DEFAULT,
+                MaaDef.ADB_INPUT_DEFAULT,
+                Map.of(),
+                "MaaAgentBinary");
+    }
+
+    public AdbController(String adbPath, String address, Map<String, Object> config) {
+        this(
+                adbPath,
+                address,
+                MaaDef.ADB_SCREENCAP_DEFAULT,
+                MaaDef.ADB_INPUT_DEFAULT,
+                config,
+                "MaaAgentBinary");
+    }
+
+    public AdbController(Path adbPath, String address, Map<String, Object> config) {
+        this(
+                adbPath.toString(),
+                address,
+                MaaDef.ADB_SCREENCAP_DEFAULT,
+                MaaDef.ADB_INPUT_DEFAULT,
+                config,
+                "MaaAgentBinary");
+    }
+
     public AdbController(String adbPath, String address, long screencapMethods, long inputMethods) {
         this(adbPath, address, screencapMethods, inputMethods, Map.of(), "MaaAgentBinary");
+    }
+
+    public AdbController(
+            Path adbPath, String address, long screencapMethods, long inputMethods) {
+        this(
+                adbPath.toString(),
+                address,
+                screencapMethods,
+                inputMethods,
+                Map.of(),
+                "MaaAgentBinary");
+    }
+
+    public AdbController(
+            String adbPath,
+            String address,
+            long screencapMethods,
+            long inputMethods,
+            Map<String, Object> config) {
+        this(adbPath, address, screencapMethods, inputMethods, config, "MaaAgentBinary");
+    }
+
+    public AdbController(
+            Path adbPath,
+            String address,
+            long screencapMethods,
+            long inputMethods,
+            Map<String, Object> config) {
+        this(adbPath, address, screencapMethods, inputMethods, config, null);
     }
 
     public AdbController(

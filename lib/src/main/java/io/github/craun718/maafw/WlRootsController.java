@@ -4,6 +4,10 @@ package io.github.craun718.maafw;
 @Deprecated
 public class WlRootsController extends Controller {
 
+    public WlRootsController(String wlrSocketPath) {
+        this(wlrSocketPath, false);
+    }
+
     public WlRootsController(String wlrSocketPath, boolean useWin32VkCode) {
         super();
         setHandle(MaaLibrary.framework()

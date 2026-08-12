@@ -13,6 +13,22 @@ public class Win32Controller extends Controller {
                 MaaDef.WIN32_INPUT_SEIZE);
     }
 
+    public Win32Controller(long windowHandle, long screencapMethod, long mouseMethod, long keyboardMethod) {
+        this(
+                windowHandle == 0 ? null : new Pointer(windowHandle),
+                screencapMethod,
+                mouseMethod,
+                keyboardMethod);
+    }
+
+    public Win32Controller(Pointer windowHandle) {
+        this(
+                windowHandle,
+                MaaDef.WIN32_SCREENCAP_BACKGROUND,
+                MaaDef.WIN32_INPUT_SEIZE,
+                MaaDef.WIN32_INPUT_SEIZE);
+    }
+
     public Win32Controller(Pointer windowHandle, long screencapMethod, long mouseMethod, long keyboardMethod) {
         super();
         setHandle(MaaLibrary.framework()
