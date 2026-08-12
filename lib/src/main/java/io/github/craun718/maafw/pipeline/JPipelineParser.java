@@ -202,7 +202,6 @@ public final class JPipelineParser {
                 JAnd param = new JAnd();
                 param.allOf = objectList(values.get("all_of"), param.allOf);
                 param.boxIndex = integer(values.get("box_index"), param.boxIndex);
-                param.subName = string(values.get("sub_name"));
                 yield param;
             }
             case OR -> {

@@ -18,7 +18,6 @@ class ConvenienceSurfaceTest {
         assertMethod(Context.class, "getNodeJson", String.class);
         assertMethod(TaskJob.class, "getDetail");
         assertMethod(Resource.class, "setInference", int.class, int.class);
-        assertMethod(Resource.class, "useCuda", int.class);
     }
 
     @Test

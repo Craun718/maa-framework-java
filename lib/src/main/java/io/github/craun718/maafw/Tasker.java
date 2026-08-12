@@ -408,11 +408,6 @@ public class Tasker implements AutoCloseable {
         return setGlobalBooleanOption(MaaDef.GlobalOption.SAVE_DRAW, saveDraw);
     }
 
-    @Deprecated
-    public static boolean setRecording(boolean recording) {
-        return false;
-    }
-
     public static boolean setStdoutLevel(MaaDef.LoggingLevel level) {
         return setGlobalIntOption(MaaDef.GlobalOption.STDOUT_LEVEL, level.code());
     }

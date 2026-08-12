@@ -140,9 +140,8 @@ class JPipelineParserTest {
                 JAnd.class,
                 parseRecognition(
                         JRecognitionType.AND,
-                        Map.of("all_of", List.of("A"), "box_index", 1, "sub_name", "first")));
+                        Map.of("all_of", List.of("A"), "box_index", 1)));
         assertEquals(1, and.boxIndex);
-        assertEquals("first", and.subName);
         assertInstanceOf(
                 JOr.class, parseRecognition(JRecognitionType.OR, Map.of("any_of", List.of("A"))));
     }

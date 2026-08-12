@@ -185,7 +185,6 @@ class MaaDefTest {
         assertEquals(1, MaaDef.GlobalOption.LOG_DIR.code());
         assertEquals(2, MaaDef.GlobalOption.SAVE_DRAW.code());
         assertEquals(4, MaaDef.GlobalOption.STDOUT_LEVEL.code());
-        assertEquals(5, MaaDef.GlobalOption.SHOW_HIT_DRAW.code());
         assertEquals(6, MaaDef.GlobalOption.DEBUG_MODE.code());
         assertEquals(7, MaaDef.GlobalOption.SAVE_ON_ERROR.code());
         assertEquals(8, MaaDef.GlobalOption.DRAW_QUALITY.code());

@@ -10,6 +10,4 @@ public final class JAnd implements JRecognitionParam {
     public List<Object> allOf = List.of();
     @JsonProperty("box_index")
     public int boxIndex;
-    @JsonProperty("sub_name")
-    public String subName;
 }

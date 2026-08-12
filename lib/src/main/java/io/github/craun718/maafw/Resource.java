@@ -220,10 +220,6 @@ public class Resource implements AutoCloseable {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_CORE_ML, coremlFlag);
     }
 
-    public boolean useCuda(int nvidiaGpuId) {
-        return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_CUDA, nvidiaGpuId);
-    }
-
     public boolean useAutoEp() {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_AUTO, MaaDef.INFERENCE_DEVICE_AUTO);
     }
