@@ -32,7 +32,9 @@ import io.github.craun718.maafw.pipeline.JWaitFreezes;
 /**
  * Optional smoke tests against an official MaaFramework release.
  *
- * <p>Set {@code MAA_FRAMEWORK_LIB_DIR} or {@code maafw.libDir} to the directory containing the
+ * <p>
+ * Set {@code MAA_FRAMEWORK_LIB_DIR} or {@code maafw.libDir} to the directory
+ * containing the
  * platform release libraries. The tests are skipped when neither is configured.
  */
 class RuntimeSmokeTest {
@@ -114,7 +116,7 @@ class RuntimeSmokeTest {
 
         try (MaaImageBuffer image = new MaaImageBuffer()) {
             assertTrue(image.empty());
-            byte[] bgr = new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30};
+            byte[] bgr = new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 };
             image.set(new MaaImage(bgr, 1, 1, 3, MaaImage.TYPE_8UC3));
             assertFalse(image.empty());
             MaaImage loaded = image.get();
@@ -173,7 +175,7 @@ class RuntimeSmokeTest {
         Path tempDir = Files.createTempDirectory("maa-java-resource-post-");
         try {
             Path ocrDir = Files.createDirectories(tempDir.resolve("ocr"));
-            Files.write(ocrDir.resolve("det.onnx"), new byte[] {1});
+            Files.write(ocrDir.resolve("det.onnx"), new byte[] { 1 });
 
             Path imageFile = tempDir.resolve("smoke.png");
             try (MaaImageBuffer image = new MaaImageBuffer()) {
@@ -188,14 +190,14 @@ class RuntimeSmokeTest {
             Files.writeString(
                     bundlePipeline.resolve("smoke.json"),
                     """
-                    {
-                      "BundleProbe": {
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      }
-                    }
-                    """);
+                            {
+                              "BundleProbe": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              }
+                            }
+                            """);
 
             try (Resource resource = new Resource()) {
                 assertTrue(
@@ -225,14 +227,14 @@ class RuntimeSmokeTest {
             Files.writeString(
                     pipeline,
                     """
-                    {
-                      "SinkProbe": {
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      }
-                    }
-                    """);
+                            {
+                              "SinkProbe": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              }
+                            }
+                            """);
 
             try (Resource resource = new Resource();
                     CustomController controller = newSmokeController();
@@ -383,8 +385,8 @@ class RuntimeSmokeTest {
                                 Context cloned = context.clone();
                                 nodeName.set(argv.nodeName());
                                 taskerSame.set(
-                                        Pointer.nativeValue(cloned.tasker().handle())
-                                                == Pointer.nativeValue(context.tasker().handle()));
+                                        Pointer.nativeValue(cloned.tasker().handle()) == Pointer
+                                                .nativeValue(context.tasker().handle()));
                                 setAnchorOk.set(context.setAnchor("java-anchor", argv.nodeName()));
                                 anchorGot.set(context.getAnchor("java-anchor"));
                                 boolean checks = taskerSame.get()
@@ -413,35 +415,35 @@ class RuntimeSmokeTest {
                 Files.writeString(
                         pipeline,
                         """
-                        {
-                          "StartUpAndClickButton": {
-                            "recognition": {"type": "DirectHit", "param": {}},
-                            "action": {"type": "DoNothing", "param": {}},
-                            "next": ["Click_Button"]
-                          },
-                          "Click_Button": {
-                            "recognition": {"type": "OCR", "param": {"expected": ["Button"]}},
-                            "action": {"type": "Click", "param": {}}
-                          },
-                          "SmokeTask": {
-                            "pre_delay": 500,
-                            "recognition": {"type": "DirectHit", "param": {}},
-                            "action": {"type": "Click", "param": {}},
-                            "next": []
-                          },
-                          "ContextSmoke": {
-                            "recognition": {
-                              "type": "Custom",
-                              "param": {"custom_recognition": "JavaContextReco"}
-                            },
-                            "action": {
-                              "type": "Custom",
-                              "param": {"custom_action": "JavaContextAction"}
-                            },
-                            "next": []
-                          }
-                        }
-                        """);
+                                {
+                                  "StartUpAndClickButton": {
+                                    "recognition": {"type": "DirectHit", "param": {}},
+                                    "action": {"type": "DoNothing", "param": {}},
+                                    "next": ["Click_Button"]
+                                  },
+                                  "Click_Button": {
+                                    "recognition": {"type": "OCR", "param": {"expected": ["Button"]}},
+                                    "action": {"type": "Click", "param": {}}
+                                  },
+                                  "SmokeTask": {
+                                    "pre_delay": 500,
+                                    "recognition": {"type": "DirectHit", "param": {}},
+                                    "action": {"type": "Click", "param": {}},
+                                    "next": []
+                                  },
+                                  "ContextSmoke": {
+                                    "recognition": {
+                                      "type": "Custom",
+                                      "param": {"custom_recognition": "JavaContextReco"}
+                                    },
+                                    "action": {
+                                      "type": "Custom",
+                                      "param": {"custom_action": "JavaContextAction"}
+                                    },
+                                    "next": []
+                                  }
+                                }
+                                """);
                 assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
                 assertTrue(resource.loaded());
                 assertTrue(resource.nodeList().contains("StartUpAndClickButton"));
@@ -569,7 +571,7 @@ class RuntimeSmokeTest {
             assertEquals(1, screen.width());
             assertEquals(1, screen.height());
             assertArrayEquals(
-                    new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30}, screen.data());
+                    new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, screen.data());
             assertEquals(Map.of("type", "custom"), controller.info());
 
             assertTrue(controller.setScreenshotTargetLongSide(1280));
@@ -608,68 +610,68 @@ class RuntimeSmokeTest {
             Files.writeString(
                     pipeline,
                     """
-                    {
-                      "ResourceTemplateHit": {
-                        "recognition": {
-                          "type": "TemplateMatch",
-                          "param": {
-                            "template": ["JavaResourceTemplate.png"],
-                            "threshold": 0.9
-                          }
-                        },
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      },
-                      "ResourceOriginalHit": {
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      },
-                      "ContextEntry": {
-                        "recognition": {
-                          "type": "Custom",
-                          "param": {"custom_recognition": "JavaContextOverrideReco"}
-                        },
-                        "action": {
-                          "type": "Custom",
-                          "param": {"custom_action": "JavaContextOverrideAction"}
-                        },
-                        "next": ["ContextOriginalHit"]
-                      },
-                      "ContextOriginalHit": {
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      },
-                      "ContextTemplateHit": {
-                        "recognition": {
-                          "type": "TemplateMatch",
-                          "param": {
-                            "template": ["JavaRuntimeTemplate.png"],
-                            "threshold": 0.9
-                          }
-                        },
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      },
-                      "TaskJobEntry": {
-                        "pre_delay": 1000,
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": ["TaskJobOriginalHit"]
-                      },
-                      "TaskJobOriginalHit": {
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      },
-                      "TaskJobOverrideHit": {
-                        "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      }
-                    }
-                    """);
+                            {
+                              "ResourceTemplateHit": {
+                                "recognition": {
+                                  "type": "TemplateMatch",
+                                  "param": {
+                                    "template": ["JavaResourceTemplate.png"],
+                                    "threshold": 0.9
+                                  }
+                                },
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "ResourceOriginalHit": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "ContextEntry": {
+                                "recognition": {
+                                  "type": "Custom",
+                                  "param": {"custom_recognition": "JavaContextOverrideReco"}
+                                },
+                                "action": {
+                                  "type": "Custom",
+                                  "param": {"custom_action": "JavaContextOverrideAction"}
+                                },
+                                "next": ["ContextOriginalHit"]
+                              },
+                              "ContextOriginalHit": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "ContextTemplateHit": {
+                                "recognition": {
+                                  "type": "TemplateMatch",
+                                  "param": {
+                                    "template": ["JavaRuntimeTemplate.png"],
+                                    "threshold": 0.9
+                                  }
+                                },
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "TaskJobEntry": {
+                                "pre_delay": 1000,
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": ["TaskJobOriginalHit"]
+                              },
+                              "TaskJobOriginalHit": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "TaskJobOverrideHit": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              }
+                            }
+                            """);
 
             exerciseResourceOverrides(pipeline);
             exerciseContextOverrides(pipeline);
@@ -718,17 +720,17 @@ class RuntimeSmokeTest {
             Files.writeString(
                     pipeline,
                     """
-                    {
-                      "DirectContext": {
-                        "recognition": {
-                          "type": "Custom",
-                          "param": {"custom_recognition": "JavaDirectContextReco"}
-                        },
-                        "action": {"type": "DoNothing", "param": {}},
-                        "next": []
-                      }
-                    }
-                    """);
+                            {
+                              "DirectContext": {
+                                "recognition": {
+                                  "type": "Custom",
+                                  "param": {"custom_recognition": "JavaDirectContextReco"}
+                                },
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              }
+                            }
+                            """);
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
             assertTrue(tasker.bind(resource, controller));
 
@@ -742,8 +744,8 @@ class RuntimeSmokeTest {
             assertTrue(contextAction.get().success(), "Click direct action should succeed");
             assertEquals("Click", contextAction.get().action());
 
-            TaskJob recoJob =
-                    tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(8));
+            TaskJob recoJob = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(),
+                    gradientBgrImage(8));
             assertTrue(recoJob.waitFor().succeeded(), "Tasker.postRecognition should succeed");
             TaskDetail recoTask = recoJob.get();
             assertNotNull(recoTask);
@@ -756,8 +758,7 @@ class RuntimeSmokeTest {
             assertEquals("DirectHit", recoNode.recognition().algorithm());
 
             int clicksBeforeAction = clickCount.get();
-            TaskJob actionJob =
-                    tasker.postAction(JActionType.CLICK, new JClick(), MaaRect.of(0, 0, 8, 8), "");
+            TaskJob actionJob = tasker.postAction(JActionType.CLICK, new JClick(), MaaRect.of(0, 0, 8, 8), "");
             assertTrue(actionJob.waitFor().succeeded(), "Tasker.postAction should succeed");
             TaskDetail actionTask = actionJob.get();
             assertNotNull(actionTask);
@@ -913,12 +914,14 @@ class RuntimeSmokeTest {
 
                 Map<String, Object> recordInfo = record.info();
                 assertEquals(Boolean.TRUE, recordInfo.get("recording"));
-                assertEquals(recording.toString(), recordInfo.get("recording_path"));
+                assertEquals(
+                        recording.toAbsolutePath().normalize(),
+                        Path.of((String) recordInfo.get("recording_path")).toAbsolutePath().normalize());
 
                 assertTrue(record.setScreenshotUseRawSize(true));
                 MaaImage recorded = record.postScreencap().waitFor().get();
                 assertArrayEquals(
-                        new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30}, recorded.data());
+                        new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, recorded.data());
                 assertTrue(record.postClick(11, 22).waitFor().succeeded());
             }
 
@@ -937,7 +940,7 @@ class RuntimeSmokeTest {
                 assertTrue(replay.setScreenshotUseRawSize(true));
                 MaaImage replayed = replay.postScreencap().waitFor().get();
                 assertArrayEquals(
-                        new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30}, replayed.data());
+                        new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, replayed.data());
                 assertTrue(replay.postClick(11, 22).waitFor().succeeded());
 
                 Map<String, Object> consumed = replay.info();
@@ -984,7 +987,7 @@ class RuntimeSmokeTest {
     }
 
     private static CustomController newSmokeController(AtomicInteger clickCount) {
-        byte[] bgr = new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30};
+        byte[] bgr = new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 };
         return new CustomController() {
             @Override
             public long getFeatures() {
@@ -1175,30 +1178,29 @@ class RuntimeSmokeTest {
                 Files.writeString(
                         pipeline,
                         """
-                        {
-                          "AgentEntry": {
-                            "recognition": {"type": "DirectHit", "param": {}},
-                            "action": {"type": "DoNothing", "param": {}},
-                            "next": ["AgentCustom"]
-                          },
-                          "AgentCustom": {
-                            "recognition": {
-                              "type": "Custom",
-                              "param": {"custom_recognition": "JavaAgentReco"}
-                            },
-                            "action": {
-                              "type": "Custom",
-                              "param": {"custom_action": "JavaAgentAction"}
-                            },
-                            "next": []
-                          }
-                        }
-                        """);
+                                {
+                                  "AgentEntry": {
+                                    "recognition": {"type": "DirectHit", "param": {}},
+                                    "action": {"type": "DoNothing", "param": {}},
+                                    "next": ["AgentCustom"]
+                                  },
+                                  "AgentCustom": {
+                                    "recognition": {
+                                      "type": "Custom",
+                                      "param": {"custom_recognition": "JavaAgentReco"}
+                                    },
+                                    "action": {
+                                      "type": "Custom",
+                                      "param": {"custom_action": "JavaAgentAction"}
+                                    },
+                                    "next": []
+                                  }
+                                }
+                                """);
 
-                String javaExecutable =
-                        System.getProperty("os.name", "").toLowerCase().contains("win")
-                                ? "java.exe"
-                                : "java";
+                String javaExecutable = System.getProperty("os.name", "").toLowerCase().contains("win")
+                        ? "java.exe"
+                        : "java";
                 String java = Path.of(System.getProperty("java.home"), "bin", javaExecutable).toString();
                 ProcessBuilder processBuilder = new ProcessBuilder(
                         java,
