@@ -64,6 +64,7 @@ class DataModelTest {
                   "begin": [1, 2],
                   "end": [[3, 4], [5, 6]],
                   "end_hold": [100, 200],
+                  "starting": 7,
                   "keycode": [7, 8],
                   "text": "hello",
                   "package": "com.example",
@@ -84,6 +85,7 @@ class DataModelTest {
         assertEquals(2, result.begin().y());
         assertEquals(List.of(MaaPoint.of(3, 4), MaaPoint.of(5, 6)), result.end());
         assertEquals(List.of(100, 200), result.endHold());
+        assertEquals(7, result.starting());
         assertEquals(List.of(7, 8), result.keycodes());
         assertEquals("hello", result.text());
         assertEquals("com.example", result.packageName());
