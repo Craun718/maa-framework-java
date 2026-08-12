@@ -33,6 +33,11 @@ public final class MaaLibrary {
 
     private MaaLibrary() {}
 
+    /** Returns whether native libraries are currently loaded. */
+    public static synchronized boolean isOpen() {
+        return framework != null || agentServer != null;
+    }
+
     /** Loads the official MaaFramework release libraries from {@code directory}. */
     public static synchronized void open(Path directory, boolean agentServerMode) {
         Objects.requireNonNull(directory, "directory");
@@ -65,6 +70,25 @@ public final class MaaLibrary {
             toolkit = Native.load(toolkitPath.toString(), MaaToolkitLibrary.class, LIBRARY_OPTIONS);
             agentClient = Native.load(agentClientPath.toString(), MaaAgentClientLibrary.class, LIBRARY_OPTIONS);
         }
+    }
+
+    /**
+     * Drops all loaded library references.
+     *
+     * <p>Call this only after closing every wrapper that holds a native handle created from the
+     * loaded libraries. It is a no-op when no libraries are loaded and is primarily useful for
+     * tests or for swapping release binaries.
+     */
+    public static synchronized void close() {
+        framework = null;
+        toolkit = null;
+        agentClient = null;
+        agentServer = null;
+        frameworkPath = null;
+        toolkitPath = null;
+        agentClientPath = null;
+        agentServerPath = null;
+        agentServerMode = false;
     }
 
     /** Loads in client mode with the supplied MaaAgentServer library. */

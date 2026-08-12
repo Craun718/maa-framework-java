@@ -240,7 +240,7 @@ public final class Context {
                     MaaLibrary.framework().MaaContextGetAnchor(handle, anchorName, buffer.handle()))) {
                 return null;
             }
-            return buffer.get();
+            return buffer.getUtf8();
         }
     }
 
