@@ -2,8 +2,12 @@ package io.github.craun718.maafw;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.LongByReference;
+import io.github.craun718.maafw.pipeline.JActionParam;
+import io.github.craun718.maafw.pipeline.JActionType;
 import io.github.craun718.maafw.pipeline.JPipelineData;
 import io.github.craun718.maafw.pipeline.JPipelineParser;
+import io.github.craun718.maafw.pipeline.JRecognitionParam;
+import io.github.craun718.maafw.pipeline.JRecognitionType;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,10 +26,18 @@ public final class Context {
         return handle;
     }
 
+    public TaskDetail runTask(String entry) {
+        return runTask(entry, Map.of());
+    }
+
     public TaskDetail runTask(String entry, Map<String, Object> pipelineOverride) {
         long taskId = MaaLibrary.framework()
                 .MaaContextRunTask(handle, entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
         return taskId == 0 ? null : tasker().getTaskDetail(taskId);
+    }
+
+    public RecognitionDetail runRecognition(String entry, MaaImage image) {
+        return runRecognition(entry, image, Map.of());
     }
 
     public RecognitionDetail runRecognition(
@@ -40,6 +52,14 @@ public final class Context {
                             imageBuffer.handle());
             return recoId == 0 ? null : tasker().getRecognitionDetail(recoId);
         }
+    }
+
+    public ActionDetail runAction(String entry) {
+        return runAction(entry, null, "", Map.of());
+    }
+
+    public ActionDetail runAction(String entry, MaaRect box, String recoDetail) {
+        return runAction(entry, box, recoDetail, Map.of());
     }
 
     public ActionDetail runAction(
@@ -58,6 +78,14 @@ public final class Context {
     }
 
     public RecognitionDetail runRecognitionDirect(
+            JRecognitionType recoType, JRecognitionParam recoParam, MaaImage image) {
+        Objects.requireNonNull(recoType, "recoType");
+        Objects.requireNonNull(recoParam, "recoParam");
+        return runRecognitionDirect(
+                recoType.nativeName(), MaaJson.parseObject(MaaJson.write(recoParam)), image);
+    }
+
+    public RecognitionDetail runRecognitionDirect(
             String recoType, Map<String, Object> recoParam, MaaImage image) {
         try (MaaImageBuffer imageBuffer = new MaaImageBuffer()) {
             imageBuffer.set(image);
@@ -69,6 +97,25 @@ public final class Context {
                             imageBuffer.handle());
             return recoId == 0 ? null : tasker().getRecognitionDetail(recoId);
         }
+    }
+
+    public ActionDetail runActionDirect(JActionType actionType, JActionParam actionParam) {
+        return runActionDirect(actionType, actionParam, null, "");
+    }
+
+    public ActionDetail runActionDirect(JActionType actionType, JActionParam actionParam, MaaRect box) {
+        return runActionDirect(actionType, actionParam, box, "");
+    }
+
+    public ActionDetail runActionDirect(
+            JActionType actionType, JActionParam actionParam, MaaRect box, String recoDetail) {
+        Objects.requireNonNull(actionType, "actionType");
+        Objects.requireNonNull(actionParam, "actionParam");
+        return runActionDirect(
+                actionType.nativeName(),
+                MaaJson.parseObject(MaaJson.write(actionParam)),
+                box,
+                recoDetail);
     }
 
     public ActionDetail runActionDirect(
@@ -84,6 +131,18 @@ public final class Context {
                             recoDetail == null ? "" : recoDetail);
             return actionId == 0 ? null : tasker().getActionDetail(actionId);
         }
+    }
+
+    public boolean waitFreezes(long time) {
+        return waitFreezes(time, null, Map.of());
+    }
+
+    public boolean waitFreezes(long time, MaaRect box) {
+        return waitFreezes(time, box, Map.of());
+    }
+
+    public boolean waitFreezes(long time, Map<String, Object> waitFreezesParam) {
+        return waitFreezes(time, null, waitFreezesParam);
     }
 
     public boolean waitFreezes(long time, MaaRect box, Map<String, Object> waitFreezesParam) {

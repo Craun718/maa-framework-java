@@ -5,6 +5,10 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
+import io.github.craun718.maafw.pipeline.JActionParam;
+import io.github.craun718.maafw.pipeline.JActionType;
+import io.github.craun718.maafw.pipeline.JRecognitionParam;
+import io.github.craun718.maafw.pipeline.JRecognitionType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -70,10 +74,21 @@ public class Tasker implements AutoCloseable {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerInited(handle));
     }
 
+    public TaskJob postTask(String entry) {
+        return postTask(entry, Map.of());
+    }
+
     public TaskJob postTask(String entry, Map<String, Object> pipelineOverride) {
         long taskId = MaaLibrary.framework()
                 .MaaTaskerPostTask(handle, entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
         return taskJob(taskId);
+    }
+
+    public TaskJob postRecognition(JRecognitionType recoType, JRecognitionParam recoParam, MaaImage image) {
+        Objects.requireNonNull(recoType, "recoType");
+        Objects.requireNonNull(recoParam, "recoParam");
+        return postRecognition(
+                recoType.nativeName(), MaaJson.parseObject(MaaJson.write(recoParam)), image);
     }
 
     public TaskJob postRecognition(String recoType, Map<String, Object> recoParam, MaaImage image) {
@@ -87,6 +102,25 @@ public class Tasker implements AutoCloseable {
                             imageBuffer.handle());
             return taskJob(taskId);
         }
+    }
+
+    public TaskJob postAction(JActionType actionType, JActionParam actionParam) {
+        return postAction(actionType, actionParam, null, "");
+    }
+
+    public TaskJob postAction(JActionType actionType, JActionParam actionParam, MaaRect box) {
+        return postAction(actionType, actionParam, box, "");
+    }
+
+    public TaskJob postAction(
+            JActionType actionType, JActionParam actionParam, MaaRect box, String recoDetail) {
+        Objects.requireNonNull(actionType, "actionType");
+        Objects.requireNonNull(actionParam, "actionParam");
+        return postAction(
+                actionType.nativeName(),
+                MaaJson.parseObject(MaaJson.write(actionParam)),
+                box,
+                recoDetail);
     }
 
     public TaskJob postAction(

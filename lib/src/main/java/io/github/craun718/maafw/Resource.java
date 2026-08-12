@@ -2,8 +2,12 @@ package io.github.craun718.maafw;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import io.github.craun718.maafw.pipeline.JActionParam;
+import io.github.craun718.maafw.pipeline.JActionType;
 import io.github.craun718.maafw.pipeline.JPipelineData;
 import io.github.craun718.maafw.pipeline.JPipelineParser;
+import io.github.craun718.maafw.pipeline.JRecognitionParam;
+import io.github.craun718.maafw.pipeline.JRecognitionType;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -139,6 +143,26 @@ public class Resource implements AutoCloseable {
             String json = buffer.get();
             return json == null || json.isBlank() ? Map.of() : MaaJson.parseObject(json);
         }
+    }
+
+    /** Returns typed default parameters for a recognition type, or {@code null} if unavailable. */
+    public JRecognitionParam getDefaultRecognitionParam(JRecognitionType recoType) {
+        Objects.requireNonNull(recoType, "recoType");
+        Map<String, Object> data = getDefaultRecognitionParam(recoType.nativeName());
+        if (data.isEmpty()) {
+            return null;
+        }
+        return JPipelineParser.parseRecognitionParam(recoType, data);
+    }
+
+    /** Returns typed default parameters for an action type, or {@code null} if unavailable. */
+    public JActionParam getDefaultActionParam(JActionType actionType) {
+        Objects.requireNonNull(actionType, "actionType");
+        Map<String, Object> data = getDefaultActionParam(actionType.nativeName());
+        if (data.isEmpty()) {
+            return null;
+        }
+        return JPipelineParser.parseActionParam(actionType, data);
     }
 
     public boolean loaded() {
