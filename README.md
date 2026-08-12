@@ -39,6 +39,17 @@ MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
 `maafw.maaFrameworkSource` is set, and skips otherwise.
 
+## Runtime Smoke Tests
+
+`RuntimeSmokeTest` exercises the release ABI against a real library directory: version lookup,
+UTF-8 buffers, rect/image buffers, resource/tasker creation, custom controller callbacks, agent
+client creation, and agent server registration. It is skipped unless the library directory is
+configured:
+
+```bash
+MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
+```
+
 ## Loading Native Libraries
 
 Call `MaaLibrary.open(Path, boolean)` once before using high-level wrappers:
@@ -56,6 +67,10 @@ Official release file names are resolved automatically:
 | Windows | `MaaFramework.dll`, `MaaToolkit.dll`, `MaaAgentClient.dll` | `MaaAgentServer.dll` |
 | macOS | `libMaaFramework.dylib`, `libMaaToolkit.dylib`, `libMaaAgentClient.dylib` | `libMaaAgentServer.dylib` |
 | Linux | `libMaaFramework.so`, `libMaaToolkit.so`, `libMaaAgentClient.so` | `libMaaAgentServer.so` |
+
+`MaaLibrary.close()` drops the loaded library references for tests or for swapping release
+binaries. Close all resource, controller, tasker, agent client/server, buffer, and sink wrappers
+before calling it.
 
 ## Client Mode
 
