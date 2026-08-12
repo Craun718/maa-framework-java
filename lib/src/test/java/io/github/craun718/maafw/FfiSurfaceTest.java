@@ -1,7 +1,7 @@
 package io.github.craun718.maafw;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,7 +60,32 @@ class FfiSurfaceTest {
         Set<String> actual = javaFunctions(javaFile);
 
         assertFalse(expected.isEmpty(), name + " headers should export at least one function");
-        assertEquals(expected, actual, name + " FFI surface mismatch");
+        Set<String> missing = new TreeSet<>(expected);
+        missing.removeAll(actual);
+        Set<String> unexpected = new TreeSet<>(actual);
+        unexpected.removeAll(expected);
+        unexpected.removeAll(expectedForwardExtras(name));
+
+        assertTrue(missing.isEmpty(), name + " FFI surface is missing: " + missing);
+        assertTrue(
+                unexpected.isEmpty(), name + " FFI surface has unexpected extra functions: " + unexpected);
+    }
+
+    private static Set<String> expectedForwardExtras(String name) {
+        return switch (name) {
+            case "MaaFramework" -> Set.of("MaaLinuxControllerCreate");
+            case "MaaToolkit" -> Set.of(
+                    "MaaToolkitPortalHelperCreate",
+                    "MaaToolkitPortalHelperDestroy",
+                    "MaaToolkitPortalHelperGetPersist",
+                    "MaaToolkitPortalHelperGetPipeWireFD",
+                    "MaaToolkitPortalHelperGetPipeWireNodeID",
+                    "MaaToolkitPortalHelperGetRestoreToken",
+                    "MaaToolkitPortalHelperOpenStream",
+                    "MaaToolkitPortalHelperSetPersist",
+                    "MaaToolkitPortalHelperSetRestoreToken");
+            default -> Set.of();
+        };
     }
 
     private static Set<String> headerFunctions(Path headerDir, String macro) throws IOException {

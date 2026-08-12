@@ -65,10 +65,17 @@ with the JNA interface methods. It covers `MaaFramework`, `MaaToolkit`, `MaaAgen
 `MaaAgentServer`. `MaaControlUnit` is intentionally excluded because those functions ship in
 separate plugin libraries, not in the official release core libraries.
 
+The same check works against either a source checkout or an extracted official release directory.
+When it is pointed at an older release such as `v5.12.3`, the newer current-main APIs
+`MaaLinuxControllerCreate` and `MaaToolkitPortalHelper*` are treated as known forward-compatible
+extras: every release symbol must still be covered, but those extras do not fail the check.
+
 ```bash
 ./scripts/check-ffi-surface.sh /path/to/MaaFramework
 # or
 MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
+# or an extracted release directory
+./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.12.3
 ```
 
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
@@ -81,7 +88,9 @@ binding:
 
 - `check-ffi-surface.sh` verifies every exported name in `MaaFramework`, `MaaToolkit`,
   `MaaAgentClient`, and `MaaAgentServer`; `MaaControlUnit` is excluded only because those
-  functions ship in separate plugin libraries.
+  functions ship in separate plugin libraries. Against an older release, current-main additions
+  such as `MaaLinuxControllerCreate` and `MaaToolkitPortalHelper*` are allowed as documented
+  forward-compatible extras.
 - The high-level wrappers mirror the Python binding's `Resource`, `Tasker`, `Context`, controller
   subclasses, `Toolkit`, buffers, event sinks, custom recognition/action/controller callbacks,
   and `AgentClient`/`AgentServer` APIs.

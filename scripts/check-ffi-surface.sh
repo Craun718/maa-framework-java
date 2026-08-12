@@ -18,6 +18,7 @@ check_surface() {
     local header_dir="$2"
     local java_file="$3"
     local macro="$4"
+    local expected_extra="$5"
     local headers java
     local header_count java_count
 
@@ -51,11 +52,30 @@ check_surface() {
     if diff -u "${headers}" "${java}" >/dev/null; then
         echo "match: yes"
     else
-        echo "missing:"
-        comm -23 "${headers}" "${java}"
-        echo "extra:"
-        comm -13 "${headers}" "${java}"
-        FAILED=1
+        local missing extra unexpected
+        missing="$(comm -23 "${headers}" "${java}")"
+        extra="$(comm -13 "${headers}" "${java}")"
+        if [[ -n "${missing}" ]]; then
+            echo "missing:"
+            echo "${missing}"
+            FAILED=1
+        fi
+        if [[ -n "${extra}" ]]; then
+            echo "extra:"
+            echo "${extra}"
+            if [[ -n "${expected_extra}" ]]; then
+                unexpected="$(printf '%s\n' "${extra}" | grep -Ev "${expected_extra}" || true)"
+                if [[ -n "${unexpected}" ]]; then
+                    echo "unexpected extra:"
+                    echo "${unexpected}"
+                    FAILED=1
+                else
+                    echo "extra is forward-compatible API: yes"
+                fi
+            else
+                FAILED=1
+            fi
+        fi
     fi
 }
 
@@ -63,25 +83,29 @@ check_surface \
     "MaaFramework" \
     "${SOURCE_ROOT}/include/MaaFramework" \
     "${REPO_ROOT}/lib/src/main/java/io/github/craun718/maafw/MaaFrameworkLibrary.java" \
-    "MAA_FRAMEWORK_API"
+    "MAA_FRAMEWORK_API" \
+    '^MaaLinuxControllerCreate$'
 
 check_surface \
     "MaaToolkit" \
     "${SOURCE_ROOT}/include/MaaToolkit" \
     "${REPO_ROOT}/lib/src/main/java/io/github/craun718/maafw/MaaToolkitLibrary.java" \
-    "MAA_TOOLKIT_API"
+    "MAA_TOOLKIT_API" \
+    '^MaaToolkitPortalHelper[A-Za-z0-9_]*$'
 
 check_surface \
     "MaaAgentClient" \
     "${SOURCE_ROOT}/include/MaaAgentClient" \
     "${REPO_ROOT}/lib/src/main/java/io/github/craun718/maafw/MaaAgentClientLibrary.java" \
-    "MAA_AGENT_CLIENT_API"
+    "MAA_AGENT_CLIENT_API" \
+    ""
 
 check_surface \
     "MaaAgentServer" \
     "${SOURCE_ROOT}/include/MaaAgentServer" \
     "${REPO_ROOT}/lib/src/main/java/io/github/craun718/maafw/MaaAgentServerLibrary.java" \
-    "MAA_AGENT_SERVER_API"
+    "MAA_AGENT_SERVER_API" \
+    ""
 
 if [[ "${FAILED}" -ne 0 ]]; then
     echo "FFI surface mismatch" >&2
