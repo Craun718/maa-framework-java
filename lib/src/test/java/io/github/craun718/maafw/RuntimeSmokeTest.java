@@ -56,6 +56,8 @@ class RuntimeSmokeTest {
         exerciseGlobalOptions();
         exerciseBuffers();
         exerciseResourceAndTasker();
+        exerciseResourcePostApis();
+        exerciseSinkHolderSeparation();
         exerciseCustomController();
         exerciseRuntimeOverrides();
         exerciseTypedDirectApi();
@@ -119,6 +121,243 @@ class RuntimeSmokeTest {
             assertEquals(1, loaded.height());
             assertEquals(3, loaded.channels());
             assertArrayEquals(bgr, loaded.data());
+
+            byte[] png = image.getEncoded();
+            assertFalse(png.length == 0, "getEncoded should return encoded image bytes");
+            try (MaaImageBuffer decoded = new MaaImageBuffer()) {
+                decoded.setEncoded(png);
+                assertFalse(decoded.empty());
+                MaaImage decodedImage = decoded.get();
+                assertEquals(1, decodedImage.width());
+                assertEquals(1, decodedImage.height());
+                assertEquals(3, decodedImage.channels());
+                assertArrayEquals(bgr, decodedImage.data());
+            }
+
+            image.resize(2, 2);
+            MaaImage resized = image.get();
+            assertEquals(2, resized.width(), "resize(width, height) should update the raw image");
+            assertEquals(2, resized.height());
+            image.resize(1);
+            assertEquals(1, image.get().width(), "resize(width) should preserve the aspect ratio");
+            image.clear();
+            assertTrue(image.empty());
+        }
+
+        try (MaaImageListBuffer list = new MaaImageListBuffer()) {
+            assertTrue(list.get().isEmpty());
+            list.append(gradientBgrImage(2));
+            list.append(gradientBgrImage(3));
+            List<MaaImage> loaded = list.get();
+            assertEquals(2, loaded.size());
+            assertEquals(2, loaded.getFirst().width());
+            assertEquals(3, loaded.get(1).width());
+
+            list.remove(0);
+            loaded = list.get();
+            assertEquals(1, loaded.size());
+            assertEquals(3, loaded.getFirst().width());
+
+            list.set(List.of(gradientBgrImage(4)));
+            loaded = list.get();
+            assertEquals(1, loaded.size());
+            assertEquals(4, loaded.getFirst().width());
+
+            list.clear();
+            assertTrue(list.get().isEmpty());
+        }
+    }
+
+    private static void exerciseResourcePostApis() throws Exception {
+        Path tempDir = Files.createTempDirectory("maa-java-resource-post-");
+        try {
+            Path ocrDir = Files.createDirectories(tempDir.resolve("ocr"));
+            Files.write(ocrDir.resolve("det.onnx"), new byte[] {1});
+
+            Path imageFile = tempDir.resolve("smoke.png");
+            try (MaaImageBuffer image = new MaaImageBuffer()) {
+                image.set(gradientBgrImage(4));
+                byte[] png = image.getEncoded();
+                assertFalse(png.length == 0, "postImage needs a readable PNG fixture");
+                Files.write(imageFile, png);
+            }
+
+            Path bundleDir = Files.createDirectories(tempDir.resolve("bundle"));
+            Path bundlePipeline = Files.createDirectories(bundleDir.resolve("pipeline"));
+            Files.writeString(
+                    bundlePipeline.resolve("smoke.json"),
+                    """
+                    {
+                      "BundleProbe": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
+
+            try (Resource resource = new Resource()) {
+                assertTrue(
+                        resource.postOcrModel(ocrDir).waitFor().succeeded(),
+                        "postOcrModel should accept a lazy OCR model directory");
+                assertTrue(resource.loaded());
+
+                assertTrue(
+                        resource.postImage(imageFile).waitFor().succeeded(),
+                        "postImage should decode a PNG fixture");
+                assertTrue(resource.loaded());
+
+                assertTrue(
+                        resource.postBundle(bundleDir).waitFor().succeeded(),
+                        "postBundle should load a pipeline directory");
+                assertTrue(resource.loaded());
+                assertTrue(resource.nodeList().contains("BundleProbe"));
+            }
+        } finally {
+            deleteRecursively(tempDir);
+        }
+    }
+
+    private static void exerciseSinkHolderSeparation() throws Exception {
+        Path pipeline = Files.createTempFile("maa-java-sink-separation-", ".json");
+        try {
+            Files.writeString(
+                    pipeline,
+                    """
+                    {
+                      "SinkProbe": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
+
+            try (Resource resource = new Resource();
+                    CustomController controller = newSmokeController();
+                    Tasker tasker = new Tasker()) {
+                assertTrue(controller.postConnection().waitFor().succeeded());
+                assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+                assertTrue(tasker.bind(resource, controller));
+
+                AtomicInteger taskerEvents = new AtomicInteger();
+                AtomicInteger contextEvents = new AtomicInteger();
+                Long taskerSinkId = tasker.addSink(new TaskerEventSink() {
+                    @Override
+                    public void onTaskerTask(
+                            Tasker tasker,
+                            MaaDef.NotificationType notificationType,
+                            TaskerEventSink.TaskerTaskDetail detail) {
+                        taskerEvents.incrementAndGet();
+                    }
+                });
+                Long contextSinkId = tasker.addContextSink(new ContextEventSink() {
+                    @Override
+                    public void onNodeRecognition(
+                            Context context,
+                            MaaDef.NotificationType notificationType,
+                            ContextEventSink.NodeRecognitionDetail detail) {
+                        contextEvents.incrementAndGet();
+                    }
+                });
+                assertNotNull(taskerSinkId);
+                assertNotNull(contextSinkId);
+
+                postSinkProbe(tasker);
+                awaitSinkCounts(taskerEvents, contextEvents, 1, 1);
+                waitForStableSinkCounts(taskerEvents, contextEvents);
+
+                int taskerBeforeContextClear = taskerEvents.get();
+                int contextBeforeContextClear = contextEvents.get();
+                tasker.clearContextSinks();
+
+                postSinkProbe(tasker);
+                awaitSinkCounts(taskerEvents, contextEvents, taskerBeforeContextClear + 1, contextBeforeContextClear);
+                waitForStableSinkCounts(taskerEvents, contextEvents);
+                assertEquals(
+                        contextBeforeContextClear,
+                        contextEvents.get(),
+                        "clearContextSinks must not remove tasker sinks; context sink removal "
+                                + "should be limited to context notifications");
+
+                Long replacementContextSinkId = tasker.addContextSink(new ContextEventSink() {
+                    @Override
+                    public void onNodeRecognition(
+                            Context context,
+                            MaaDef.NotificationType notificationType,
+                            ContextEventSink.NodeRecognitionDetail detail) {
+                        contextEvents.incrementAndGet();
+                    }
+                });
+                assertNotNull(replacementContextSinkId);
+
+                postSinkProbe(tasker);
+                awaitSinkCounts(
+                        taskerEvents,
+                        contextEvents,
+                        taskerBeforeContextClear + 2,
+                        contextBeforeContextClear + 1);
+                waitForStableSinkCounts(taskerEvents, contextEvents);
+
+                int taskerBeforeClear = taskerEvents.get();
+                int contextBeforeClear = contextEvents.get();
+                tasker.clearSinks();
+
+                postSinkProbe(tasker);
+                awaitSinkCounts(taskerEvents, contextEvents, taskerBeforeClear, contextBeforeClear + 1);
+                waitForStableSinkCounts(taskerEvents, contextEvents);
+                assertEquals(
+                        taskerBeforeClear,
+                        taskerEvents.get(),
+                        "clearSinks must not remove context sinks");
+            }
+        } finally {
+            Files.deleteIfExists(pipeline);
+        }
+    }
+
+    private static void postSinkProbe(Tasker tasker) {
+        TaskJob task = tasker.postTask("SinkProbe");
+        TaskDetail detail = task.waitFor().get();
+        assertTrue(detail.status().succeeded(), "SinkProbe task should succeed");
+    }
+
+    private static void awaitSinkCounts(
+            AtomicInteger taskerEvents, AtomicInteger contextEvents, int taskerMinimum, int contextMinimum)
+            throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (System.nanoTime() < deadline) {
+            if (taskerEvents.get() >= taskerMinimum && contextEvents.get() >= contextMinimum) {
+                return;
+            }
+            Thread.sleep(25);
+        }
+        assertTrue(
+                false,
+                "sink events not delivered: tasker="
+                        + taskerEvents.get()
+                        + "/"
+                        + taskerMinimum
+                        + " context="
+                        + contextEvents.get()
+                        + "/"
+                        + contextMinimum);
+    }
+
+    private static void waitForStableSinkCounts(AtomicInteger taskerEvents, AtomicInteger contextEvents)
+            throws InterruptedException {
+        int lastTasker = taskerEvents.get();
+        int lastContext = contextEvents.get();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            Thread.sleep(100);
+            int tasker = taskerEvents.get();
+            int context = contextEvents.get();
+            if (tasker == lastTasker && context == lastContext) {
+                return;
+            }
+            lastTasker = tasker;
+            lastContext = context;
         }
     }
 
