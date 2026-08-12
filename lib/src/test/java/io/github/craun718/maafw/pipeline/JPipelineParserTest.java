@@ -170,6 +170,118 @@ class JPipelineParserTest {
     }
 
     @Test
+    void parsesSwipeActionWithNestedEndpoints() {
+        JSwipe swipe = assertInstanceOf(
+                JSwipe.class,
+                parseAction(
+                        JActionType.SWIPE,
+                        Map.of(
+                                "starting", 2,
+                                "begin", List.of(10, 20),
+                                "begin_offset", List.of(1, 2, 3, 4),
+                                "end", List.of(Map.of("x", 100, "y", 200)),
+                                "end_offset", List.of(List.of(5, 6, 7, 8)),
+                                "end_hold", List.of(150),
+                                "duration", List.of(300, 400),
+                                "only_hover", true,
+                                "contact", 2,
+                                "pressure", 3)));
+
+        assertEquals(2, swipe.starting);
+        assertEquals(List.of(10, 20), swipe.begin);
+        assertEquals(List.of(1, 2, 3, 4), swipe.beginOffset);
+        assertEquals(List.of(Map.of("x", 100, "y", 200)), swipe.end);
+        assertEquals(List.of(List.of(5, 6, 7, 8)), swipe.endOffset);
+        assertEquals(List.of(150L), swipe.endHold);
+        assertEquals(List.of(300L, 400L), swipe.duration);
+        assertTrue(swipe.onlyHover);
+        assertEquals(2, swipe.contact);
+        assertEquals(3, swipe.pressure);
+    }
+
+    @Test
+    void parsesMultiSwipeWithNestedSwipeFields() {
+        JMultiSwipe multi = assertInstanceOf(
+                JMultiSwipe.class,
+                parseAction(
+                        JActionType.MULTI_SWIPE,
+                        Map.of(
+                                "swipes",
+                                List.of(
+                                        Map.of(
+                                                "starting", 1,
+                                                "begin", List.of(1, 2),
+                                                "end", List.of(Map.of("x", 3, "y", 4)),
+                                                "end_offset", List.of(List.of(5, 6, 7, 8)),
+                                                "duration", List.of(250),
+                                                "contact", 1,
+                                                "pressure", 2),
+                                        Map.of(
+                                                "begin", List.of(9, 10),
+                                                "end", List.of(Map.of("x", 11, "y", 12)),
+                                                "only_hover", true,
+                                                "end_hold", List.of(500))))));
+
+        assertEquals(2, multi.swipes.size());
+        JSwipe first = multi.swipes.getFirst();
+        assertEquals(1, first.starting);
+        assertEquals(List.of(1, 2), first.begin);
+        assertEquals(List.of(Map.of("x", 3, "y", 4)), first.end);
+        assertEquals(List.of(List.of(5, 6, 7, 8)), first.endOffset);
+        assertEquals(List.of(250L), first.duration);
+        assertEquals(1, first.contact);
+        assertEquals(2, first.pressure);
+
+        JSwipe second = multi.swipes.get(1);
+        assertEquals(0, second.starting);
+        assertEquals(List.of(9, 10), second.begin);
+        assertEquals(List.of(Map.of("x", 11, "y", 12)), second.end);
+        assertTrue(second.onlyHover);
+        assertEquals(List.of(500L), second.endHold);
+    }
+
+    @Test
+    void parsesCommandShellAndScreencapWithNativeFields() {
+        JCommand command = assertInstanceOf(
+                JCommand.class,
+                parseAction(
+                        JActionType.COMMAND,
+                        Map.of("exec", "adb", "args", List.of("shell", "echo"), "detach", true)));
+        assertEquals("adb", command.exec);
+        assertEquals(List.of("shell", "echo"), command.args);
+        assertTrue(command.detach);
+
+        JCommand defaultCommand =
+                assertInstanceOf(JCommand.class, parseAction(JActionType.COMMAND, Map.of("exec", "adb")));
+        assertEquals(List.of(), defaultCommand.args);
+        assertFalse(defaultCommand.detach);
+
+        JShell shell = assertInstanceOf(
+                JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi", "shell_timeout", -1)));
+        assertEquals("echo hi", shell.cmd);
+        assertEquals(-1, shell.shellTimeout);
+
+        JShell defaultShell =
+                assertInstanceOf(JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi")));
+        assertEquals(20000, defaultShell.shellTimeout);
+
+        JScreencap screencap = assertInstanceOf(
+                JScreencap.class,
+                parseAction(
+                        JActionType.SCREENCAP,
+                        Map.of("filename", "shot.png", "format", "jpg", "quality", 85)));
+        assertEquals("shot.png", screencap.filename);
+        assertEquals("jpg", screencap.format);
+        assertEquals(85, screencap.quality);
+
+        JScreencap defaultScreencap =
+                assertInstanceOf(JScreencap.class, parseAction(JActionType.SCREENCAP, Map.of()));
+        assertEquals("", defaultScreencap.filename);
+        assertEquals("png", defaultScreencap.format);
+        assertEquals(100, defaultScreencap.quality);
+    }
+
+    @Test
     void serializesTypedParamsWithNativeJsonKeys() {
         JTemplateMatch template = new JTemplateMatch();
         template.template = List.of("a.png");
@@ -231,6 +343,60 @@ class JPipelineParserTest {
     }
 
     @Test
+    void serializesCommandScreencapAndMultiSwipeWithNativeJsonKeys() {
+        JCommand command = new JCommand();
+        command.exec = "adb";
+        command.args = List.of("shell", "echo");
+        command.detach = true;
+
+        JScreencap screencap = new JScreencap();
+        screencap.filename = "shot.png";
+        screencap.format = "jpg";
+        screencap.quality = 85;
+
+        JSwipe swipe = new JSwipe();
+        swipe.starting = 1;
+        swipe.begin = List.of(10, 20);
+        swipe.beginOffset = List.of(1, 2, 3, 4);
+        swipe.end = List.of(List.of(30, 40));
+        swipe.endOffset = List.of(List.of(5, 6, 7, 8));
+        swipe.endHold = List.of(500L);
+        swipe.duration = List.of(600L, 700L);
+        swipe.onlyHover = true;
+        swipe.contact = 2;
+        swipe.pressure = 3;
+
+        JMultiSwipe multi = new JMultiSwipe();
+        multi.swipes = List.of(swipe);
+
+        Map<String, Object> commandJson = MaaJson.parseObject(MaaJson.write(command));
+        assertEquals("adb", commandJson.get("exec"));
+        assertEquals(List.of("shell", "echo"), commandJson.get("args"));
+        assertEquals(true, commandJson.get("detach"));
+
+        Map<String, Object> screencapJson = MaaJson.parseObject(MaaJson.write(screencap));
+        assertEquals("shot.png", screencapJson.get("filename"));
+        assertEquals("jpg", screencapJson.get("format"));
+        assertEquals(85, screencapJson.get("quality"));
+
+        Map<String, Object> multiJson = MaaJson.parseObject(MaaJson.write(multi));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> swipes = (List<Map<String, Object>>) multiJson.get("swipes");
+        assertEquals(1, swipes.size());
+        Map<String, Object> swipeJson = swipes.getFirst();
+        assertEquals(1, swipeJson.get("starting"));
+        assertEquals(List.of(10, 20), swipeJson.get("begin"));
+        assertEquals(List.of(1, 2, 3, 4), swipeJson.get("begin_offset"));
+        assertEquals(List.of(List.of(30, 40)), swipeJson.get("end"));
+        assertEquals(List.of(List.of(5, 6, 7, 8)), swipeJson.get("end_offset"));
+        assertEquals(List.of(500L), longValues((List<?>) swipeJson.get("end_hold")));
+        assertEquals(List.of(600L, 700L), longValues((List<?>) swipeJson.get("duration")));
+        assertEquals(true, swipeJson.get("only_hover"));
+        assertEquals(2, ((Number) swipeJson.get("contact")).longValue());
+        assertEquals(3, swipeJson.get("pressure"));
+    }
+
+    @Test
     void serializesWaitFreezesWithNativeJsonKeys() {
         JWaitFreezes wait = new JWaitFreezes();
         wait.time = 50;
@@ -266,5 +432,9 @@ class JPipelineParserTest {
 
     private static JActionParam parseAction(JActionType type, Map<String, Object> params) {
         return JPipelineParser.parseActionParam(type, params);
+    }
+
+    private static List<Long> longValues(List<?> values) {
+        return values.stream().map(value -> ((Number) value).longValue()).toList();
     }
 }
