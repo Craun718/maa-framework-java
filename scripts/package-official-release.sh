@@ -76,8 +76,9 @@ for entry in "${PLATFORMS[@]}"; do
     cp -R "${source_root}/." "${stage}/"
     cp "${JAR}" "${stage}/lib/maa-framework-java.jar"
     cp "${REPO_ROOT}/README.md" "${stage}/lib/README.md"
+    cp "${REPO_ROOT}/README.en.md" "${stage}/lib/README.en.md"
 
-    for required in "bin" "lib/maa-framework-java.jar" "lib/README.md"; do
+    for required in "bin" "lib/maa-framework-java.jar" "lib/README.md" "lib/README.en.md"; do
         if [[ ! -e "${stage}/${required}" ]]; then
             echo "invalid package layout: missing ${required}" >&2
             exit 1
