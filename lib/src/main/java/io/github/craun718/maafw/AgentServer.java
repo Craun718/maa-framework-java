@@ -28,6 +28,14 @@ public final class AgentServer {
         return registerCustomRecognition(name, factory.get());
     }
 
+    /** Registers a recognizer instantiated from {@code recognitionClass}, matching class-based decorator bindings. */
+    public static boolean registerCustomRecognition(
+            String name, Class<? extends CustomRecognition> recognitionClass) {
+        Objects.requireNonNull(recognitionClass, "recognitionClass");
+        return registerCustomRecognition(
+                name, CustomRegistrations.newInstance(recognitionClass, "custom recognition"));
+    }
+
     public static boolean registerCustomAction(String name, CustomAction action) {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(action, "action");
@@ -40,6 +48,13 @@ public final class AgentServer {
     public static boolean registerCustomAction(String name, Supplier<? extends CustomAction> factory) {
         Objects.requireNonNull(factory, "factory");
         return registerCustomAction(name, factory.get());
+    }
+
+    /** Registers an action instantiated from {@code actionClass}, matching class-based decorator bindings. */
+    public static boolean registerCustomAction(String name, Class<? extends CustomAction> actionClass) {
+        Objects.requireNonNull(actionClass, "actionClass");
+        return registerCustomAction(
+                name, CustomRegistrations.newInstance(actionClass, "custom action"));
     }
 
     public static Long addResourceSink(ResourceEventSink sink) {
