@@ -1,9 +1,11 @@
 package io.github.craun718.maafw;
 
+import com.sun.jna.Pointer;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -12,11 +14,15 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+
+import io.github.craun718.maafw.pipeline.JWaitFreezes;
 
 /**
  * Optional smoke tests against an official MaaFramework release.
@@ -45,6 +51,7 @@ class RuntimeSmokeTest {
         exerciseBuffers();
         exerciseResourceAndTasker();
         exerciseCustomController();
+        exerciseRecordAndReplay();
         exerciseToolkit();
         exerciseAgentClient();
     }
@@ -106,8 +113,49 @@ class RuntimeSmokeTest {
             assertNotNull(resource.handle());
             assertTrue(resource.nodeList().isEmpty());
 
+            AtomicBoolean contextChecksOk = new AtomicBoolean();
+            AtomicBoolean waitFreezesOk = new AtomicBoolean();
+            AtomicBoolean taskerSame = new AtomicBoolean();
+            AtomicBoolean setAnchorOk = new AtomicBoolean();
+            AtomicReference<String> anchorGot = new AtomicReference<>("");
+            AtomicReference<String> nodeName = new AtomicReference<>("");
             Path pipeline = Files.createTempFile("maa-java-pipeline-", ".json");
             try {
+                assertTrue(resource.registerCustomRecognition(
+                        "JavaContextReco",
+                        new CustomRecognition() {
+                            @Override
+                            public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                                Context cloned = context.clone();
+                                nodeName.set(argv.nodeName());
+                                taskerSame.set(
+                                        Pointer.nativeValue(cloned.tasker().handle())
+                                                == Pointer.nativeValue(context.tasker().handle()));
+                                setAnchorOk.set(context.setAnchor("java-anchor", argv.nodeName()));
+                                anchorGot.set(context.getAnchor("java-anchor"));
+                                boolean checks = taskerSame.get()
+                                        && setAnchorOk.get()
+                                        && argv.nodeName().equals(anchorGot.get());
+                                contextChecksOk.set(checks);
+
+                                JWaitFreezes wait = new JWaitFreezes();
+                                wait.time = 1;
+                                wait.rateLimit = 1;
+                                wait.timeout = 5000;
+                                waitFreezesOk.set(
+                                        context.waitFreezes(0, MaaRect.of(0, 0, 1, 1), wait));
+                                return AnalyzeResult.hit(MaaRect.of(10, 20, 30, 40));
+                            }
+                        }));
+                assertTrue(resource.registerCustomAction(
+                        "JavaContextAction",
+                        new CustomAction() {
+                            @Override
+                            public RunResult run(Context context, RunArg argv) {
+                                return RunResult.ok();
+                            }
+                        }));
+
                 Files.writeString(
                         pipeline,
                         """
@@ -126,12 +174,25 @@ class RuntimeSmokeTest {
                             "recognition": {"type": "DirectHit", "param": {}},
                             "action": {"type": "Click", "param": {}},
                             "next": []
+                          },
+                          "ContextSmoke": {
+                            "recognition": {
+                              "type": "Custom",
+                              "param": {"custom_recognition": "JavaContextReco"}
+                            },
+                            "action": {
+                              "type": "Custom",
+                              "param": {"custom_action": "JavaContextAction"}
+                            },
+                            "next": []
                           }
                         }
                         """);
                 assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
                 assertTrue(resource.loaded());
                 assertTrue(resource.nodeList().contains("StartUpAndClickButton"));
+                assertTrue(resource.customRecognitionList().contains("JavaContextReco"));
+                assertTrue(resource.customActionList().contains("JavaContextAction"));
 
                 Map<String, Object> node = resource.getNodeData("StartUpAndClickButton");
                 assertNotNull(node);
@@ -180,6 +241,23 @@ class RuntimeSmokeTest {
                 assertNotNull(tasker.getNodeDetail(taskDetail.nodeIdList().getFirst()));
                 assertNotNull(tasker.getActionDetail(latest.action().actionId()));
                 assertTrue(tasker.clearCache());
+
+                TaskJob contextTask = tasker.postTask("ContextSmoke");
+                TaskDetail contextDetail = contextTask.waitFor().get();
+                assertTrue(contextDetail.status().succeeded(), "Context smoke task should succeed");
+                assertTrue(
+                        contextChecksOk.get(),
+                        "Context.clone/anchor: taskerSame="
+                                + taskerSame.get()
+                                + " setAnchor="
+                                + setAnchorOk.get()
+                                + " node="
+                                + nodeName.get()
+                                + " anchorGot="
+                                + anchorGot.get());
+                assertTrue(
+                        waitFreezesOk.get(),
+                        "Typed JWaitFreezes should be accepted by MaaContextWaitFreezes");
             }
         }
 
@@ -207,6 +285,54 @@ class RuntimeSmokeTest {
             assertTrue(controller.setScreenshotTargetLongSide(1280));
             assertTrue(controller.setScreenshotTargetShortSide(720));
             assertTrue(controller.setScreenshotResizeMethod(1));
+        }
+    }
+
+    private static void exerciseRecordAndReplay() throws Exception {
+        Path tempDir = Files.createTempDirectory("maa-java-recording-");
+        try {
+            Path recording = tempDir.resolve("smoke.jsonl");
+            try (CustomController inner = newSmokeController();
+                    RecordController record = new RecordController(inner, recording)) {
+                assertSame(inner, record.inner());
+                assertTrue(record.postConnection().waitFor().succeeded());
+                assertTrue(record.connected());
+                assertEquals("java-smoke", record.uuid());
+
+                Map<String, Object> recordInfo = record.info();
+                assertEquals(Boolean.TRUE, recordInfo.get("recording"));
+                assertEquals(recording.toString(), recordInfo.get("recording_path"));
+
+                assertTrue(record.setScreenshotUseRawSize(true));
+                MaaImage recorded = record.postScreencap().waitFor().get();
+                assertArrayEquals(
+                        new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30}, recorded.data());
+                assertTrue(record.postClick(11, 22).waitFor().succeeded());
+            }
+
+            assertTrue(Files.isRegularFile(recording), "RecordController should write JSONL");
+
+            try (ReplayController replay = new ReplayController(recording)) {
+                Map<String, Object> replayInfo = replay.info();
+                assertEquals("replay", replayInfo.get("type"));
+                assertEquals(3, ((Number) replayInfo.get("record_count")).intValue());
+                assertEquals(0, ((Number) replayInfo.get("record_index")).intValue());
+
+                assertTrue(replay.postConnection().waitFor().succeeded());
+                assertTrue(replay.connected());
+                assertEquals("java-smoke", replay.uuid());
+
+                assertTrue(replay.setScreenshotUseRawSize(true));
+                MaaImage replayed = replay.postScreencap().waitFor().get();
+                assertArrayEquals(
+                        new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30}, replayed.data());
+                assertTrue(replay.postClick(11, 22).waitFor().succeeded());
+
+                Map<String, Object> consumed = replay.info();
+                assertEquals(3, ((Number) consumed.get("record_index")).intValue());
+            }
+        } finally {
+            deleteRecursively(tempDir);
         }
     }
 

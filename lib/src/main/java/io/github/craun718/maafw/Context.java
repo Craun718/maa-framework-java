@@ -8,11 +8,16 @@ import io.github.craun718.maafw.pipeline.JPipelineData;
 import io.github.craun718.maafw.pipeline.JPipelineParser;
 import io.github.craun718.maafw.pipeline.JRecognitionParam;
 import io.github.craun718.maafw.pipeline.JRecognitionType;
+import io.github.craun718.maafw.pipeline.JWaitFreezes;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/** Context passed into custom recognizers/actions and context event sinks. */
+/**
+ * Context passed into custom recognizers/actions and context event sinks.
+ *
+ * <p>Native context handles are borrowed from the running tasker and do not need to be closed.
+ */
 public final class Context {
 
     private final Pointer handle;
@@ -145,6 +150,22 @@ public final class Context {
         return waitFreezes(time, null, waitFreezesParam);
     }
 
+    /** Uses the typed {@link JWaitFreezes} parameters; the top-level time remains zero. */
+    public boolean waitFreezes(JWaitFreezes waitFreezesParam) {
+        return waitFreezes(0, null, waitFreezesParam);
+    }
+
+    /** Uses the typed {@link JWaitFreezes} parameters with an explicit top-level time. */
+    public boolean waitFreezes(long time, JWaitFreezes waitFreezesParam) {
+        return waitFreezes(time, null, waitFreezesParam);
+    }
+
+    /** Uses the typed {@link JWaitFreezes} parameters with a box for {@code target=Self}. */
+    public boolean waitFreezes(long time, MaaRect box, JWaitFreezes waitFreezesParam) {
+        Objects.requireNonNull(waitFreezesParam, "waitFreezesParam");
+        return waitFreezes(time, box, MaaJson.parseObject(MaaJson.write(waitFreezesParam)));
+    }
+
     public boolean waitFreezes(long time, MaaRect box, Map<String, Object> waitFreezesParam) {
         String paramJson = MaaJson.write(waitFreezesParam == null ? Map.of() : waitFreezesParam);
         if (box == null) {
@@ -219,6 +240,10 @@ public final class Context {
         return tasker().taskJob(taskId);
     }
 
+    /**
+     * Clones this context. The returned handle is owned by the original native context and shares
+     * its task state, so it does not need to be closed.
+     */
     @Override
     public Context clone() {
         Pointer cloned = MaaLibrary.framework().MaaContextClone(handle);

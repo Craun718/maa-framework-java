@@ -231,6 +231,28 @@ class JPipelineParserTest {
     }
 
     @Test
+    void serializesWaitFreezesWithNativeJsonKeys() {
+        JWaitFreezes wait = new JWaitFreezes();
+        wait.time = 50;
+        wait.target = List.of(1, 2, 3, 4);
+        wait.targetOffset = List.of(5, 6, 7, 8);
+        wait.threshold = 0.9;
+        wait.method = 3;
+        wait.rateLimit = 200;
+        wait.timeout = 5000;
+
+        Map<String, Object> json = MaaJson.parseObject(MaaJson.write(wait));
+
+        assertEquals(50, ((Number) json.get("time")).intValue());
+        assertEquals(List.of(1, 2, 3, 4), json.get("target"));
+        assertEquals(List.of(5, 6, 7, 8), json.get("target_offset"));
+        assertEquals(0.9, ((Number) json.get("threshold")).doubleValue());
+        assertEquals(3, ((Number) json.get("method")).intValue());
+        assertEquals(200, ((Number) json.get("rate_limit")).intValue());
+        assertEquals(5000, ((Number) json.get("timeout")).intValue());
+    }
+
+    @Test
     void typedDirectApiEnumsUseNativeNames() {
         assertEquals("\"TemplateMatch\"", MaaJson.write(JRecognitionType.TEMPLATE_MATCH));
         assertEquals("\"OCR\"", MaaJson.write(JRecognitionType.OCR));
