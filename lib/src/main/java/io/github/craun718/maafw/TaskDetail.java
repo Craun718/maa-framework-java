@@ -56,8 +56,9 @@ public final class TaskDetail {
                     nodes.add(detail);
                 }
             }
+            nodes = List.copyOf(nodes);
         }
-        return List.copyOf(nodes);
+        return nodes;
     }
 
     @Override

@@ -50,6 +50,22 @@ public final class MaaRect {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof MaaRect rect)) {
+            return false;
+        }
+        return x == rect.x && y == rect.y && width == rect.width && height == rect.height;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y, width, height);
+    }
+
+    @Override
     public String toString() {
         return "MaaRect(" + x + ", " + y + ", " + width + ", " + height + ")";
     }

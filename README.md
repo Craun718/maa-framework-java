@@ -102,6 +102,46 @@ The typed parameter classes serialize with the same snake_case JSON keys expecte
 and `JRecognitionType`/`JActionType` serialize using native names such as `TemplateMatch` and
 `Click`.
 
+## Buffers and Event Sinks
+
+Native buffers are wrapped with `AutoCloseable` types. `MaaStringBuffer` and
+`MaaStringListBuffer` exchange UTF-8 text, `MaaImageBuffer` and `MaaImageListBuffer` exchange
+raw BGR image data, and `MaaRectBuffer` exchanges rectangles. Image data is copied into
+immutable `MaaImage` values, so mutating the byte array passed in or returned by `data()` never
+changes the buffer value.
+
+```java
+try (MaaImageBuffer buffer = new MaaImageBuffer()) {
+    buffer.set(MaaImage.empty());
+    boolean empty = buffer.empty();
+}
+```
+
+Event sinks are implemented by subclassing the matching sink type and overriding the notification
+methods. Keep the returned sink id while the owner is alive; the binding holds the Java callback
+only while the wrapper is registered.
+
+```java
+TaskerEventSink sink = new TaskerEventSink() {
+    @Override
+    public void onTaskerTask(
+            Tasker tasker,
+            MaaDef.NotificationType notificationType,
+            TaskerEventSink.TaskerTaskDetail detail) {
+        System.out.println(detail.entry() + " -> " + notificationType);
+    }
+};
+
+Long sinkId = tasker.addSink(sink);
+// tasker.addContextSink(new ContextEventSink() { ... }) for pipeline node events
+// resource.addSink(...) and controller.addSink(...) follow the same pattern
+tasker.removeSink(sinkId);
+```
+
+Result models are pure Java values: `RecognitionDetail`, `RecognitionResult`, `ActionDetail`,
+`ActionResult`, `TaskDetail`, `NodeDetail`, and `WaitFreezesDetail` can be inspected directly
+after a job completes or from a callback without holding a native buffer open.
+
 ## Agent Mode
 
 Agent mode splits custom logic from the main process. The main process creates an `AgentClient`,

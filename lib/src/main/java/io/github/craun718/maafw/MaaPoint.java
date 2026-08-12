@@ -38,6 +38,22 @@ public final class MaaPoint {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof MaaPoint point)) {
+            return false;
+        }
+        return x == point.x && y == point.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+
+    @Override
     public String toString() {
         return "MaaPoint(" + x + ", " + y + ")";
     }
