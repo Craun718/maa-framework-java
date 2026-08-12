@@ -39,8 +39,8 @@ public final class MaaImageBuffer implements AutoCloseable {
         int height = MaaLibrary.framework().MaaImageBufferHeight(handle);
         int channels = MaaLibrary.framework().MaaImageBufferChannels(handle);
         int type = MaaLibrary.framework().MaaImageBufferType(handle);
-        long bytes = (long) width * height * channels;
-        byte[] data = raw.getByteArray(0, Math.toIntExact(Math.min(bytes, Integer.MAX_VALUE)));
+        long bytes = Math.multiplyExact(Math.multiplyExact((long) width, height), channels);
+        byte[] data = raw.getByteArray(0, requireJavaArraySize(bytes, "Raw image data"));
         return new MaaImage(data, width, height, channels, type);
     }
 
@@ -50,7 +50,7 @@ public final class MaaImageBuffer implements AutoCloseable {
         if (encoded == null || size <= 0) {
             return new byte[0];
         }
-        return encoded.getByteArray(0, Math.toIntExact(Math.min(size, Integer.MAX_VALUE)));
+        return encoded.getByteArray(0, requireJavaArraySize(size, "Encoded image data"));
     }
 
     public void set(MaaImage image) {
@@ -89,6 +89,17 @@ public final class MaaImageBuffer implements AutoCloseable {
 
     public void clear() {
         MaaStringBuffer.requireOk(MaaLibrary.framework().MaaImageBufferClear(handle));
+    }
+
+    static int requireJavaArraySize(long size, String description) {
+        if (size < 0) {
+            throw new IllegalArgumentException(description + " size must not be negative: " + size);
+        }
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalStateException(
+                    description + " is too large for a Java byte[]: " + size + " bytes");
+        }
+        return (int) size;
     }
 
     @Override
