@@ -77,9 +77,17 @@ public class Resource implements AutoCloseable {
         return new Job(MaaLibrary.framework().MaaResourcePostImage(handle, path), this::status, this::waitFor);
     }
 
-    public boolean overridePipeline(Map<String, Object> pipelineOverride) {
+    /** Overrides the pipeline using a raw JSON object string. */
+    public boolean overridePipeline(String pipelineOverride) {
         return MaaStringBuffer.toBoolean(
-                MaaLibrary.framework().MaaResourceOverridePipeline(handle, MaaJson.write(pipelineOverride)));
+                MaaLibrary.framework()
+                        .MaaResourceOverridePipeline(
+                                handle, MaaJson.objectJsonOrEmpty(pipelineOverride)));
+    }
+
+    public boolean overridePipeline(Map<String, Object> pipelineOverride) {
+        return overridePipeline(
+                MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
     /**

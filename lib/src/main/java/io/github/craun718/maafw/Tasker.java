@@ -77,12 +77,18 @@ public class Tasker implements AutoCloseable {
     }
 
     public TaskJob postTask(String entry) {
-        return postTask(entry, Map.of());
+        return postTask(entry, (String) null);
     }
 
     public TaskJob postTask(String entry, Map<String, Object> pipelineOverride) {
+        return postTask(
+                entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+    }
+
+    public TaskJob postTask(String entry, String pipelineOverride) {
         long taskId = MaaLibrary.framework()
-                .MaaTaskerPostTask(handle, entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+                .MaaTaskerPostTask(
+                        handle, entry, MaaJson.objectJsonOrEmpty(pipelineOverride));
         return taskJob(taskId);
     }
 
@@ -166,10 +172,15 @@ public class Tasker implements AutoCloseable {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerClearCache(handle));
     }
 
-    public boolean overridePipeline(long taskId, Map<String, Object> pipelineOverride) {
+    public boolean overridePipeline(long taskId, String pipelineOverride) {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework()
                 .MaaTaskerOverridePipeline(
-                        handle, taskId, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride)));
+                        handle, taskId, MaaJson.objectJsonOrEmpty(pipelineOverride)));
+    }
+
+    public boolean overridePipeline(long taskId, Map<String, Object> pipelineOverride) {
+        return overridePipeline(
+                taskId, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
     public RecognitionDetail getRecognitionDetail(long recoId) {

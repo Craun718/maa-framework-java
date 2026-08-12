@@ -63,4 +63,8 @@ public final class MaaJson {
         }
         return Map.of();
     }
+
+    static String objectJsonOrEmpty(String json) {
+        return json == null || json.isBlank() ? "{}" : json;
+    }
 }

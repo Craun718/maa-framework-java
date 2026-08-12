@@ -32,50 +32,73 @@ public final class Context {
     }
 
     public TaskDetail runTask(String entry) {
-        return runTask(entry, Map.of());
+        return runTask(entry, (String) null);
     }
 
     public TaskDetail runTask(String entry, Map<String, Object> pipelineOverride) {
+        return runTask(
+                entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+    }
+
+    public TaskDetail runTask(String entry, String pipelineOverride) {
         long taskId = MaaLibrary.framework()
-                .MaaContextRunTask(handle, entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+                .MaaContextRunTask(
+                        handle, entry, MaaJson.objectJsonOrEmpty(pipelineOverride));
         return taskId == 0 ? null : tasker().getTaskDetail(taskId);
     }
 
     public RecognitionDetail runRecognition(String entry, MaaImage image) {
-        return runRecognition(entry, image, Map.of());
+        return runRecognition(entry, image, (String) null);
     }
 
     public RecognitionDetail runRecognition(
             String entry, MaaImage image, Map<String, Object> pipelineOverride) {
+        return runRecognition(
+                entry,
+                image,
+                MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+    }
+
+    public RecognitionDetail runRecognition(
+            String entry, MaaImage image, String pipelineOverride) {
         try (MaaImageBuffer imageBuffer = new MaaImageBuffer()) {
             imageBuffer.set(image);
             long recoId = MaaLibrary.framework()
                     .MaaContextRunRecognition(
                             handle,
                             entry,
-                            MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride),
+                            MaaJson.objectJsonOrEmpty(pipelineOverride),
                             imageBuffer.handle());
             return recoId == 0 ? null : tasker().getRecognitionDetail(recoId);
         }
     }
 
     public ActionDetail runAction(String entry) {
-        return runAction(entry, null, "", Map.of());
+        return runAction(entry, null, "", (String) null);
     }
 
     public ActionDetail runAction(String entry, MaaRect box, String recoDetail) {
-        return runAction(entry, box, recoDetail, Map.of());
+        return runAction(entry, box, recoDetail, (String) null);
     }
 
     public ActionDetail runAction(
             String entry, MaaRect box, String recoDetail, Map<String, Object> pipelineOverride) {
+        return runAction(
+                entry,
+                box,
+                recoDetail,
+                MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+    }
+
+    public ActionDetail runAction(
+            String entry, MaaRect box, String recoDetail, String pipelineOverride) {
         try (MaaRectBuffer rectBuffer = new MaaRectBuffer()) {
             rectBuffer.set(box == null ? MaaRect.of(0, 0, 0, 0) : box);
             long actionId = MaaLibrary.framework()
                     .MaaContextRunAction(
                             handle,
                             entry,
-                            MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride),
+                            MaaJson.objectJsonOrEmpty(pipelineOverride),
                             rectBuffer.handle(),
                             recoDetail == null ? "" : recoDetail);
             return actionId == 0 ? null : tasker().getActionDetail(actionId);
@@ -179,9 +202,15 @@ public final class Context {
         }
     }
 
-    public boolean overridePipeline(Map<String, Object> pipelineOverride) {
+    public boolean overridePipeline(String pipelineOverride) {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                .MaaContextOverridePipeline(handle, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride)));
+                .MaaContextOverridePipeline(
+                        handle, MaaJson.objectJsonOrEmpty(pipelineOverride)));
+    }
+
+    public boolean overridePipeline(Map<String, Object> pipelineOverride) {
+        return overridePipeline(
+                MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
     /**

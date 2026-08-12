@@ -37,6 +37,10 @@ public class TaskJob extends JobWithResult<TaskDetail> {
     }
 
     public boolean overridePipeline(Map<String, Object> pipelineOverride) {
-        return overridePipelineFunc.apply(jobId, MaaJson.write(pipelineOverride));
+        return overridePipeline(MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+    }
+
+    public boolean overridePipeline(String pipelineOverride) {
+        return overridePipelineFunc.apply(jobId, MaaJson.objectJsonOrEmpty(pipelineOverride));
     }
 }
