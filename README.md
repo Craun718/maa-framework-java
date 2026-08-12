@@ -23,6 +23,39 @@ dependencies {
 ./gradlew :lib:build
 ```
 
+## Official Release Distribution
+
+The Java jar itself is platform-neutral and does not bundle native binaries. To distribute it
+with the same files as an official MaaFramework release, extract the per-platform release
+directories into one folder and run:
+
+```bash
+MAA_FRAMEWORK_VERSION=v5.12.3 \
+MAA_FRAMEWORK_RELEASES=/path/to/extracted-releases \
+./scripts/package-official-release.sh
+```
+
+The script recognizes `MAA-win-*`, `MAA-linux-*`, `MAA-macos-*`, and `MAA-android-*`
+directories. For every available platform it builds `lib/maa-framework-java.jar`, copies the
+official release's `bin/` tree, including controller plugins, and includes
+`share/MaaAgentBinary/` when present. Each zip is written to:
+
+```text
+build/distributions/maa-framework-java-${MAA_FRAMEWORK_VERSION}-${platform}.zip
+```
+
+The output layout mirrors the official release scope:
+
+```text
+lib/maa-framework-java.jar
+lib/README.md
+bin/...
+share/MaaAgentBinary/...
+```
+
+`MAA_FRAMEWORK_OUTPUT_DIR` overrides the output directory. The first argument to the script can
+also be used instead of `MAA_FRAMEWORK_RELEASES`.
+
 ## FFI Surface Verification
 
 `scripts/check-ffi-surface.sh` compares the exported function names in the official C headers
@@ -73,6 +106,11 @@ Official release file names are resolved automatically:
 binaries. Close all resource, controller, tasker, agent client/server, buffer, and sink wrappers
 before calling it.
 
+`MaaLibrary.libraryDirectory()` returns the directory passed to `open`. When the directory is the
+official release layout's `bin/`, `MaaLibrary.defaultAgentBinaryPath()` resolves the sibling
+`share/MaaAgentBinary/` directory automatically. The default `AdbController` constructors use
+that resolved path; the overload taking an explicit `Path agentPath` overrides it.
+
 ## Client Mode
 
 ```java
@@ -88,8 +126,7 @@ try (Controller controller =
                         device.address(),
                         device.screencapMethods(),
                         device.inputMethods(),
-                        device.config(),
-                        "MaaAgentBinary");
+                        device.config());
         Resource resource = new Resource();
         Tasker tasker = new Tasker()) {
     resource.postBundle(Path.of("assets"));
@@ -188,7 +225,6 @@ Register custom implementations before calling `startUp`. The server process loa
 
 ```java
 MaaLibrary.open(Path.of("bin"), true);
-Toolkit.initOption(Path.of("config"), Map.of());
 
 AgentServer.registerCustomRecognition(
         "MyReco",
