@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,6 +53,7 @@ class RuntimeSmokeTest {
         exerciseBuffers();
         exerciseResourceAndTasker();
         exerciseCustomController();
+        exerciseRuntimeOverrides();
         exerciseRecordAndReplay();
         exerciseToolkit();
         exerciseAgentClient();
@@ -295,6 +297,200 @@ class RuntimeSmokeTest {
         }
     }
 
+    private static void exerciseRuntimeOverrides() throws Exception {
+        Path pipeline = Files.createTempFile("maa-java-runtime-overrides-", ".json");
+        try {
+            Files.writeString(
+                    pipeline,
+                    """
+                    {
+                      "ResourceTemplateHit": {
+                        "recognition": {
+                          "type": "TemplateMatch",
+                          "param": {
+                            "template": ["JavaResourceTemplate.png"],
+                            "threshold": 0.9
+                          }
+                        },
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "ResourceOriginalHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "ContextEntry": {
+                        "recognition": {
+                          "type": "Custom",
+                          "param": {"custom_recognition": "JavaContextOverrideReco"}
+                        },
+                        "action": {
+                          "type": "Custom",
+                          "param": {"custom_action": "JavaContextOverrideAction"}
+                        },
+                        "next": ["ContextOriginalHit"]
+                      },
+                      "ContextOriginalHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "ContextTemplateHit": {
+                        "recognition": {
+                          "type": "TemplateMatch",
+                          "param": {
+                            "template": ["JavaRuntimeTemplate.png"],
+                            "threshold": 0.9
+                          }
+                        },
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "TaskJobEntry": {
+                        "pre_delay": 1000,
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": ["TaskJobOriginalHit"]
+                      },
+                      "TaskJobOriginalHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "TaskJobOverrideHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
+
+            exerciseResourceOverrides(pipeline);
+            exerciseContextOverrides(pipeline);
+            exerciseTaskJobOverride(pipeline);
+
+            try (CustomController controller = newRuntimeSmokeController()) {
+                assertTrue(controller.postConnection().waitFor().succeeded());
+                assertFalse(
+                        controller.setBackgroundManagedKeys(List.of(0x12, 0x34)),
+                        "Custom controllers do not support Win32 background managed keys");
+                assertFalse(
+                        controller.setBackgroundManagedKeys(List.of()),
+                        "Custom controllers do not support Win32 background managed keys");
+            }
+        } finally {
+            Files.deleteIfExists(pipeline);
+        }
+    }
+
+    private static void exerciseResourceOverrides(Path pipeline) throws Exception {
+        try (Resource resource = new Resource();
+                CustomController controller = newRuntimeSmokeController();
+                Tasker tasker = new Tasker()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(controller.setScreenshotUseRawSize(true));
+            assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+
+            MaaImage template = gradientBgrImage(10);
+            assertTrue(resource.overrideImage("JavaResourceTemplate.png", template));
+            assertTrue(resource.overridePipeline(Map.of("ResourceCreatedByOverride", Map.of())));
+            assertTrue(resource.overrideNext("ResourceCreatedByOverride", List.of("ResourceTemplateHit")));
+            assertTrue(resource.getNodeData("ResourceCreatedByOverride").containsKey("next"));
+
+            TaskJob task = tasker.postTask("ResourceCreatedByOverride");
+            TaskDetail detail = task.waitFor().get();
+            assertTrue(
+                    detail.status().succeeded(),
+                    "Resource overrides should make the task succeed; status="
+                            + detail.status()
+                            + " nodes="
+                            + detail.nodes().stream()
+                                    .map(node -> node.name() + "/" + node.completed())
+                                    .toList());
+            assertEquals(
+                    List.of("ResourceCreatedByOverride", "ResourceTemplateHit"),
+                    detail.nodes().stream().map(NodeDetail::name).toList());
+            assertNull(tasker.getLatestNode("ResourceOriginalHit"));
+        }
+    }
+
+    private static void exerciseContextOverrides(Path pipeline) throws Exception {
+        AtomicBoolean contextNextOverridden = new AtomicBoolean();
+        AtomicBoolean contextImageOverridden = new AtomicBoolean();
+        try (Resource resource = new Resource();
+                CustomController controller = newRuntimeSmokeController();
+                Tasker tasker = new Tasker()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(controller.setScreenshotUseRawSize(true));
+            assertTrue(resource.registerCustomRecognition(
+                    "JavaContextOverrideReco",
+                    new CustomRecognition() {
+                        @Override
+                        public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                            contextNextOverridden.set(
+                                    context.overrideNext("ContextEntry", List.of("ContextTemplateHit")));
+                            contextImageOverridden.set(context.overrideImage(
+                                    "JavaRuntimeTemplate.png", gradientBgrImage(10)));
+                            return AnalyzeResult.hit(MaaRect.of(0, 0, 20, 20));
+                        }
+                    }));
+            assertTrue(resource.registerCustomAction(
+                    "JavaContextOverrideAction",
+                    new CustomAction() {
+                        @Override
+                        public RunResult run(Context context, RunArg argv) {
+                            return RunResult.ok();
+                        }
+                    }));
+            assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+
+            TaskJob task = tasker.postTask("ContextEntry");
+            TaskDetail detail = task.waitFor().get();
+            assertTrue(detail.status().succeeded(), "Context overrides should make the task succeed");
+            assertTrue(contextNextOverridden.get(), "Context.overrideNext should succeed");
+            assertTrue(contextImageOverridden.get(), "Context.overrideImage should succeed");
+            assertEquals(
+                    List.of("ContextEntry", "ContextTemplateHit"),
+                    detail.nodes().stream().map(NodeDetail::name).toList());
+        }
+    }
+
+    private static void exerciseTaskJobOverride(Path pipeline) throws Exception {
+        try (Resource resource = new Resource();
+                CustomController controller = newRuntimeSmokeController();
+                Tasker tasker = new Tasker()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(controller.setScreenshotUseRawSize(true));
+            assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+
+            TaskJob task = tasker.postTask("TaskJobEntry");
+            assertTrue(task.overridePipeline(Map.of("TaskJobEntry", Map.of("next", List.of("TaskJobOverrideHit")))));
+            assertTrue(tasker.running(), "Task should still be running during the pre-delay override");
+            TaskDetail detail = task.waitFor().get();
+            assertTrue(detail.status().succeeded(), "TaskJob.overridePipeline should not break the task");
+            assertEquals(
+                    List.of("TaskJobEntry", "TaskJobOverrideHit"),
+                    detail.nodes().stream().map(NodeDetail::name).toList());
+        }
+    }
+
+    private static MaaImage gradientBgrImage(int size) {
+        byte[] data = new byte[size * size * 3];
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                int index = (y * size + x) * 3;
+                data[index] = (byte) (x * 4);
+                data[index + 1] = (byte) (y * 4);
+                data[index + 2] = (byte) ((x + y) * 3);
+            }
+        }
+        return new MaaImage(data, size, size, 3, MaaImage.TYPE_8UC3);
+    }
+
     private static void exerciseRecordAndReplay() throws Exception {
         Path tempDir = Files.createTempDirectory("maa-java-recording-");
         try {
@@ -421,6 +617,91 @@ class RuntimeSmokeTest {
                 if (clickCount != null) {
                     clickCount.incrementAndGet();
                 }
+                return true;
+            }
+
+            @Override
+            public boolean swipe(int x1, int y1, int x2, int y2, int duration) {
+                return true;
+            }
+
+            @Override
+            public boolean touchDown(int contact, int x, int y, int pressure) {
+                return true;
+            }
+
+            @Override
+            public boolean touchMove(int contact, int x, int y, int pressure) {
+                return true;
+            }
+
+            @Override
+            public boolean touchUp(int contact) {
+                return true;
+            }
+
+            @Override
+            public boolean clickKey(int keycode) {
+                return true;
+            }
+
+            @Override
+            public boolean inputText(String text) {
+                return true;
+            }
+
+            @Override
+            public boolean keyDown(int keycode) {
+                return true;
+            }
+
+            @Override
+            public boolean keyUp(int keycode) {
+                return true;
+            }
+        };
+    }
+
+    private static CustomController newRuntimeSmokeController() {
+        MaaImage screen = gradientBgrImage(20);
+        return new CustomController() {
+            @Override
+            public long getFeatures() {
+                return 0;
+            }
+
+            @Override
+            public boolean connect() {
+                return true;
+            }
+
+            @Override
+            public boolean connected() {
+                return true;
+            }
+
+            @Override
+            public String requestUuid() {
+                return "java-runtime-smoke";
+            }
+
+            @Override
+            public boolean startApp(String intent) {
+                return true;
+            }
+
+            @Override
+            public boolean stopApp(String intent) {
+                return true;
+            }
+
+            @Override
+            public MaaImage screencap() {
+                return screen;
+            }
+
+            @Override
+            public boolean click(int x, int y) {
                 return true;
             }
 
