@@ -227,6 +227,37 @@ RecognitionDetail reco = context.runRecognitionDirect(JRecognitionType.OCR, ocrP
 ActionDetail action = context.runActionDirect(JActionType.SHELL, shellParam, box, recoJson);
 ```
 
+The builder API mirrors the Go binding's `Pipeline`/`Node` model. `JPipeline` keeps nodes by
+name, `JPipelineData.name` is excluded from JSON, and `JPipeline.toJson()` emits the native
+pipeline map form:
+
+```java
+JTemplateMatch match = new JTemplateMatch();
+match.template = List.of("start.png");
+
+JClick click = new JClick();
+click.target = List.of(100, 200);
+
+JPipeline pipeline = new JPipeline();
+pipeline.add(
+        new JPipelineData()
+                .name("Startup")
+                .recognition(JRecognition.templateMatch(match))
+                .action(JAction.click(click))
+                .addNext("Idle")
+                .addNext(JNodeAttr.of("Retry", true, true))
+                .addOnError("Fail")
+                .addAnchor("entry")
+                .timeout(5000));
+pipeline.add("Idle", new JPipelineData().action(JAction.doNothing()));
+
+String pipelineJson = pipeline.toJson();
+```
+
+`JPipeline.fromJson(String)` and `JPipelineParser.parseAll(String)` parse the same full node map
+back into typed nodes. The `JRecognition` and `JAction` factory methods cover every pipeline v2
+recognition/action type.
+
 The typed parameter classes serialize with the same snake_case JSON keys expected by MaaFramework,
 and `JRecognitionType`/`JActionType` serialize using native names such as `TemplateMatch` and
 `Click`. The direct tasker/context calls are also covered by `RuntimeSmokeTest` against release

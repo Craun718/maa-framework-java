@@ -16,27 +16,39 @@ public final class JPipelineParser {
         return parse(MaaJson.parseObject(json));
     }
 
+    public static JPipelineData parse(Object data) {
+        if (data instanceof String json) {
+            return parse(json);
+        }
+        if (data instanceof Map<?, ?> raw) {
+            Map<String, Object> values = new LinkedHashMap<>();
+            raw.forEach((key, item) -> values.put(String.valueOf(key), item));
+            return parse(values);
+        }
+        throw new IllegalArgumentException("Pipeline node must be a JSON object");
+    }
+
     public static JPipelineData parse(Map<String, Object> data) {
         Objects.requireNonNull(data, "data");
 
-        JRecognition recognition = new JRecognition();
+        JRecognition recognition = null;
         Map<String, Object> recognitionData = map(data.get("recognition"));
-        if (recognitionData == null) {
-            throw new IllegalArgumentException("Missing recognition section");
+        if (recognitionData != null) {
+            recognition = new JRecognition();
+            String recognitionTypeName = string(recognitionData.get("type"));
+            recognition.type = JRecognitionType.of(recognitionTypeName);
+            recognition.param = parseRecognitionParam(
+                    recognition.type, mapOrEmpty(recognitionData.get("param")));
         }
-        String recognitionTypeName = string(recognitionData.get("type"));
-        recognition.type = JRecognitionType.of(recognitionTypeName);
-        recognition.param = parseRecognitionParam(
-                recognition.type, mapOrEmpty(recognitionData.get("param")));
 
-        JAction action = new JAction();
+        JAction action = null;
         Map<String, Object> actionData = map(data.get("action"));
-        if (actionData == null) {
-            throw new IllegalArgumentException("Missing action section");
+        if (actionData != null) {
+            action = new JAction();
+            String actionTypeName = string(actionData.get("type"));
+            action.type = JActionType.of(actionTypeName);
+            action.param = parseActionParam(action.type, mapOrEmpty(actionData.get("param")));
         }
-        String actionTypeName = string(actionData.get("type"));
-        action.type = JActionType.of(actionTypeName);
-        action.param = parseActionParam(action.type, mapOrEmpty(actionData.get("param")));
 
         JPipelineData pipeline = new JPipelineData();
         pipeline.recognition = recognition;
@@ -59,6 +71,13 @@ public final class JPipelineParser {
         pipeline.focus = data.get("focus");
         pipeline.attach = objectMap(data.get("attach"));
         return pipeline;
+    }
+
+    public static Map<String, JPipelineData> parseAll(String json) {
+        Map<String, Object> root = MaaJson.parseObject(json);
+        Map<String, JPipelineData> nodes = new LinkedHashMap<>();
+        root.forEach((name, value) -> nodes.put(name, parse(value)));
+        return nodes;
     }
 
     public static JRecognitionParam parseRecognitionParam(
@@ -552,6 +571,9 @@ public final class JPipelineParser {
 
     private static List<List<String>> stringListList(Object value, List<List<String>> fallback) {
         if (value instanceof List<?> flat && (flat.isEmpty() || !(flat.getFirst() instanceof List<?>))) {
+            if (flat.isEmpty()) {
+                return List.of();
+            }
             List<String> row = stringList(flat, List.of());
             return List.of(row);
         }
