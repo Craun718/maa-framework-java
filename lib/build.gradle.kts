@@ -34,4 +34,17 @@ java {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+
+    val libDir = providers.gradleProperty("maafw.libDir")
+    val sourceDir = providers.gradleProperty("maafw.maaFrameworkSource")
+    val sinkLog = providers.gradleProperty("maafw.sinkLog")
+    if (libDir.isPresent) {
+        systemProperty("maafw.libDir", libDir.get())
+    }
+    if (sourceDir.isPresent) {
+        systemProperty("maafw.maaFrameworkSource", sourceDir.get())
+    }
+    if (sinkLog.isPresent) {
+        systemProperty("maafw.sinkLog", sinkLog.get())
+    }
 }

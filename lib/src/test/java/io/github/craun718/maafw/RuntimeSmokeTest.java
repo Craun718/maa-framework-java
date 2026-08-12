@@ -583,7 +583,9 @@ class RuntimeSmokeTest {
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(controller.connected());
             assertEquals("blank-controller", controller.uuid());
-            assertEquals(Map.of("type", "blank"), controller.info());
+            // MaaFramework's custom controller manager always stamps type=custom on the
+            // high-level info payload; BlankController only supplies extra fields.
+            assertEquals(Map.of("type", "custom"), controller.info());
 
             JobWithResult<MaaImage> screencap = controller.postScreencap();
             assertTrue(screencap.waitFor().succeeded());
