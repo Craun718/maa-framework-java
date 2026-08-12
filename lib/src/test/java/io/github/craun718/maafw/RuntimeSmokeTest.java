@@ -898,40 +898,34 @@ class RuntimeSmokeTest {
             try (Resource resource = new Resource();
                     CustomController controller = newSmokeController();
                     Tasker tasker = new Tasker()) {
-                assertTrue(controller.postConnection().waitFor().succeeded());
                 assertTrue(tasker.bind(resource, controller));
                 assertTrue(client.bind(resource));
                 assertTrue(client.registerSink(resource, controller, tasker));
 
                 Path pipeline = Files.createTempFile("maa-java-agent-pipeline-", ".json");
-                try {
-                    Files.writeString(
-                            pipeline,
-                            """
-                            {
-                              "AgentEntry": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": ["AgentCustom"]
-                              },
-                              "AgentCustom": {
-                                "recognition": {
-                                  "type": "Custom",
-                                  "param": {"custom_recognition": "JavaAgentReco"}
-                                },
-                                "action": {
-                                  "type": "Custom",
-                                  "param": {"custom_action": "JavaAgentAction"}
-                                },
-                                "next": []
-                              }
-                            }
-                            """);
-                    assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
-                    assertTrue(resource.loaded());
-                } finally {
-                    Files.deleteIfExists(pipeline);
-                }
+                Path sinkLog = Files.createTempFile("maa-java-agent-sinks-", ".log");
+                Files.writeString(
+                        pipeline,
+                        """
+                        {
+                          "AgentEntry": {
+                            "recognition": {"type": "DirectHit", "param": {}},
+                            "action": {"type": "DoNothing", "param": {}},
+                            "next": ["AgentCustom"]
+                          },
+                          "AgentCustom": {
+                            "recognition": {
+                              "type": "Custom",
+                              "param": {"custom_recognition": "JavaAgentReco"}
+                            },
+                            "action": {
+                              "type": "Custom",
+                              "param": {"custom_action": "JavaAgentAction"}
+                            },
+                            "next": []
+                          }
+                        }
+                        """);
 
                 String java = Path.of(System.getProperty("java.home"), "bin", "java").toString();
                 ProcessBuilder processBuilder = new ProcessBuilder(
@@ -939,6 +933,7 @@ class RuntimeSmokeTest {
                         "-cp",
                         System.getProperty("java.class.path"),
                         "-Dmaafw.libDir=" + libraryDir(),
+                        "-Dmaafw.sinkLog=" + sinkLog,
                         "io.github.craun718.maafw.AgentServerProcess",
                         identifier);
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
@@ -957,6 +952,10 @@ class RuntimeSmokeTest {
                     assertTrue(connected, "AgentServer did not accept the TCP connection");
                     assertTrue(client.connected());
                     assertTrue(client.alive());
+
+                    assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+                    assertTrue(resource.loaded());
+                    assertTrue(controller.postConnection().waitFor().succeeded());
 
                     assertTrue(resource.customRecognitionList().contains("JavaAgentReco"));
                     assertTrue(resource.customActionList().contains("JavaAgentAction"));
@@ -979,6 +978,7 @@ class RuntimeSmokeTest {
                     assertEquals("Custom", customNode.action().action());
                     assertTrue(customNode.action().success());
 
+                    awaitSinkEvents(sinkLog);
                     assertTrue(client.disconnect());
                     assertTrue(
                             process.waitFor(30, TimeUnit.SECONDS),
@@ -989,9 +989,32 @@ class RuntimeSmokeTest {
                     if (process.isAlive()) {
                         process.destroy();
                     }
+                    Files.deleteIfExists(sinkLog);
+                    Files.deleteIfExists(pipeline);
                 }
             }
         }
+    }
+
+    private static void awaitSinkEvents(Path sinkLog) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        String content = "";
+        while (System.nanoTime() < deadline) {
+            if (Files.exists(sinkLog)) {
+                content = Files.readString(sinkLog);
+                if (content.contains("resource\t")
+                        && content.contains("controller\t")
+                        && content.contains("tasker\t")
+                        && content.contains("context\t")) {
+                    return;
+                }
+            }
+            Thread.sleep(100);
+        }
+        assertTrue(
+                false,
+                "AgentServer did not forward all sink families; log:\n"
+                        + (content == null || content.isBlank() ? "<empty>" : content));
     }
 
     private static Path libraryDir() {
