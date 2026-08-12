@@ -36,8 +36,10 @@ MAA_FRAMEWORK_RELEASES=/path/to/extracted-releases \
 ```
 
 The script recognizes `MAA-win-*`, `MAA-linux-*`, `MAA-macos-*`, and `MAA-android-*`
-directories. For every available platform it builds `lib/maa-framework-java.jar`, copies the
-official release's `bin/` tree, including controller plugins, and includes
+directories, including extracted folders whose names carry a release tag such as
+`MAA-macos-aarch64-v5.12.3`. For every available platform it builds
+`lib/maa-framework-java.jar`, copies the official release's `bin/` tree, including controller
+plugins, and includes
 `share/MaaAgentBinary/` when present. Each zip is written to:
 
 ```text
