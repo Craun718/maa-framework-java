@@ -88,10 +88,10 @@ also be used instead of `MAA_FRAMEWORK_RELEASES`.
 
 ## FFI Surface Verification
 
-`scripts/check-ffi-surface.sh` compares the exported function names in the official C headers
-with the JNA interface methods. It covers `MaaFramework`, `MaaToolkit`, `MaaAgentClient`, and
-`MaaAgentServer`. `MaaControlUnit` is intentionally excluded because those functions ship in
-separate plugin libraries, not in the official release core libraries.
+`scripts/check-ffi-surface.sh` compares exported function names, parameter types, and return types
+in the official C headers with the JNA interface methods. It covers `MaaFramework`, `MaaToolkit`,
+`MaaAgentClient`, and `MaaAgentServer`. `MaaControlUnit` is intentionally excluded because those
+functions ship in separate plugin libraries, not in the official release core libraries.
 
 The same check works against either a source checkout or an extracted official release directory.
 When it is pointed at an older release such as `v5.12.3`, the newer current-main APIs
@@ -114,11 +114,11 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 This binding is tracked against the current MaaFramework headers, documentation, and Python
 binding:
 
-- `check-ffi-surface.sh` verifies every exported name in `MaaFramework`, `MaaToolkit`,
-  `MaaAgentClient`, and `MaaAgentServer`; `MaaControlUnit` is excluded only because those
-  functions ship in separate plugin libraries. Against an older release, current-main additions
-  such as `MaaLinuxControllerCreate` and `MaaToolkitPortalHelper*` are allowed as documented
-  forward-compatible extras.
+- `check-ffi-surface.sh` verifies every exported function in `MaaFramework`, `MaaToolkit`,
+  `MaaAgentClient`, and `MaaAgentServer`, including parameter and return signatures;
+  `MaaControlUnit` is excluded only because those functions ship in separate plugin libraries.
+  Against an older release, current-main additions such as `MaaLinuxControllerCreate` and
+  `MaaToolkitPortalHelper*` are allowed as documented forward-compatible extras.
 - The high-level wrappers mirror the Python binding's `Resource`, `Tasker`, `Context`, controller
   subclasses, `Toolkit`, buffers, event sinks, custom recognition/action/controller callbacks,
   and `AgentClient`/`AgentServer` APIs.
