@@ -23,7 +23,8 @@ public class Tasker implements AutoCloseable {
 
     private final Pointer handle;
     private final boolean owned;
-    private final Map<Long, EventSink> sinks = new HashMap<>();
+    private final Map<Long, TaskerEventSink> taskerSinks = new HashMap<>();
+    private final Map<Long, ContextEventSink> contextSinks = new HashMap<>();
     private Resource resourceHolder;
     private Controller controllerHolder;
 
@@ -349,18 +350,18 @@ public class Tasker implements AutoCloseable {
         if (sinkId == MaaDef.INVALID_ID) {
             return null;
         }
-        sinks.put(sinkId, sink);
+        taskerSinks.put(sinkId, sink);
         return sinkId;
     }
 
     public void removeSink(long sinkId) {
         MaaLibrary.framework().MaaTaskerRemoveSink(handle, sinkId);
-        sinks.remove(sinkId);
+        taskerSinks.remove(sinkId);
     }
 
     public void clearSinks() {
         MaaLibrary.framework().MaaTaskerClearSinks(handle);
-        sinks.clear();
+        taskerSinks.clear();
     }
 
     public Long addContextSink(ContextEventSink sink) {
@@ -368,18 +369,18 @@ public class Tasker implements AutoCloseable {
         if (sinkId == MaaDef.INVALID_ID) {
             return null;
         }
-        sinks.put(sinkId, sink);
+        contextSinks.put(sinkId, sink);
         return sinkId;
     }
 
     public void removeContextSink(long sinkId) {
         MaaLibrary.framework().MaaTaskerRemoveContextSink(handle, sinkId);
-        sinks.remove(sinkId);
+        contextSinks.remove(sinkId);
     }
 
     public void clearContextSinks() {
         MaaLibrary.framework().MaaTaskerClearContextSinks(handle);
-        sinks.clear();
+        contextSinks.clear();
     }
 
     public static boolean setLogDir(Path path) {
