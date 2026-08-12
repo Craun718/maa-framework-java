@@ -76,7 +76,13 @@ public class AdbController extends Controller {
             long screencapMethods,
             long inputMethods,
             Map<String, Object> config) {
-        this(adbPath, address, screencapMethods, inputMethods, config, null);
+        this(
+                adbPath.toString(),
+                address,
+                screencapMethods,
+                inputMethods,
+                config,
+                MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(
