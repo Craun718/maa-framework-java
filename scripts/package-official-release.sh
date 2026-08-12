@@ -20,7 +20,8 @@ fi
 
 "${REPO_ROOT}/gradlew" -q :lib:jar
 
-JAR="$(find "${REPO_ROOT}/lib/build/libs" -maxdepth 1 -type f -name '*.jar' -print | head -1)"
+JAR="$(find "${REPO_ROOT}/lib/build/libs" -maxdepth 1 -type f -name '*.jar' \
+    ! -name '*sources.jar' ! -name '*javadoc.jar' -print | head -1)"
 if [[ -z "${JAR}" ]]; then
     echo "Java binding jar was not produced by :lib:jar" >&2
     exit 1
@@ -40,6 +41,15 @@ PLATFORMS=(
 )
 
 packed=0
+stage=""
+
+cleanup_stage() {
+    if [[ -n "${stage}" && -d "${stage}" ]]; then
+        rm -rf "${stage}"
+    fi
+}
+trap cleanup_stage EXIT
+
 for entry in "${PLATFORMS[@]}"; do
     read -r platform source_dir <<< "${entry}"
     source_root="${RELEASES_ROOT}/${source_dir}"
@@ -61,20 +71,27 @@ for entry in "${PLATFORMS[@]}"; do
     fi
 
     stage="$(mktemp -d "${TMPDIR:-/tmp}/maa-java-release.XXXXXX")"
-    trap 'rm -rf "${stage}"' EXIT
 
     mkdir -p "${stage}/lib"
+    cp -R "${source_root}/." "${stage}/"
     cp "${JAR}" "${stage}/lib/maa-framework-java.jar"
     cp "${REPO_ROOT}/README.md" "${stage}/lib/README.md"
-    cp -R "${source_root}/." "${stage}/"
+
+    for required in "bin" "lib/maa-framework-java.jar" "lib/README.md"; do
+        if [[ ! -e "${stage}/${required}" ]]; then
+            echo "invalid package layout: missing ${required}" >&2
+            exit 1
+        fi
+    done
 
     archive="${OUT_DIR}/maa-framework-java-${VERSION}-${platform}.zip"
+    rm -f "${archive}"
     (
         cd "${stage}"
         zip -qr "${archive}" .
     )
     rm -rf "${stage}"
-    trap - EXIT
+    stage=""
 
     echo "packaged ${archive}"
     packed=1
@@ -84,3 +101,5 @@ if [[ "${packed}" -eq 0 ]]; then
     echo "no MAA-* release directories were found under ${RELEASES_ROOT}" >&2
     exit 1
 fi
+
+trap - EXIT
