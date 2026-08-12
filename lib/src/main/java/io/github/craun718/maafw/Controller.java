@@ -102,6 +102,10 @@ public class Controller implements AutoCloseable {
         return job(MaaLibrary.framework().MaaControllerPostTouchMove(handle, contact, x, y, pressure));
     }
 
+    public Job postTouchUp() {
+        return postTouchUp(0);
+    }
+
     public Job postTouchUp(int contact) {
         return job(MaaLibrary.framework().MaaControllerPostTouchUp(handle, contact));
     }

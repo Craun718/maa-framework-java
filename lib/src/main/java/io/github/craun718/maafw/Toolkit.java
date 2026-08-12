@@ -11,6 +11,10 @@ public final class Toolkit {
 
     private Toolkit() {}
 
+    public static boolean initOption(String userPath) {
+        return initOption(userPath, Map.of());
+    }
+
     public static boolean initOption(String userPath, Map<String, Object> defaultConfig) {
         if (MaaLibrary.isAgentServer()) {
             Object logging = defaultConfig == null ? null : defaultConfig.get("logging");
@@ -24,12 +28,16 @@ public final class Toolkit {
                         userPath, MaaJson.write(defaultConfig == null ? Map.of() : defaultConfig)));
     }
 
+    public static boolean initOption(Path userPath) {
+        return initOption(userPath, Map.of());
+    }
+
     public static boolean initOption(Path userPath, Map<String, Object> defaultConfig) {
         return initOption(userPath.toString(), defaultConfig);
     }
 
     public static List<AdbDevice> findAdbDevices() {
-        return findAdbDevices(null);
+        return findAdbDevices((String) null);
     }
 
     public static List<AdbDevice> findAdbDevices(String specifiedAdb) {
@@ -61,6 +69,10 @@ public final class Toolkit {
         } finally {
             MaaLibrary.toolkit().MaaToolkitAdbDeviceListDestroy(list);
         }
+    }
+
+    public static List<AdbDevice> findAdbDevices(Path specifiedAdb) {
+        return findAdbDevices(specifiedAdb.toString());
     }
 
     public static List<DesktopWindow> findDesktopWindows() {

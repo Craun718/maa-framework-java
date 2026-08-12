@@ -75,6 +75,14 @@ public final class MaaImageBuffer implements AutoCloseable {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaImageBufferIsEmpty(handle));
     }
 
+    public void resize() {
+        resize(0, 0);
+    }
+
+    public void resize(int width) {
+        resize(width, 0);
+    }
+
     public void resize(int width, int height) {
         MaaStringBuffer.requireOk(MaaLibrary.framework().MaaImageBufferResize(handle, width, height));
     }

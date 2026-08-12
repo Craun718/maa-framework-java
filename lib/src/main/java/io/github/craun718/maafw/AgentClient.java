@@ -16,6 +16,11 @@ public final class AgentClient implements AutoCloseable {
     private Resource resourceHolder;
     private List<Object> sinkHolders = List.of();
 
+    /** Creates an agent client with IPC mode and no explicit identifier. */
+    public AgentClient() {
+        this((String) null);
+    }
+
     /**
      * Creates an agent client.
      *
@@ -54,6 +59,11 @@ public final class AgentClient implements AutoCloseable {
             throw new IllegalStateException("Failed to create TCP agent client");
         }
         return new AgentClient(created);
+    }
+
+    /** Creates a TCP agent client with an automatically selected port. */
+    public static AgentClient createTcp() {
+        return createTcp(0);
     }
 
     private AgentClient(Pointer handle) {
