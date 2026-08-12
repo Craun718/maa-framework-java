@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
@@ -298,9 +299,109 @@ class RuntimeSmokeTest {
         };
     }
 
-    private static void exerciseAgentClient() {
+    private static void exerciseAgentClient() throws Exception {
         try (AgentClient client = AgentClient.createTcp(0)) {
-            assertNotNull(client.identifier());
+            String identifier = client.identifier();
+            assertNotNull(identifier);
+            assertTrue(identifier.matches("\\d+"), "TCP identifier should be a port number");
+            assertTrue(client.setTimeout(30_000));
+
+            try (Resource resource = new Resource();
+                    CustomController controller = newSmokeController();
+                    Tasker tasker = new Tasker()) {
+                assertTrue(controller.postConnection().waitFor().succeeded());
+                assertTrue(tasker.bind(resource, controller));
+                assertTrue(client.bind(resource));
+                assertTrue(client.registerSink(resource, controller, tasker));
+
+                Path pipeline = Files.createTempFile("maa-java-agent-pipeline-", ".json");
+                try {
+                    Files.writeString(
+                            pipeline,
+                            """
+                            {
+                              "AgentEntry": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": ["AgentCustom"]
+                              },
+                              "AgentCustom": {
+                                "recognition": {
+                                  "type": "Custom",
+                                  "param": {"custom_recognition": "JavaAgentReco"}
+                                },
+                                "action": {
+                                  "type": "Custom",
+                                  "param": {"custom_action": "JavaAgentAction"}
+                                },
+                                "next": []
+                              }
+                            }
+                            """);
+                    assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+                    assertTrue(resource.loaded());
+                } finally {
+                    Files.deleteIfExists(pipeline);
+                }
+
+                String java = Path.of(System.getProperty("java.home"), "bin", "java").toString();
+                ProcessBuilder processBuilder = new ProcessBuilder(
+                        java,
+                        "-cp",
+                        System.getProperty("java.class.path"),
+                        "-Dmaafw.libDir=" + libraryDir(),
+                        "io.github.craun718.maafw.AgentServerProcess",
+                        identifier);
+                processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+                Process process = processBuilder.start();
+
+                try {
+                    boolean connected = false;
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+                    while (!connected && process.isAlive() && System.nanoTime() < deadline) {
+                        connected = client.connect();
+                        if (!connected) {
+                            Thread.sleep(250);
+                        }
+                    }
+                    assertTrue(connected, "AgentServer did not accept the TCP connection");
+                    assertTrue(client.connected());
+                    assertTrue(client.alive());
+
+                    assertTrue(resource.customRecognitionList().contains("JavaAgentReco"));
+                    assertTrue(resource.customActionList().contains("JavaAgentAction"));
+                    assertTrue(client.customRecognitionList().contains("JavaAgentReco"));
+                    assertTrue(client.customActionList().contains("JavaAgentAction"));
+
+                    TaskJob task = tasker.postTask("AgentEntry");
+                    TaskDetail taskDetail = task.waitFor().get();
+                    assertTrue(taskDetail.status().succeeded(), "Agent custom pipeline should succeed");
+                    assertFalse(taskDetail.nodeIdList().isEmpty());
+
+                    NodeDetail customNode = tasker.getLatestNode("AgentCustom");
+                    assertNotNull(customNode);
+                    assertTrue(customNode.completed());
+                    assertNotNull(customNode.recognition());
+                    assertEquals("Custom", customNode.recognition().algorithm());
+                    assertTrue(customNode.recognition().hit());
+                    assertEquals(MaaRect.of(10, 20, 30, 40), customNode.recognition().box());
+                    assertNotNull(customNode.action());
+                    assertEquals("Custom", customNode.action().action());
+                    assertTrue(customNode.action().success());
+
+                    assertTrue(client.disconnect());
+                    assertTrue(
+                            process.waitFor(30, TimeUnit.SECONDS),
+                            "AgentServer process should exit after disconnect");
+                    assertEquals(0, process.exitValue());
+                } finally {
+                    client.disconnect();
+                    if (process.isAlive()) {
+                        process.destroy();
+                    }
+                }
+            }
         }
     }
 
