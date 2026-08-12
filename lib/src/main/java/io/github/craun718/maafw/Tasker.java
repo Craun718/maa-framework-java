@@ -247,7 +247,9 @@ public class Tasker implements AutoCloseable {
                     action.getUtf8(),
                     box.get(),
                     success.getValue() != 0,
-                    rawDetail.isEmpty() ? null : new ActionResult(rawDetail),
+                    rawDetail.isEmpty()
+                            ? null
+                            : new ActionResult(parseActionType(action.getUtf8()), rawDetail),
                     rawDetail);
         }
     }
@@ -467,6 +469,7 @@ public class Tasker implements AutoCloseable {
         if (rawDetailValue == null) {
             return new ParsedRecognition(List.of(), List.of(), null);
         }
+        JRecognitionType type = parseRecognitionType(algorithmName);
         if (("And".equals(algorithmName) || "Or".equals(algorithmName)) && rawDetailValue instanceof List<?> list) {
             List<RecognitionDetail> subResults = new ArrayList<>(list.size());
             for (Object item : list) {
@@ -482,7 +485,7 @@ public class Tasker implements AutoCloseable {
                     subResults.add(subDetail);
                 }
             }
-            RecognitionResult result = new RecognitionResult(Map.of(), subResults);
+            RecognitionResult result = new RecognitionResult(type, Map.of(), subResults);
             return new ParsedRecognition(List.of(result), List.of(result), result);
         }
         if (!(rawDetailValue instanceof Map<?, ?> rawMap)) {
@@ -490,25 +493,41 @@ public class Tasker implements AutoCloseable {
         }
 
         Map<String, Object> rawDetail = objectMap(rawMap);
-        List<RecognitionResult> all = parseResultList(rawDetail.get("all"));
-        List<RecognitionResult> filtered = parseResultList(rawDetail.get("filtered"));
+        List<RecognitionResult> all = parseResultList(type, rawDetail.get("all"));
+        List<RecognitionResult> filtered = parseResultList(type, rawDetail.get("filtered"));
         RecognitionResult best = rawDetail.get("best") instanceof Map<?, ?> bestMap
-                ? new RecognitionResult(objectMap(bestMap))
+                ? new RecognitionResult(type, objectMap(bestMap))
                 : null;
         return new ParsedRecognition(all, filtered, best);
     }
 
-    private List<RecognitionResult> parseResultList(Object value) {
+    private List<RecognitionResult> parseResultList(JRecognitionType type, Object value) {
         if (!(value instanceof List<?> list)) {
             return List.of();
         }
         List<RecognitionResult> results = new ArrayList<>(list.size());
         for (Object item : list) {
             if (item instanceof Map<?, ?> map) {
-                results.add(new RecognitionResult(objectMap(map)));
+                results.add(new RecognitionResult(type, objectMap(map)));
             }
         }
         return List.copyOf(results);
+    }
+
+    private static JActionType parseActionType(String name) {
+        try {
+            return JActionType.of(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static JRecognitionType parseRecognitionType(String name) {
+        try {
+            return JRecognitionType.of(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

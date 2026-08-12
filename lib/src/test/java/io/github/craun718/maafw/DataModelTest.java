@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.jna.Pointer;
+import io.github.craun718.maafw.pipeline.JActionType;
+import io.github.craun718.maafw.pipeline.JRecognitionType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +127,91 @@ class DataModelTest {
     }
 
     @Test
+    void actionResultReportsTypeAndTypedAccessors() {
+        ActionResult click = new ActionResult(
+                JActionType.CLICK,
+                MaaJson.parseObject("""
+                        {
+                          "point": [10, 20],
+                          "contact": 3,
+                          "pressure": 50
+                        }
+                        """));
+
+        assertEquals(JActionType.CLICK, click.type());
+        assertTrue(click.asClick().isPresent());
+        assertEquals(MaaPoint.of(10, 20), click.asClick().orElseThrow().point());
+        assertEquals(3, click.asClick().orElseThrow().contact());
+        assertFalse(click.asSwipe().isPresent());
+
+        ActionResult shell = new ActionResult(
+                JActionType.SHELL,
+                MaaJson.parseObject("""
+                        {
+                          "cmd": "ls",
+                          "shell_timeout": 5000,
+                          "success": true,
+                          "output": "out"
+                        }
+                        """));
+        assertTrue(shell.asShell().isPresent());
+        assertEquals("ls", shell.asShell().orElseThrow().cmd());
+        assertEquals(5000L, shell.asShell().orElseThrow().shellTimeout());
+        assertTrue(shell.asShell().orElseThrow().success());
+        assertEquals("out", shell.asShell().orElseThrow().output());
+
+        ActionResult screencap = new ActionResult(
+                JActionType.SCREENCAP,
+                MaaJson.parseObject("""
+                        {
+                          "filepath": "capture.jpg",
+                          "format": "jpg",
+                          "quality": 85,
+                          "success": true
+                        }
+                        """));
+        assertTrue(screencap.asScreencap().isPresent());
+        assertEquals("capture.jpg", screencap.filepath());
+        assertEquals("jpg", screencap.format());
+        assertEquals(85, screencap.quality());
+        assertTrue(screencap.asScreencap().orElseThrow().success());
+    }
+
+    @Test
+    void actionResultTypedMultiSwipeKeepsNestedSwipeResults() {
+        ActionResult multi = new ActionResult(
+                JActionType.MULTI_SWIPE,
+                MaaJson.parseObject("""
+                        {
+                          "swipes": [
+                            {
+                              "begin": [1, 2],
+                              "end": [[7, 8]],
+                              "end_hold": [50],
+                              "duration": [60],
+                              "only_hover": true,
+                              "starting": 7,
+                              "contact": 1,
+                              "pressure": 200
+                            }
+                          ]
+                        }
+                        """));
+
+        assertTrue(multi.asMultiSwipe().isPresent());
+        List<ActionResult.SwipeActionResult> swipes = multi.asMultiSwipe().orElseThrow().swipes();
+        assertEquals(1, swipes.size());
+        assertEquals(MaaPoint.of(1, 2), swipes.getFirst().begin());
+        assertEquals(List.of(MaaPoint.of(7, 8)), swipes.getFirst().end());
+        assertEquals(List.of(50), swipes.getFirst().endHold());
+        assertEquals(List.of(60), swipes.getFirst().durations());
+        assertTrue(swipes.getFirst().onlyHover());
+        assertEquals(7, swipes.getFirst().starting());
+        assertEquals(1, swipes.getFirst().contact());
+        assertEquals(200, swipes.getFirst().pressure());
+    }
+
+    @Test
     void recognitionResultParsesBoxScoreCountTextAndLabel() {
         RecognitionResult result = new RecognitionResult(MaaJson.parseObject("""
                 {
@@ -146,6 +233,91 @@ class DataModelTest {
         assertEquals("button", result.label());
         assertEquals(0.9, ((Number) ((Map<?, ?>) result.detail()).get("confidence")).doubleValue());
         assertTrue(result.subResults().isEmpty());
+    }
+
+    @Test
+    void recognitionResultReportsAlgorithmAndTypedAccessors() {
+        RecognitionResult template = new RecognitionResult(
+                JRecognitionType.TEMPLATE_MATCH,
+                MaaJson.parseObject("""
+                        {
+                          "box": [10, 20, 30, 40],
+                          "score": 0.95
+                        }
+                        """));
+        assertEquals(JRecognitionType.TEMPLATE_MATCH, template.type());
+        assertTrue(template.asTemplateMatch().isPresent());
+        assertEquals(MaaRect.of(10, 20, 30, 40), template.asTemplateMatch().orElseThrow().box());
+        assertEquals(0.95, template.asTemplateMatch().orElseThrow().score());
+        assertFalse(template.asOCR().isPresent());
+
+        RecognitionResult ocr = new RecognitionResult(
+                JRecognitionType.OCR,
+                MaaJson.parseObject("""
+                        {
+                          "box": [1, 2, 3, 4],
+                          "score": 0.8,
+                          "text": "Start"
+                        }
+                        """));
+        assertTrue(ocr.asOCR().isPresent());
+        assertEquals("Start", ocr.asOCR().orElseThrow().text());
+
+        RecognitionResult classify = new RecognitionResult(
+                JRecognitionType.NEURAL_NETWORK_CLASSIFY,
+                MaaJson.parseObject("""
+                        {
+                          "box": [1, 2, 3, 4],
+                          "score": 0.7,
+                          "cls_index": 3,
+                          "label": "button"
+                        }
+                        """));
+        assertTrue(classify.asNeuralNetworkClassify().isPresent());
+        assertEquals(3, classify.asNeuralNetworkClassify().orElseThrow().clsIndex());
+        assertEquals("button", classify.asNeuralNetworkClassify().orElseThrow().label());
+
+        RecognitionResult custom = new RecognitionResult(
+                JRecognitionType.CUSTOM,
+                MaaJson.parseObject("""
+                        {
+                          "box": [1, 2, 3, 4],
+                          "detail": {"confidence": 0.9}
+                        }
+                        """));
+        assertTrue(custom.asCustom().isPresent());
+        assertEquals(
+                0.9,
+                ((Number) ((Map<?, ?>) custom.asCustom().orElseThrow().detail())
+                                .get("confidence"))
+                        .doubleValue());
+    }
+
+    @Test
+    void recognitionResultTypesAndOrSubResults() {
+        RecognitionDetail sub = new RecognitionDetail(
+                7L,
+                "Sub",
+                "OCR",
+                true,
+                MaaRect.of(1, 2, 3, 4),
+                List.of(),
+                List.of(),
+                null,
+                Map.of(),
+                MaaImage.empty(),
+                List.of());
+        List<RecognitionDetail> subResults = List.of(sub);
+
+        RecognitionResult and = new RecognitionResult(JRecognitionType.AND, Map.of(), subResults);
+        assertTrue(and.asAnd().isPresent());
+        assertEquals(List.of(sub), and.asAnd().orElseThrow().subResults());
+        assertFalse(and.asOr().isPresent());
+
+        RecognitionResult or = new RecognitionResult(JRecognitionType.OR, Map.of(), subResults);
+        assertTrue(or.asOr().isPresent());
+        assertEquals(List.of(sub), or.asOr().orElseThrow().subResults());
+        assertFalse(or.asAnd().isPresent());
     }
 
     @Test
