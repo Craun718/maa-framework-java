@@ -954,7 +954,7 @@ class RuntimeSmokeTest {
     private static void exerciseToolkit() throws Exception {
         Path configDir = Files.createTempDirectory("maa-java-toolkit-");
         try {
-            assertTrue(Toolkit.initOption(configDir));
+            assertTrue(Toolkit.initOption(configDir, Map.of("logging", false)));
             if (!isMacOs() || Toolkit.macosCheckPermission(MaaDef.MacOSPermission.SCREEN_CAPTURE)) {
                 assertNotNull(Toolkit.findDesktopWindows());
             }
