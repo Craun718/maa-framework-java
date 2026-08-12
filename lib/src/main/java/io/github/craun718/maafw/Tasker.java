@@ -143,8 +143,10 @@ public class Tasker implements AutoCloseable {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerRunning(handle));
     }
 
-    public TaskJob postStop() {
-        return taskJob(MaaLibrary.framework().MaaTaskerPostStop(handle));
+    /** Posts a stop request and returns the asynchronous stop job. */
+    public Job postStop() {
+        long jobId = MaaLibrary.framework().MaaTaskerPostStop(handle);
+        return new Job(jobId, this::status, this::waitFor);
     }
 
     public boolean stopping() {

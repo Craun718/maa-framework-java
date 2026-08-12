@@ -184,6 +184,11 @@ public final class Context {
                 .MaaContextOverridePipeline(handle, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride)));
     }
 
+    /**
+     * Overrides a node's {@code next} list for the current task execution.
+     *
+     * @return {@code true} when the node already exists and the override was accepted
+     */
     public boolean overrideNext(String name, List<String> nextList) {
         try (MaaStringListBuffer listBuffer = new MaaStringListBuffer()) {
             listBuffer.set(nextList == null ? List.of() : nextList);

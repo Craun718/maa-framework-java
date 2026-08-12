@@ -81,6 +81,11 @@ public class Resource implements AutoCloseable {
                 MaaLibrary.framework().MaaResourceOverridePipeline(handle, MaaJson.write(pipelineOverride)));
     }
 
+    /**
+     * Overrides a node's {@code next} list, creating the node when it does not already exist.
+     *
+     * @return {@code true} when the override was accepted
+     */
     public boolean overrideNext(String name, List<String> nextList) {
         try (MaaStringListBuffer buffer = new MaaStringListBuffer()) {
             buffer.set(nextList);

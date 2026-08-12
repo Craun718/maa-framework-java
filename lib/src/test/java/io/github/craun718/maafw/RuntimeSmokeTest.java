@@ -369,6 +369,7 @@ class RuntimeSmokeTest {
             exerciseResourceOverrides(pipeline);
             exerciseContextOverrides(pipeline);
             exerciseTaskJobOverride(pipeline);
+            exerciseStopOverride(pipeline);
 
             try (CustomController controller = newRuntimeSmokeController()) {
                 assertTrue(controller.postConnection().waitFor().succeeded());
@@ -475,6 +476,25 @@ class RuntimeSmokeTest {
             assertEquals(
                     List.of("TaskJobEntry", "TaskJobOverrideHit"),
                     detail.nodes().stream().map(NodeDetail::name).toList());
+        }
+    }
+
+    private static void exerciseStopOverride(Path pipeline) throws Exception {
+        try (Resource resource = new Resource();
+                CustomController controller = newRuntimeSmokeController();
+                Tasker tasker = new Tasker()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(controller.setScreenshotUseRawSize(true));
+            assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+
+            TaskJob task = tasker.postTask("TaskJobEntry");
+            assertTrue(tasker.running(), "Task should start before the stop request");
+            Job stop = tasker.postStop();
+            assertTrue(tasker.stopping(), "postStop should put the tasker in stopping state");
+            assertTrue(stop.waitFor().succeeded(), "Stop job should succeed");
+            assertFalse(tasker.running(), "Tasker should not be running after stop");
+            assertFalse(tasker.stopping(), "Tasker should not be stopping after stop");
         }
     }
 
