@@ -47,11 +47,11 @@ public final class AgentClient implements AutoCloseable {
     /**
      * Creates a TCP agent client listening on {@code 127.0.0.1:port}; port 0 selects an available
      * port automatically.
+     *
+     * @throws IllegalArgumentException if port is outside {@code 0..65535}
      */
     public static AgentClient createTcp(int port) {
-        if (port < 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid port number: " + port + ". Must be between 0 and 65535.");
-        }
+        requireValidTcpPort(port);
         requireClientMode();
 
         Pointer created = MaaLibrary.agentClient().MaaAgentClientCreateTcp((short) port);
@@ -64,6 +64,14 @@ public final class AgentClient implements AutoCloseable {
     /** Creates a TCP agent client with an automatically selected port. */
     public static AgentClient createTcp() {
         return createTcp(0);
+    }
+
+    static int requireValidTcpPort(int port) {
+        if (port < 0 || port > 65535) {
+            throw new IllegalArgumentException(
+                    "Invalid port number: " + port + ". Must be between 0 and 65535.");
+        }
+        return port;
     }
 
     private AgentClient(Pointer handle) {
