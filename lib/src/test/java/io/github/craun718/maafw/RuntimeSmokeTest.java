@@ -23,6 +23,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
+import io.github.craun718.maafw.pipeline.JActionType;
+import io.github.craun718.maafw.pipeline.JClick;
+import io.github.craun718.maafw.pipeline.JDirectHit;
+import io.github.craun718.maafw.pipeline.JRecognitionType;
 import io.github.craun718.maafw.pipeline.JWaitFreezes;
 
 /**
@@ -54,6 +58,7 @@ class RuntimeSmokeTest {
         exerciseResourceAndTasker();
         exerciseCustomController();
         exerciseRuntimeOverrides();
+        exerciseTypedDirectApi();
         exerciseRecordAndReplay();
         exerciseToolkit();
         exerciseAgentClient();
@@ -202,6 +207,7 @@ class RuntimeSmokeTest {
                 assertTrue(resource.nodeList().contains("StartUpAndClickButton"));
                 assertTrue(resource.customRecognitionList().contains("JavaContextReco"));
                 assertTrue(resource.customActionList().contains("JavaContextAction"));
+                assertFalse(resource.hash().isBlank(), "Resource hash should be available after loading");
 
                 Map<String, Object> node = resource.getNodeData("StartUpAndClickButton");
                 assertNotNull(node);
@@ -267,6 +273,37 @@ class RuntimeSmokeTest {
                 assertTrue(
                         waitFreezesOk.get(),
                         "Typed JWaitFreezes should be accepted by MaaContextWaitFreezes");
+
+                assertTrue(resource.unregisterCustomRecognition("JavaContextReco"));
+                assertFalse(resource.customRecognitionList().contains("JavaContextReco"));
+                assertTrue(resource.unregisterCustomAction("JavaContextAction"));
+                assertFalse(resource.customActionList().contains("JavaContextAction"));
+
+                assertTrue(resource.registerCustomRecognition(
+                        "JavaClearReco",
+                        new CustomRecognition() {
+                            @Override
+                            public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                                return AnalyzeResult.miss();
+                            }
+                        }));
+                assertTrue(resource.registerCustomAction(
+                        "JavaClearAction",
+                        new CustomAction() {
+                            @Override
+                            public RunResult run(Context context, RunArg argv) {
+                                return RunResult.ok();
+                            }
+                        }));
+                assertTrue(resource.customRecognitionList().contains("JavaClearReco"));
+                assertTrue(resource.customActionList().contains("JavaClearAction"));
+                assertTrue(resource.clearCustomRecognition());
+                assertFalse(resource.customRecognitionList().contains("JavaClearReco"));
+                assertTrue(resource.clearCustomAction());
+                assertFalse(resource.customActionList().contains("JavaClearAction"));
+
+                assertTrue(resource.clear());
+                assertTrue(resource.nodeList().isEmpty());
             }
         }
 
@@ -380,6 +417,90 @@ class RuntimeSmokeTest {
                         controller.setBackgroundManagedKeys(List.of()),
                         "Custom controllers do not support Win32 background managed keys");
             }
+        } finally {
+            Files.deleteIfExists(pipeline);
+        }
+    }
+
+    private static void exerciseTypedDirectApi() throws Exception {
+        AtomicInteger clickCount = new AtomicInteger();
+        AtomicReference<RecognitionDetail> contextRecognition = new AtomicReference<>();
+        AtomicReference<ActionDetail> contextAction = new AtomicReference<>();
+        Path pipeline = Files.createTempFile("maa-java-typed-direct-", ".json");
+        try (Resource resource = new Resource();
+                CustomController controller = newSmokeController(clickCount);
+                Tasker tasker = new Tasker()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(resource.registerCustomRecognition(
+                    "JavaDirectContextReco",
+                    new CustomRecognition() {
+                        @Override
+                        public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                            RecognitionDetail reco = context.runRecognitionDirect(
+                                    JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(8));
+                            contextRecognition.set(reco);
+                            if (reco != null && reco.hit()) {
+                                contextAction.set(context.runActionDirect(
+                                        JActionType.CLICK, new JClick(), reco.box(), ""));
+                            }
+                            return AnalyzeResult.hit(MaaRect.of(0, 0, 8, 8));
+                        }
+                    }));
+
+            Files.writeString(
+                    pipeline,
+                    """
+                    {
+                      "DirectContext": {
+                        "recognition": {
+                          "type": "Custom",
+                          "param": {"custom_recognition": "JavaDirectContextReco"}
+                        },
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
+            assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+
+            TaskJob contextTask = tasker.postTask("DirectContext");
+            TaskDetail contextDetail = contextTask.waitFor().get();
+            assertTrue(contextDetail.status().succeeded(), "Custom context task should succeed");
+            assertNotNull(contextRecognition.get(), "Context.runRecognitionDirect should return a detail");
+            assertTrue(contextRecognition.get().hit(), "DirectHit should hit");
+            assertEquals("DirectHit", contextRecognition.get().algorithm());
+            assertNotNull(contextAction.get(), "Context.runActionDirect should return a detail");
+            assertTrue(contextAction.get().success(), "Click direct action should succeed");
+            assertEquals("Click", contextAction.get().action());
+
+            TaskJob recoJob =
+                    tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(8));
+            assertTrue(recoJob.waitFor().succeeded(), "Tasker.postRecognition should succeed");
+            TaskDetail recoTask = recoJob.get();
+            assertNotNull(recoTask);
+            assertTrue(recoTask.entry().startsWith("recognition/DirectHit/"), recoTask.entry());
+            assertFalse(recoTask.nodeIdList().isEmpty());
+            NodeDetail recoNode = tasker.getNodeDetail(recoTask.nodeIdList().getFirst());
+            assertNotNull(recoNode);
+            assertNotNull(recoNode.recognition());
+            assertTrue(recoNode.recognition().hit(), "Tasker.postRecognition DirectHit should hit");
+            assertEquals("DirectHit", recoNode.recognition().algorithm());
+
+            int clicksBeforeAction = clickCount.get();
+            TaskJob actionJob =
+                    tasker.postAction(JActionType.CLICK, new JClick(), MaaRect.of(0, 0, 8, 8), "");
+            assertTrue(actionJob.waitFor().succeeded(), "Tasker.postAction should succeed");
+            TaskDetail actionTask = actionJob.get();
+            assertNotNull(actionTask);
+            assertTrue(actionTask.entry().startsWith("action/Click/"), actionTask.entry());
+            assertFalse(actionTask.nodeIdList().isEmpty());
+            NodeDetail actionNode = tasker.getNodeDetail(actionTask.nodeIdList().getFirst());
+            assertNotNull(actionNode);
+            assertNotNull(actionNode.action());
+            assertTrue(actionNode.action().success(), "Click action should succeed");
+            assertEquals("Click", actionNode.action().action());
+            assertEquals(clicksBeforeAction + 1, clickCount.get());
         } finally {
             Files.deleteIfExists(pipeline);
         }

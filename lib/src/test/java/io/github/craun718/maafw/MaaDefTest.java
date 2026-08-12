@@ -54,6 +54,14 @@ class MaaDefTest {
     }
 
     @Test
+    void controllerFeatureBitsMatchOfficialHeader() {
+        assertEquals(0L, MaaDef.CONTROLLER_FEATURE_NONE);
+        assertEquals(1L, MaaDef.CONTROLLER_FEATURE_USE_MOUSE_DOWN_UP_INSTEAD_OF_CLICK);
+        assertEquals(1L << 1, MaaDef.CONTROLLER_FEATURE_USE_KEYBOARD_DOWN_UP_INSTEAD_OF_CLICK);
+        assertEquals(1L << 2, MaaDef.CONTROLLER_FEATURE_NO_SCALING_TOUCH_POINTS);
+    }
+
+    @Test
     void recoveryImageCacheLimitRejectsNegativeValues() {
         assertThrows(IllegalArgumentException.class, () -> Tasker.setRecoImageCacheLimit(-1));
     }

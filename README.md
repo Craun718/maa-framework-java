@@ -42,9 +42,10 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 ## Runtime Smoke Tests
 
 `RuntimeSmokeTest` exercises the release ABI against a real library directory: version lookup,
-UTF-8 buffers, rect/image buffers, resource/tasker creation, custom controller callbacks,
-record/replay controllers, toolkit option/device helpers, an AgentClient TCP round-trip, and agent
-server registration. It is skipped unless the library directory is configured:
+UTF-8 buffers, rect/image buffers, resource/tasker creation, typed direct recognition/action calls,
+resource lifecycle operations, custom controller callbacks, record/replay controllers, toolkit
+option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
+unless the library directory is configured:
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
@@ -131,7 +132,8 @@ ActionDetail action = context.runActionDirect(JActionType.SHELL, shellParam, box
 
 The typed parameter classes serialize with the same snake_case JSON keys expected by MaaFramework,
 and `JRecognitionType`/`JActionType` serialize using native names such as `TemplateMatch` and
-`Click`.
+`Click`. The direct tasker/context calls are also covered by `RuntimeSmokeTest` against release
+binaries.
 
 ## Buffers and Event Sinks
 
