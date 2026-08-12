@@ -214,13 +214,15 @@ public final class Context {
     }
 
     /**
-     * Overrides a node's {@code next} list for the current task execution.
+     * Overrides a node's {@code next} list for the current task execution. Items may be raw
+     * strings with {@code [JumpBack]}/{@code [Anchor]} prefixes or typed
+     * {@link io.github.craun718.maafw.pipeline.JNodeAttr} values.
      *
      * @return {@code true} when the node already exists and the override was accepted
      */
-    public boolean overrideNext(String name, List<String> nextList) {
+    public boolean overrideNext(String name, List<?> nextList) {
         try (MaaStringListBuffer listBuffer = new MaaStringListBuffer()) {
-            listBuffer.set(nextList == null ? List.of() : nextList);
+            listBuffer.set(MaaNextItems.names(nextList));
             return MaaStringBuffer.toBoolean(
                     MaaLibrary.framework().MaaContextOverrideNext(handle, name, listBuffer.handle()));
         }

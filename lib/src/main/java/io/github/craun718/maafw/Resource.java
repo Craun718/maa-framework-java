@@ -92,12 +92,14 @@ public class Resource implements AutoCloseable {
 
     /**
      * Overrides a node's {@code next} list, creating the node when it does not already exist.
+     * Items may be raw strings with {@code [JumpBack]}/{@code [Anchor]} prefixes or typed
+     * {@link io.github.craun718.maafw.pipeline.JNodeAttr} values.
      *
      * @return {@code true} when the override was accepted
      */
-    public boolean overrideNext(String name, List<String> nextList) {
+    public boolean overrideNext(String name, List<?> nextList) {
         try (MaaStringListBuffer buffer = new MaaStringListBuffer()) {
-            buffer.set(nextList);
+            buffer.set(MaaNextItems.names(nextList));
             return MaaStringBuffer.toBoolean(
                     MaaLibrary.framework().MaaResourceOverrideNext(handle, name, buffer.handle()));
         }
