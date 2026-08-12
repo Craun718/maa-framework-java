@@ -1,6 +1,7 @@
 package io.github.craun718.maafw;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.IntByReference;
@@ -413,7 +414,7 @@ public class Tasker implements AutoCloseable {
     }
 
     public static boolean setRecoImageCacheLimit(long limit) {
-        return setGlobalLongOption(MaaDef.GlobalOption.RECO_IMAGE_CACHE_LIMIT, limit);
+        return setGlobalSizeTOption(MaaDef.GlobalOption.RECO_IMAGE_CACHE_LIMIT, limit);
     }
 
     public static boolean loadPlugin(String path) {
@@ -525,10 +526,24 @@ public class Tasker implements AutoCloseable {
         }
     }
 
-    private static boolean setGlobalLongOption(MaaDef.GlobalOption option, long value) {
-        try (Memory memory = new Memory(Long.BYTES)) {
-            memory.setLong(0, value);
-            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Long.BYTES));
+    private static boolean setGlobalSizeTOption(MaaDef.GlobalOption option, long value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("Native size_t values must be non-negative");
+        }
+        if (Native.POINTER_SIZE == Long.BYTES) {
+            try (Memory memory = new Memory(Long.BYTES)) {
+                memory.setLong(0, value);
+                return MaaStringBuffer.toBoolean(
+                        MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Long.BYTES));
+            }
+        }
+        if (value > 0xFFFF_FFFFL) {
+            throw new IllegalArgumentException("Value does not fit in the native size_t width");
+        }
+        try (Memory memory = new Memory(Integer.BYTES)) {
+            memory.setInt(0, (int) value);
+            return MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Integer.BYTES));
         }
     }
 

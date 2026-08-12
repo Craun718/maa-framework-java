@@ -48,12 +48,19 @@ class RuntimeSmokeTest {
         assertTrue(MaaLibrary.isOpen());
         assertFalse(MaaLibrary.version().isBlank(), "MaaVersion should return a release version");
 
+        exerciseGlobalOptions();
         exerciseBuffers();
         exerciseResourceAndTasker();
         exerciseCustomController();
         exerciseRecordAndReplay();
         exerciseToolkit();
         exerciseAgentClient();
+    }
+
+    private static void exerciseGlobalOptions() {
+        assertTrue(Tasker.setRecoImageCacheLimit(512), "RecoImageCacheLimit should accept a size_t value");
+        assertTrue(Tasker.setSaveDraw(false));
+        assertTrue(Tasker.setSaveOnError(false));
     }
 
     @Test

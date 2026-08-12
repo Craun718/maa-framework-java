@@ -3,6 +3,7 @@ package io.github.craun718.maafw;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -50,5 +51,10 @@ class MaaDefTest {
         assertTrue((MaaDef.ADB_SCREENCAP_DEFAULT & MaaDef.ADB_SCREENCAP_ENCODE) != 0);
         assertTrue((MaaDef.ADB_SCREENCAP_DEFAULT & MaaDef.ADB_SCREENCAP_RAW_BY_NETCAT) == 0);
         assertTrue((MaaDef.ADB_SCREENCAP_DEFAULT & MaaDef.ADB_SCREENCAP_MINICAP_STREAM) == 0);
+    }
+
+    @Test
+    void recoveryImageCacheLimitRejectsNegativeValues() {
+        assertThrows(IllegalArgumentException.class, () -> Tasker.setRecoImageCacheLimit(-1));
     }
 }
