@@ -36,6 +36,11 @@ public final class ActionResult {
         return MaaResultParsers.integerList(raw.get("duration"));
     }
 
+    /** Returns the swipe start offset for {@code Swipe} / {@code MultiSwipe} results. */
+    public Integer starting() {
+        return MaaResultParsers.integer(raw.get("starting"));
+    }
+
     public List<Integer> keycodes() {
         return MaaResultParsers.integerList(raw.get("keycode"));
     }
