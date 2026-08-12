@@ -7,7 +7,13 @@ import java.util.Map;
 public class AdbController extends Controller {
 
     public AdbController(String adbPath, String address) {
-        this(adbPath, address, MaaDef.ADB_SCREENCAP_DEFAULT, MaaDef.ADB_INPUT_DEFAULT, Map.of(), "MaaAgentBinary");
+        this(
+                adbPath,
+                address,
+                MaaDef.ADB_SCREENCAP_DEFAULT,
+                MaaDef.ADB_INPUT_DEFAULT,
+                Map.of(),
+                MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(Path adbPath, String address) {
@@ -17,7 +23,7 @@ public class AdbController extends Controller {
                 MaaDef.ADB_SCREENCAP_DEFAULT,
                 MaaDef.ADB_INPUT_DEFAULT,
                 Map.of(),
-                "MaaAgentBinary");
+                MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(String adbPath, String address, Map<String, Object> config) {
@@ -27,7 +33,7 @@ public class AdbController extends Controller {
                 MaaDef.ADB_SCREENCAP_DEFAULT,
                 MaaDef.ADB_INPUT_DEFAULT,
                 config,
-                "MaaAgentBinary");
+                MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(Path adbPath, String address, Map<String, Object> config) {
@@ -37,11 +43,11 @@ public class AdbController extends Controller {
                 MaaDef.ADB_SCREENCAP_DEFAULT,
                 MaaDef.ADB_INPUT_DEFAULT,
                 config,
-                "MaaAgentBinary");
+                MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(String adbPath, String address, long screencapMethods, long inputMethods) {
-        this(adbPath, address, screencapMethods, inputMethods, Map.of(), "MaaAgentBinary");
+        this(adbPath, address, screencapMethods, inputMethods, Map.of(), MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(
@@ -52,7 +58,7 @@ public class AdbController extends Controller {
                 screencapMethods,
                 inputMethods,
                 Map.of(),
-                "MaaAgentBinary");
+                MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(
@@ -61,7 +67,7 @@ public class AdbController extends Controller {
             long screencapMethods,
             long inputMethods,
             Map<String, Object> config) {
-        this(adbPath, address, screencapMethods, inputMethods, config, "MaaAgentBinary");
+        this(adbPath, address, screencapMethods, inputMethods, config, MaaLibrary.defaultAgentBinaryPath());
     }
 
     public AdbController(
@@ -104,6 +110,6 @@ public class AdbController extends Controller {
                 screencapMethods,
                 inputMethods,
                 config,
-                agentPath == null ? "MaaAgentBinary" : agentPath.toString());
+                agentPath == null ? MaaLibrary.defaultAgentBinaryPath() : agentPath.toString());
     }
 }

@@ -26,6 +26,7 @@ public final class MaaLibrary {
     private static volatile MaaToolkitLibrary toolkit;
     private static volatile MaaAgentClientLibrary agentClient;
     private static volatile MaaAgentServerLibrary agentServer;
+    private static volatile Path libraryDirectory;
     private static volatile Path frameworkPath;
     private static volatile Path toolkitPath;
     private static volatile Path agentClientPath;
@@ -45,6 +46,7 @@ public final class MaaLibrary {
             throw new IllegalArgumentException("MaaFramework library directory does not exist: " + directory);
         }
 
+        libraryDirectory = directory;
         MaaLibrary.agentServerMode = agentServerMode;
         String platform = platform();
 
@@ -84,6 +86,7 @@ public final class MaaLibrary {
         toolkit = null;
         agentClient = null;
         agentServer = null;
+        libraryDirectory = null;
         frameworkPath = null;
         toolkitPath = null;
         agentClientPath = null;
@@ -148,6 +151,29 @@ public final class MaaLibrary {
 
     public static Path agentServerPath() {
         return agentServerPath;
+    }
+
+    /** Returns the directory passed to {@link #open(Path, boolean)}. */
+    public static Path libraryDirectory() {
+        return libraryDirectory;
+    }
+
+    /**
+     * Returns the official release layout's {@code MaaAgentBinary} directory when available, or the
+     * legacy relative path used by callers that manage the binary themselves.
+     */
+    public static String defaultAgentBinaryPath() {
+        return defaultAgentBinaryPath(libraryDirectory);
+    }
+
+    static String defaultAgentBinaryPath(Path directory) {
+        if (directory != null) {
+            Path agentDirectory = directory.resolve("../share/MaaAgentBinary").normalize();
+            if (Files.isDirectory(agentDirectory)) {
+                return agentDirectory.toString();
+            }
+        }
+        return "MaaAgentBinary";
     }
 
     private static Path resolve(Path directory, String baseName, String platform) {
