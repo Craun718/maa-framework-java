@@ -28,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -50,7 +50,7 @@ jobs:
           cp lib/build/libs/lib.jar staging/maa-framework-java.jar
 
       - name: Upload Java Library
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maa-framework-java-lib
           path: staging/maa-framework-java.jar
@@ -75,10 +75,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -114,7 +114,7 @@ jobs:
             return latestRelease.tag_name
 
       - name: Download MaaFramework
-        uses: robinraju/release-downloader@v1
+        uses: robinraju/release-downloader@v1.13
         with:
           repository: MaaXYZ/MaaFramework
           tag: ${{ steps.resolve_maa_release.outputs.result }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload Test Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.maa_prefix }}-${{ matrix.arch }}-test-reports
           path: |
@@ -159,10 +159,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -198,7 +198,7 @@ jobs:
             return latestRelease.tag_name
 
       - name: Download MaaFramework
-        uses: robinraju/release-downloader@v1
+        uses: robinraju/release-downloader@v1.13
         with:
           repository: MaaXYZ/MaaFramework
           tag: ${{ steps.resolve_maa_release.outputs.result }}
@@ -221,7 +221,7 @@ jobs:
         run: ./scripts/package-official-release.sh
 
       - name: Upload Release Archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maa-framework-java-${{ matrix.platform }}-ci
           path: dist/*.zip
@@ -235,28 +235,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download Linux Release Archive
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: maa-framework-java-linux-x86_64-ci
           path: dist
 
       - name: Download Android Release Archive
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: maa-framework-java-android-arm64-v8a-ci
           path: dist
 
       - name: Download Java Library
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: maa-framework-java-lib
           path: artifacts
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.meta.outputs.tag }}
           prerelease: ${{ contains(needs.meta.outputs.tag, '-alpha') || contains(needs.meta.outputs.tag, '-beta') || contains(needs.meta.outputs.tag, '-rc') }}
