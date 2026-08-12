@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -115,6 +116,12 @@ class RuntimeSmokeTest {
                           "Click_Button": {
                             "recognition": {"type": "OCR", "param": {"expected": ["Button"]}},
                             "action": {"type": "Click", "param": {}}
+                          },
+                          "SmokeTask": {
+                            "pre_delay": 500,
+                            "recognition": {"type": "DirectHit", "param": {}},
+                            "action": {"type": "Click", "param": {}},
+                            "next": []
                           }
                         }
                         """);
@@ -136,13 +143,39 @@ class RuntimeSmokeTest {
                 Files.deleteIfExists(pipeline);
             }
 
-            try (CustomController controller = newSmokeController();
+            AtomicInteger clickCount = new AtomicInteger();
+            try (CustomController controller = newSmokeController(clickCount);
                     Tasker tasker = new Tasker()) {
                 assertTrue(controller.postConnection().waitFor().succeeded());
                 assertTrue(tasker.bind(resource, controller));
                 assertTrue(tasker.inited());
                 assertNotNull(tasker.resource());
                 assertNotNull(tasker.controller());
+
+                TaskJob task = tasker.postTask("SmokeTask");
+                assertTrue(tasker.running(), "postTask should start a running task");
+                TaskDetail taskDetail = task.waitFor().get();
+                assertTrue(taskDetail.status().succeeded());
+                assertEquals("SmokeTask", taskDetail.entry());
+                NodeDetail latest = tasker.getLatestNode("SmokeTask");
+                assertNotNull(latest);
+                assertEquals(
+                        1,
+                        clickCount.get(),
+                        "Click action should call the controller; action="
+                                + latest.action()
+                                + " box="
+                                + latest.action().box()
+                                + " result="
+                                + latest.action().result());
+                assertFalse(tasker.running());
+                assertTrue(latest.completed());
+                assertEquals("Click", latest.action().action());
+                assertTrue(latest.action().success());
+
+                assertNotNull(tasker.getNodeDetail(taskDetail.nodeIdList().getFirst()));
+                assertNotNull(tasker.getActionDetail(latest.action().actionId()));
+                assertTrue(tasker.clearCache());
             }
         }
 
@@ -174,8 +207,17 @@ class RuntimeSmokeTest {
     }
 
     private static CustomController newSmokeController() {
+        return newSmokeController(null);
+    }
+
+    private static CustomController newSmokeController(AtomicInteger clickCount) {
         byte[] bgr = new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30};
         return new CustomController() {
+            @Override
+            public long getFeatures() {
+                return 0;
+            }
+
             @Override
             public boolean connect() {
                 return true;
@@ -208,6 +250,9 @@ class RuntimeSmokeTest {
 
             @Override
             public boolean click(int x, int y) {
+                if (clickCount != null) {
+                    clickCount.incrementAndGet();
+                }
                 return true;
             }
 
