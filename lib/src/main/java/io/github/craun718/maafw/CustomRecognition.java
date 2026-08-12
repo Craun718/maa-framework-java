@@ -3,7 +3,13 @@ package io.github.craun718.maafw;
 import com.sun.jna.Pointer;
 import java.util.Map;
 
-/** Base class for custom MaaFramework pipeline recognitions. */
+/**
+ * Base class for custom MaaFramework pipeline recognitions.
+ *
+ * <p>The native callback resolves the current {@link TaskDetail} before invoking {@link #analyze}.
+ * If the detail cannot be resolved, the callback returns failure and {@code analyze} is not called.
+ * This matches the Python binding's behavior.
+ */
 public abstract class CustomRecognition {
 
     public record AnalyzeArg(

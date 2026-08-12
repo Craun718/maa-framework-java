@@ -23,6 +23,22 @@ dependencies {
 ./gradlew :lib:build
 ```
 
+## FFI Surface Verification
+
+`scripts/check-ffi-surface.sh` compares the exported function names in the official C headers
+with the JNA interface methods. It covers `MaaFramework`, `MaaToolkit`, `MaaAgentClient`, and
+`MaaAgentServer`. `MaaControlUnit` is intentionally excluded because those functions ship in
+separate plugin libraries, not in the official release core libraries.
+
+```bash
+./scripts/check-ffi-surface.sh /path/to/MaaFramework
+# or
+MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
+```
+
+The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
+`maafw.maaFrameworkSource` is set, and skips otherwise.
+
 ## Loading Native Libraries
 
 Call `MaaLibrary.open(Path, boolean)` once before using high-level wrappers:
@@ -196,12 +212,18 @@ try (AgentClient client = new AgentClient("my-agent");
 ```
 
 `AgentClient.createTcp(0)` creates a TCP client with an automatically selected port. The server
-process should use the port returned by `client.identifier()` as its identifier.
+process should use the port returned by `client.identifier()` as its identifier. Ports passed to
+`AgentClient.createTcp(int)` are validated as `0..65535` before any native call; use `0` for an
+automatically selected port.
 
 ## Notes
 
 - `AgentServer` holds registered callbacks and sinks internally so JVM garbage collection cannot
   remove native callbacks. `AgentClient` similarly holds the resource and sinks passed to it.
+- Custom recognition and action callbacks resolve current task/recognition details before invoking
+  Java code. If those details are unavailable, including a zero or missing recognition id for a
+  custom action, the native callback returns failure without calling the Java method. This mirrors
+  the Python binding.
 - In agent server mode, the official `MaaAgentServer` library is a stub for local resource,
   controller, and tasker creation and for plugin loading. Use that mode only to host callbacks
   and sinks.

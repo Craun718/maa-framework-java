@@ -2,7 +2,14 @@ package io.github.craun718.maafw;
 
 import com.sun.jna.Pointer;
 
-/** Base class for custom MaaFramework pipeline actions. */
+/**
+ * Base class for custom MaaFramework pipeline actions.
+ *
+ * <p>The native callback resolves the current {@link TaskDetail} and {@link RecognitionDetail}
+ * before invoking {@link #run}. Missing details, including an unavailable or zero {@code reco_id},
+ * cause the callback to return failure without calling {@code run}. This matches the Python
+ * binding's behavior.
+ */
 public abstract class CustomAction {
 
     public record RunArg(
