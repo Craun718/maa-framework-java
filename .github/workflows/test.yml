@@ -35,7 +35,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build Library and Examples
         shell: bash
@@ -80,7 +82,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Resolve MaaFramework Release
         id: resolve_maa_release
@@ -162,7 +166,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Resolve MaaFramework Release
         id: resolve_maa_release
