@@ -36,13 +36,22 @@ PLATFORMS=(
     "macos-x86_64 MAA-macos-x86_64"
     "macos-aarch64 MAA-macos-aarch64"
     "android-x86_64 MAA-android-x86_64"
-    "android-aarch64 MAA-android-aarch64"
+    "android-arm64-v8a MAA-android-arm64-v8a"
 )
 
 packed=0
 for entry in "${PLATFORMS[@]}"; do
     read -r platform source_dir <<< "${entry}"
     source_root="${RELEASES_ROOT}/${source_dir}"
+    if [[ ! -d "${source_root}" ]]; then
+        source_root=""
+        for candidate in "${RELEASES_ROOT}"/MAA-${platform}-*; do
+            if [[ -d "${candidate}" ]]; then
+                source_root="${candidate}"
+                break
+            fi
+        done
+    fi
     if [[ ! -d "${source_root}" ]]; then
         continue
     fi
