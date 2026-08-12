@@ -202,6 +202,7 @@ public final class JPipelineParser {
                 JAnd param = new JAnd();
                 param.allOf = objectList(values.get("all_of"), param.allOf);
                 param.boxIndex = integer(values.get("box_index"), param.boxIndex);
+                param.subName = string(values.get("sub_name"));
                 yield param;
             }
             case OR -> {
@@ -583,6 +584,9 @@ public final class JPipelineParser {
     }
 
     private static List<Long> longList(Object value, List<Long> fallback) {
+        if (value instanceof Number number) {
+            return List.of(number.longValue());
+        }
         List<Object> items = list(value);
         if (items == null) {
             return fallback;
@@ -653,8 +657,14 @@ public final class JPipelineParser {
     }
 
     private static List<Object> objectList(Object value, List<Object> fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        if (!(value instanceof List<?>)) {
+            return List.of(value);
+        }
         List<Object> items = list(value);
-        return items == null ? fallback : List.copyOf(items);
+        return List.copyOf(items);
     }
 
     private static List<JSwipe> requiredSwipeList(Object value) {

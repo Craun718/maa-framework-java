@@ -136,8 +136,13 @@ class JPipelineParserTest {
         assertInstanceOf(
                 JCustomRecognition.class,
                 parseRecognition(JRecognitionType.CUSTOM, Map.of("custom_recognition", "reco")));
-        assertInstanceOf(
-                JAnd.class, parseRecognition(JRecognitionType.AND, Map.of("all_of", List.of("A"))));
+        JAnd and = assertInstanceOf(
+                JAnd.class,
+                parseRecognition(
+                        JRecognitionType.AND,
+                        Map.of("all_of", List.of("A"), "box_index", 1, "sub_name", "first")));
+        assertEquals(1, and.boxIndex);
+        assertEquals("first", and.subName);
         assertInstanceOf(
                 JOr.class, parseRecognition(JRecognitionType.OR, Map.of("any_of", List.of("A"))));
     }
@@ -248,6 +253,22 @@ class JPipelineParserTest {
         assertTrue(swipe.onlyHover);
         assertEquals(2, swipe.contact);
         assertEquals(3, swipe.pressure);
+    }
+
+    @Test
+    void parsesSwipeScalarEndDurationAndEndHold() {
+        JSwipe swipe = assertInstanceOf(
+                JSwipe.class,
+                parseAction(
+                        JActionType.SWIPE,
+                        Map.of(
+                                "end", "someNode",
+                                "duration", 500,
+                                "end_hold", 60)));
+
+        assertEquals(List.of("someNode"), swipe.end);
+        assertEquals(List.of(500L), swipe.duration);
+        assertEquals(List.of(60L), swipe.endHold);
     }
 
     @Test
