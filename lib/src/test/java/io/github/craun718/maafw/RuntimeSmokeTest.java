@@ -59,6 +59,7 @@ class RuntimeSmokeTest {
         exerciseResourcePostApis();
         exerciseSinkHolderSeparation();
         exerciseCustomController();
+        exerciseBlankController();
         exerciseRuntimeOverrides();
         exerciseTypedDirectApi();
         exerciseRecordAndReplay();
@@ -574,6 +575,28 @@ class RuntimeSmokeTest {
             assertTrue(controller.setScreenshotTargetLongSide(1280));
             assertTrue(controller.setScreenshotTargetShortSide(720));
             assertTrue(controller.setScreenshotResizeMethod(1));
+        }
+    }
+
+    private static void exerciseBlankController() {
+        try (BlankController controller = new BlankController()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(controller.connected());
+            assertEquals("blank-controller", controller.uuid());
+            assertEquals(Map.of("type", "blank"), controller.info());
+
+            JobWithResult<MaaImage> screencap = controller.postScreencap();
+            assertTrue(screencap.waitFor().succeeded());
+            MaaImage screen = screencap.get();
+            assertFalse(screen.isEmpty());
+            assertEquals(1280, screen.width());
+            assertEquals(720, screen.height());
+            assertEquals(3, screen.channels());
+            assertEquals(1280 * 720 * 3, screen.data().length);
+
+            JobWithResult<String> shell = controller.postShell("echo blank");
+            assertTrue(shell.waitFor().succeeded());
+            assertEquals("", shell.get());
         }
     }
 

@@ -122,6 +122,9 @@ binding:
 - The high-level wrappers mirror the Python binding's `Resource`, `Tasker`, `Context`, controller
   subclasses, `Toolkit`, buffers, event sinks, custom recognition/action/controller callbacks,
   and `AgentClient`/`AgentServer` APIs.
+- `BlankController` provides a pure-Java no-op custom controller for resource/tasker testing without
+  a device, matching the Go binding's convenience API. Unlike `DbgController`, it does not wrap the
+  native debug controller.
 - The `pipeline` package parses project interface v2 node JSON into typed recognition and action
   parameters, including nested `And`/`Or`, `MultiSwipe`, wait-freezes, `focus`, and `attach`
   values, instead of exposing only raw JSON.
@@ -139,6 +142,10 @@ UTF-8 buffers, rect/image buffers, resource/tasker creation, typed direct recogn
 resource lifecycle operations, custom controller callbacks, record/replay controllers, toolkit
 option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
 unless the library directory is configured:
+
+The suite was verified against the official `v5.12.3` macOS aarch64 release: 74 tests across 16
+suites pass with zero failures, including `BlankController`, FFI signature checks against the
+current main source, and the official-release packaging path.
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
