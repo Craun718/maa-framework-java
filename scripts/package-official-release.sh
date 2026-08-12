@@ -63,14 +63,10 @@ for entry in "${PLATFORMS[@]}"; do
     stage="$(mktemp -d "${TMPDIR:-/tmp}/maa-java-release.XXXXXX")"
     trap 'rm -rf "${stage}"' EXIT
 
-    mkdir -p "${stage}/lib" "${stage}/bin"
+    mkdir -p "${stage}/lib"
     cp "${JAR}" "${stage}/lib/maa-framework-java.jar"
     cp "${REPO_ROOT}/README.md" "${stage}/lib/README.md"
-    cp -R "${source_root}/bin/." "${stage}/bin/"
-    if [[ -d "${source_root}/share/MaaAgentBinary" ]]; then
-        mkdir -p "${stage}/share"
-        cp -R "${source_root}/share/MaaAgentBinary" "${stage}/share/"
-    fi
+    cp -R "${source_root}/." "${stage}/"
 
     archive="${OUT_DIR}/maa-framework-java-${VERSION}-${platform}.zip"
     (

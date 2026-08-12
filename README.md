@@ -38,9 +38,9 @@ MAA_FRAMEWORK_RELEASES=/path/to/extracted-releases \
 The script recognizes `MAA-win-*`, `MAA-linux-*`, `MAA-macos-*`, and `MAA-android-*`
 directories, including extracted folders whose names carry a release tag such as
 `MAA-macos-aarch64-v5.12.3`. For every available platform it builds
-`lib/maa-framework-java.jar`, copies the official release's `bin/` tree, including controller
-plugins, and includes
-`share/MaaAgentBinary/` when present. Each zip is written to:
+`lib/maa-framework-java.jar` and copies the complete official release tree, including
+`bin/`, `include/`, `symbols/`, documentation, samples, schemas, licenses, and
+`share/MaaAgentBinary/`. Each zip is written to:
 
 ```text
 build/distributions/maa-framework-java-${MAA_FRAMEWORK_VERSION}-${platform}.zip
@@ -51,8 +51,16 @@ The output layout mirrors the official release scope:
 ```text
 lib/maa-framework-java.jar
 lib/README.md
+LICENSE.md
+README.md
+README_en.md
 bin/...
+docs/...
+include/...
+sample/...
 share/MaaAgentBinary/...
+symbols/...
+tools/...
 ```
 
 `MAA_FRAMEWORK_OUTPUT_DIR` overrides the output directory. The first argument to the script can
@@ -97,8 +105,9 @@ binding:
 - The `pipeline` package parses project interface v2 node JSON into typed recognition and action
   parameters, including nested `And`/`Or`, `MultiSwipe`, wait-freezes, `focus`, and `attach`
   values, instead of exposing only raw JSON.
-- `package-official-release.sh` builds distributions with the same `bin/`, controller plugin, and
-  `MaaAgentBinary` scope as official MaaFramework releases.
+- `package-official-release.sh` builds distributions with the same top-level release tree as
+  official MaaFramework releases, including `bin/`, controller plugins, `include/`, `symbols/`,
+  docs/samples/schemas, and `share/MaaAgentBinary/`.
 
 The Java row in MaaFramework's integration documentation describes an older third-party v3
 binding; this repository targets the current API and covers the surfaces listed above.
