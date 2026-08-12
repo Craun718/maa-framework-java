@@ -43,4 +43,9 @@ public class TaskJob extends JobWithResult<TaskDetail> {
     public boolean overridePipeline(String pipelineOverride) {
         return overridePipelineFunc.apply(jobId, MaaJson.objectJsonOrEmpty(pipelineOverride));
     }
+
+    /** Returns the task detail without waiting for the task to complete. */
+    public TaskDetail getDetail() {
+        return get(false);
+    }
 }

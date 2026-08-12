@@ -254,6 +254,17 @@ public final class Context {
         }
     }
 
+    /** Returns the current pipeline node definition as raw JSON, or {@code null} if the node does not exist. */
+    public String getNodeJson(String name) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaContextGetNodeData(handle, name, buffer.handle()))) {
+                return null;
+            }
+            String json = buffer.get();
+            return json == null || json.isBlank() ? null : json;
+        }
+    }
+
     /** Returns the current pipeline node as a typed object, or {@code null} if the node does not exist. */
     public JPipelineData getNodeObject(String name) {
         Map<String, Object> data = getNodeData(name);

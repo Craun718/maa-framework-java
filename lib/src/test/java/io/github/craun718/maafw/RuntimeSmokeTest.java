@@ -453,6 +453,10 @@ class RuntimeSmokeTest {
                 List<?> next = (List<?>) node.get("next");
                 assertEquals("Click_Button", ((Map<?, ?>) next.getFirst()).get("name"));
                 assertNotNull(resource.getNodeObject("Click_Button"));
+                String nodeJson = resource.getNodeJson("StartUpAndClickButton");
+                assertNotNull(nodeJson);
+                assertEquals(node, MaaJson.parseObject(nodeJson));
+                assertNull(resource.getNodeJson("MissingNode"));
 
                 Map<String, Object> templateDefaults = resource.getDefaultRecognitionParam("TemplateMatch");
                 assertTrue(templateDefaults.containsKey("threshold"));

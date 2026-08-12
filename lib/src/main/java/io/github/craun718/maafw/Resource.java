@@ -131,6 +131,17 @@ public class Resource implements AutoCloseable {
         }
     }
 
+    /** Returns the current pipeline node definition as raw JSON, or {@code null} if the node does not exist. */
+    public String getNodeJson(String name) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceGetNodeData(handle, name, buffer.handle()))) {
+                return null;
+            }
+            String json = buffer.get();
+            return json == null || json.isBlank() ? null : json;
+        }
+    }
+
     /** Returns the current pipeline node as a typed object, or {@code null} if the node does not exist. */
     public JPipelineData getNodeObject(String name) {
         Map<String, Object> data = getNodeData(name);
@@ -207,6 +218,10 @@ public class Resource implements AutoCloseable {
 
     public boolean useCoreml(int coremlFlag) {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_CORE_ML, coremlFlag);
+    }
+
+    public boolean useCuda(int nvidiaGpuId) {
+        return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_CUDA, nvidiaGpuId);
     }
 
     public boolean useAutoEp() {
@@ -355,7 +370,7 @@ public class Resource implements AutoCloseable {
         MaaLibrary.framework().MaaResourceWait(handle, id);
     }
 
-    private boolean setInference(int executionProvider, int deviceId) {
+    public boolean setInference(int executionProvider, int deviceId) {
         try (Memory executionProviderValue = intMemory(executionProvider);
                 Memory deviceValue = intMemory(deviceId)) {
             boolean providerOk = MaaStringBuffer.toBoolean(MaaLibrary.framework()
