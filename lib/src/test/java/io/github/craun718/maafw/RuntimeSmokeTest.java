@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -95,10 +96,54 @@ class RuntimeSmokeTest {
         }
     }
 
-    private static void exerciseResourceAndTasker() {
+    private static void exerciseResourceAndTasker() throws Exception {
         try (Resource resource = new Resource()) {
             assertNotNull(resource.handle());
             assertTrue(resource.nodeList().isEmpty());
+
+            Path pipeline = Files.createTempFile("maa-java-pipeline-", ".json");
+            try {
+                Files.writeString(
+                        pipeline,
+                        """
+                        {
+                          "StartUpAndClickButton": {
+                            "recognition": {"type": "DirectHit", "param": {}},
+                            "action": {"type": "DoNothing", "param": {}},
+                            "next": ["Click_Button"]
+                          },
+                          "Click_Button": {
+                            "recognition": {"type": "OCR", "param": {"expected": ["Button"]}},
+                            "action": {"type": "Click", "param": {}}
+                          }
+                        }
+                        """);
+                assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
+                assertTrue(resource.loaded());
+                assertTrue(resource.nodeList().contains("StartUpAndClickButton"));
+
+                Map<String, Object> node = resource.getNodeData("StartUpAndClickButton");
+                assertNotNull(node);
+                List<?> next = (List<?>) node.get("next");
+                assertEquals("Click_Button", ((Map<?, ?>) next.getFirst()).get("name"));
+                assertNotNull(resource.getNodeObject("Click_Button"));
+
+                Map<String, Object> templateDefaults = resource.getDefaultRecognitionParam("TemplateMatch");
+                assertTrue(templateDefaults.containsKey("threshold"));
+                Map<String, Object> clickDefaults = resource.getDefaultActionParam("Click");
+                assertTrue(clickDefaults.containsKey("target"));
+            } finally {
+                Files.deleteIfExists(pipeline);
+            }
+
+            try (CustomController controller = newSmokeController();
+                    Tasker tasker = new Tasker()) {
+                assertTrue(controller.postConnection().waitFor().succeeded());
+                assertTrue(tasker.bind(resource, controller));
+                assertTrue(tasker.inited());
+                assertNotNull(tasker.resource());
+                assertNotNull(tasker.controller());
+            }
         }
 
         try (Tasker tasker = new Tasker()) {
@@ -108,8 +153,29 @@ class RuntimeSmokeTest {
     }
 
     private static void exerciseCustomController() {
+        try (CustomController controller = newSmokeController()) {
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(controller.connected());
+            assertEquals("java-smoke", controller.uuid());
+
+            assertTrue(controller.setScreenshotUseRawSize(true));
+            MaaImage screen = controller.postScreencap().waitFor().get();
+            assertFalse(screen.isEmpty());
+            assertEquals(1, screen.width());
+            assertEquals(1, screen.height());
+            assertArrayEquals(
+                    new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30}, screen.data());
+            assertEquals(Map.of("type", "custom"), controller.info());
+
+            assertTrue(controller.setScreenshotTargetLongSide(1280));
+            assertTrue(controller.setScreenshotTargetShortSide(720));
+            assertTrue(controller.setScreenshotResizeMethod(1));
+        }
+    }
+
+    private static CustomController newSmokeController() {
         byte[] bgr = new byte[] {(byte) 0x10, (byte) 0x20, (byte) 0x30};
-        CustomController controller = new CustomController() {
+        return new CustomController() {
             @Override
             public boolean connect() {
                 return true;
@@ -185,20 +251,6 @@ class RuntimeSmokeTest {
                 return true;
             }
         };
-
-        try (controller) {
-            assertTrue(controller.postConnection().waitFor().succeeded());
-            assertTrue(controller.connected());
-            assertEquals("java-smoke", controller.uuid());
-
-            assertTrue(controller.setScreenshotUseRawSize(true));
-            MaaImage screen = controller.postScreencap().waitFor().get();
-            assertFalse(screen.isEmpty());
-            assertEquals(1, screen.width());
-            assertEquals(1, screen.height());
-            assertArrayEquals(bgr, screen.data());
-            assertEquals(Map.of("type", "custom"), controller.info());
-        }
     }
 
     private static void exerciseAgentClient() {
