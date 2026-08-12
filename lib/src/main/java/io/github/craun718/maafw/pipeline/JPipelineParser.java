@@ -30,6 +30,27 @@ public final class JPipelineParser {
 
     public static JPipelineData parse(Map<String, Object> data) {
         Objects.requireNonNull(data, "data");
+        return parse(data, null);
+    }
+
+    public static JPipelineData parse(Object data, String nodeName) {
+        if (data instanceof String json) {
+            return parse(json, nodeName);
+        }
+        if (data instanceof Map<?, ?> raw) {
+            Map<String, Object> values = new LinkedHashMap<>();
+            raw.forEach((key, item) -> values.put(String.valueOf(key), item));
+            return parse(values, nodeName);
+        }
+        throw new IllegalArgumentException("Pipeline node must be a JSON object");
+    }
+
+    public static JPipelineData parse(String json, String nodeName) {
+        return parse(MaaJson.parseObject(json), nodeName);
+    }
+
+    private static JPipelineData parse(Map<String, Object> data, String nodeName) {
+        Objects.requireNonNull(data, "data");
 
         JRecognition recognition = null;
         Map<String, Object> recognitionData = map(data.get("recognition"));
@@ -51,13 +72,14 @@ public final class JPipelineParser {
         }
 
         JPipelineData pipeline = new JPipelineData();
+        pipeline.name = nodeName;
         pipeline.recognition = recognition;
         pipeline.action = action;
         pipeline.next = parseNodeAttrList(data.get("next"));
         pipeline.rateLimit = longValue(data.get("rate_limit"), 1000);
         pipeline.timeout = longValue(data.get("timeout"), 20000);
         pipeline.onError = parseNodeAttrList(data.get("on_error"));
-        pipeline.anchor = stringMap(data.get("anchor"));
+        pipeline.anchor = parseAnchor(nodeName, data.get("anchor"));
         pipeline.inverse = booleanValue(data.get("inverse"), false);
         pipeline.enabled = booleanValue(data.get("enabled"), true);
         pipeline.preDelay = longValue(data.get("pre_delay"), 200);
@@ -76,7 +98,7 @@ public final class JPipelineParser {
     public static Map<String, JPipelineData> parseAll(String json) {
         Map<String, Object> root = MaaJson.parseObject(json);
         Map<String, JPipelineData> nodes = new LinkedHashMap<>();
-        root.forEach((name, value) -> nodes.put(name, parse(value)));
+        root.forEach((name, value) -> nodes.put(name, parse(value, name)));
         return nodes;
     }
 
@@ -248,18 +270,18 @@ public final class JPipelineParser {
             }
             case CLICK_KEY -> {
                 JClickKey param = new JClickKey();
-                param.key = requiredIntList(values.get("key"));
+                param.key = requiredKeyList(values);
                 yield param;
             }
             case LONG_PRESS_KEY -> {
                 JLongPressKey param = new JLongPressKey();
-                param.key = requiredIntList(values.get("key"));
+                param.key = requiredKeyList(values);
                 param.duration = longValue(values.get("duration"), param.duration);
                 yield param;
             }
             case KEY_DOWN, KEY_UP -> {
                 JKey param = new JKey();
-                param.key = integer(values.get("key"), param.key);
+                param.key = keyCode(values);
                 yield param;
             }
             case INPUT_TEXT -> {
@@ -352,8 +374,7 @@ public final class JPipelineParser {
         List<JNodeAttr> result = new ArrayList<>(items.size());
         for (Object item : items) {
             if (item instanceof String name) {
-                result.add(new JNodeAttr());
-                result.get(result.size() - 1).name = name;
+                result.add(parseNodeAttrString(name));
                 continue;
             }
             Map<String, Object> values = map(item);
@@ -367,6 +388,26 @@ public final class JPipelineParser {
             result.add(attr);
         }
         return List.copyOf(result);
+    }
+
+    private static JNodeAttr parseNodeAttrString(String raw) {
+        String remaining = raw;
+        JNodeAttr attr = new JNodeAttr();
+        while (remaining.startsWith("[")) {
+            int end = remaining.indexOf(']');
+            if (end < 0) {
+                break;
+            }
+            String prefix = remaining.substring(0, end + 1);
+            if ("[JumpBack]".equals(prefix)) {
+                attr.jumpBack = true;
+            } else if ("[Anchor]".equals(prefix)) {
+                attr.anchor = true;
+            }
+            remaining = remaining.substring(end + 1);
+        }
+        attr.name = remaining;
+        return attr;
     }
 
     public static String toJson(JPipelineData data) {
@@ -499,6 +540,9 @@ public final class JPipelineParser {
     }
 
     private static List<Integer> intList(Object value, List<Integer> fallback) {
+        if (value instanceof Number number) {
+            return List.of(number.intValue());
+        }
         List<Object> items = list(value);
         if (items == null) {
             return fallback;
@@ -516,6 +560,26 @@ public final class JPipelineParser {
             throw new IllegalArgumentException("Missing required int list parameter");
         }
         return result;
+    }
+
+    private static List<Integer> requiredKeyList(Map<String, Object> values) {
+        Object key = values.get("key");
+        if (key == null) {
+            key = values.get("key_code");
+        }
+        List<Integer> result = intList(key, null);
+        if (result == null || result.isEmpty()) {
+            throw new IllegalArgumentException("Missing required key parameter");
+        }
+        return result;
+    }
+
+    private static int keyCode(Map<String, Object> values) {
+        Object key = values.get("key");
+        if (key == null) {
+            key = values.get("key_code");
+        }
+        return integer(key, 0);
     }
 
     private static List<Long> longList(Object value, List<Long> fallback) {
@@ -620,7 +684,22 @@ public final class JPipelineParser {
         return List.copyOf(result);
     }
 
-    private static Map<String, String> stringMap(Object value) {
+    private static Map<String, String> parseAnchor(String nodeName, Object value) {
+        if (value instanceof String anchor) {
+            return nodeName == null ? Map.of() : Map.of(anchor, nodeName);
+        }
+        if (value instanceof List<?> anchors) {
+            if (nodeName == null) {
+                return Map.of();
+            }
+            Map<String, String> result = new LinkedHashMap<>();
+            for (Object item : anchors) {
+                if (item instanceof String anchor) {
+                    result.put(anchor, nodeName);
+                }
+            }
+            return Map.copyOf(result);
+        }
         Map<String, Object> values = map(value);
         if (values == null) {
             return Map.of();

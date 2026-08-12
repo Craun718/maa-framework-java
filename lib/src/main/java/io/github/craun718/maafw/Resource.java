@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /** High-level resource wrapper equivalent to the Python binding's {@code Resource}. */
 public class Resource implements AutoCloseable {
@@ -247,6 +248,12 @@ public class Resource implements AutoCloseable {
                 .MaaResourceRegisterCustomRecognition(handle, name, recognition.callback(), null));
     }
 
+    /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
+    public boolean registerCustomRecognition(String name, Supplier<? extends CustomRecognition> factory) {
+        Objects.requireNonNull(factory, "factory");
+        return registerCustomRecognition(name, factory.get());
+    }
+
     public boolean unregisterCustomRecognition(String name) {
         customRecognitions.remove(name);
         return MaaStringBuffer.toBoolean(
@@ -264,6 +271,12 @@ public class Resource implements AutoCloseable {
         customActions.put(name, action);
         return MaaStringBuffer.toBoolean(
                 MaaLibrary.framework().MaaResourceRegisterCustomAction(handle, name, action.callback(), null));
+    }
+
+    /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
+    public boolean registerCustomAction(String name, Supplier<? extends CustomAction> factory) {
+        Objects.requireNonNull(factory, "factory");
+        return registerCustomAction(name, factory.get());
     }
 
     public boolean unregisterCustomAction(String name) {

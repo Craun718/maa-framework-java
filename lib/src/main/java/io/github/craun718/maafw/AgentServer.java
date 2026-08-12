@@ -3,6 +3,7 @@ package io.github.craun718.maafw;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /** Agent server hosting custom recognitions, actions and event sinks in a separate process. */
 public final class AgentServer {
@@ -21,12 +22,24 @@ public final class AgentServer {
                 .MaaAgentServerRegisterCustomRecognition(name, recognition.callback(), null));
     }
 
+    /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
+    public static boolean registerCustomRecognition(String name, Supplier<? extends CustomRecognition> factory) {
+        Objects.requireNonNull(factory, "factory");
+        return registerCustomRecognition(name, factory.get());
+    }
+
     public static boolean registerCustomAction(String name, CustomAction action) {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(action, "action");
         CUSTOM_ACTIONS.put(name, action);
         return MaaStringBuffer.toBoolean(
                 MaaLibrary.agentServer().MaaAgentServerRegisterCustomAction(name, action.callback(), null));
+    }
+
+    /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
+    public static boolean registerCustomAction(String name, Supplier<? extends CustomAction> factory) {
+        Objects.requireNonNull(factory, "factory");
+        return registerCustomAction(name, factory.get());
     }
 
     public static Long addResourceSink(ResourceEventSink sink) {

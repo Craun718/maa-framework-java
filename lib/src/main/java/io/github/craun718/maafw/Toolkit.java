@@ -46,10 +46,19 @@ public final class Toolkit {
             throw new IllegalStateException("Failed to create ADB device list");
         }
         try {
+            boolean found;
             if (specifiedAdb == null || specifiedAdb.isBlank()) {
-                MaaLibrary.toolkit().MaaToolkitAdbDeviceFind(list);
+                found = MaaStringBuffer.toBoolean(
+                        MaaLibrary.toolkit().MaaToolkitAdbDeviceFind(list));
             } else {
-                MaaLibrary.toolkit().MaaToolkitAdbDeviceFindSpecified(specifiedAdb, list);
+                found = MaaStringBuffer.toBoolean(
+                        MaaLibrary.toolkit().MaaToolkitAdbDeviceFindSpecified(specifiedAdb, list));
+            }
+            if (!found) {
+                throw new IllegalStateException(
+                        specifiedAdb == null || specifiedAdb.isBlank()
+                                ? "Failed to find ADB devices"
+                                : "Failed to find ADB devices with adb: " + specifiedAdb);
             }
 
             long size = MaaLibrary.toolkit().MaaToolkitAdbDeviceListSize(list);
@@ -81,7 +90,9 @@ public final class Toolkit {
             throw new IllegalStateException("Failed to create desktop window list");
         }
         try {
-            MaaLibrary.toolkit().MaaToolkitDesktopWindowFindAll(list);
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitDesktopWindowFindAll(list))) {
+                throw new IllegalStateException("Failed to find desktop windows");
+            }
             long size = MaaLibrary.toolkit().MaaToolkitDesktopWindowListSize(list);
             List<DesktopWindow> windows = new ArrayList<>((int) Math.min(size, Integer.MAX_VALUE));
             for (long i = 0; i < size; i++) {

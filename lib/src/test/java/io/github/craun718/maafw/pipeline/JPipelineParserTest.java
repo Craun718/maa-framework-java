@@ -38,10 +38,10 @@ class JPipelineParserTest {
                       "pressure": 3
                     }
                   },
-                  "next": ["A", {"name": "B", "jump_back": true}],
+                  "next": ["A", {"name": "B", "jump_back": true}, "[JumpBack][Anchor]C"],
                   "rate_limit": 500,
                   "timeout": 1000,
-                  "on_error": ["C"],
+                  "on_error": ["[Anchor]D", "E"],
                   "anchor": {"a": "b"},
                   "inverse": true,
                   "enabled": false,
@@ -81,11 +81,17 @@ class JPipelineParserTest {
         assertEquals(2, click.contact);
         assertEquals(3, click.pressure);
 
-        assertEquals(2, data.next.size());
         assertEquals("A", data.next.getFirst().name);
         assertEquals("B", data.next.get(1).name);
         assertTrue(data.next.get(1).jumpBack);
-        assertEquals("C", data.onError.getFirst().name);
+        assertEquals(3, data.next.size());
+        assertEquals("C", data.next.get(2).name);
+        assertTrue(data.next.get(2).jumpBack);
+        assertTrue(data.next.get(2).anchor);
+        assertEquals(2, data.onError.size());
+        assertEquals("D", data.onError.getFirst().name);
+        assertTrue(data.onError.getFirst().anchor);
+        assertEquals("E", data.onError.get(1).name);
         assertEquals(500, data.rateLimit);
         assertEquals(1000, data.timeout);
         assertEquals(Map.of("a", "b"), data.anchor);
@@ -167,6 +173,51 @@ class JPipelineParserTest {
         assertInstanceOf(
                 JCustomAction.class,
                 parseAction(JActionType.CUSTOM, Map.of("custom_action", "action")));
+    }
+
+    @Test
+    void parsesScalarKeysAndLegacyKeyCode() {
+        JClickKey clickKey = assertInstanceOf(
+                JClickKey.class,
+                parseAction(JActionType.CLICK_KEY, Map.of("key", 27)));
+        assertEquals(List.of(27), clickKey.key);
+
+        JClickKey clickKeyCode = assertInstanceOf(
+                JClickKey.class,
+                parseAction(JActionType.CLICK_KEY, Map.of("key_code", 28)));
+        assertEquals(List.of(28), clickKeyCode.key);
+
+        JLongPressKey longPressKey = assertInstanceOf(
+                JLongPressKey.class,
+                parseAction(JActionType.LONG_PRESS_KEY, Map.of("key_code", 29)));
+        assertEquals(List.of(29), longPressKey.key);
+
+        JKey keyDown = assertInstanceOf(
+                JKey.class,
+                parseAction(JActionType.KEY_DOWN, Map.of("key_code", 30)));
+        assertEquals(30, keyDown.key);
+
+        JKey keyUp = assertInstanceOf(
+                JKey.class,
+                parseAction(JActionType.KEY_UP, Map.of("key_code", 31)));
+        assertEquals(31, keyUp.key);
+    }
+
+    @Test
+    void parseAllNormalizesStringAndListAnchors() {
+        String json =
+                """
+                {
+                  "A": {"anchor": "selfA", "next": ["B"]},
+                  "B": {"anchor": ["selfB", "shared"], "next": []}
+                }
+                """;
+
+        Map<String, JPipelineData> nodes = JPipelineParser.parseAll(json);
+        assertEquals("A", nodes.get("A").name);
+        assertEquals(Map.of("selfA", "A"), nodes.get("A").anchor);
+        assertEquals("B", nodes.get("B").name);
+        assertEquals(Map.of("selfB", "B", "shared", "B"), nodes.get("B").anchor);
     }
 
     @Test

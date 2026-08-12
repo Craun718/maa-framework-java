@@ -63,8 +63,7 @@ public final class JPipeline {
 
     public static JPipeline fromJson(String json) {
         JPipeline pipeline = new JPipeline();
-        Map<String, Object> root = MaaJson.parseObject(json);
-        root.forEach((name, value) -> pipeline.add(name, JPipelineParser.parse(value)));
+        JPipelineParser.parseAll(json).forEach(pipeline::add);
         return pipeline;
     }
 }
