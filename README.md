@@ -74,6 +74,26 @@ MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
 `maafw.maaFrameworkSource` is set, and skips otherwise.
 
+## Completeness and Parity
+
+This binding is tracked against the current MaaFramework headers, documentation, and Python
+binding:
+
+- `check-ffi-surface.sh` verifies every exported name in `MaaFramework`, `MaaToolkit`,
+  `MaaAgentClient`, and `MaaAgentServer`; `MaaControlUnit` is excluded only because those
+  functions ship in separate plugin libraries.
+- The high-level wrappers mirror the Python binding's `Resource`, `Tasker`, `Context`, controller
+  subclasses, `Toolkit`, buffers, event sinks, custom recognition/action/controller callbacks,
+  and `AgentClient`/`AgentServer` APIs.
+- The `pipeline` package parses project interface v2 node JSON into typed recognition and action
+  parameters, including nested `And`/`Or`, `MultiSwipe`, wait-freezes, `focus`, and `attach`
+  values, instead of exposing only raw JSON.
+- `package-official-release.sh` builds distributions with the same `bin/`, controller plugin, and
+  `MaaAgentBinary` scope as official MaaFramework releases.
+
+The Java row in MaaFramework's integration documentation describes an older third-party v3
+binding; this repository targets the current API and covers the surfaces listed above.
+
 ## Runtime Smoke Tests
 
 `RuntimeSmokeTest` exercises the release ABI against a real library directory: version lookup,
