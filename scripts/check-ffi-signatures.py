@@ -8,7 +8,6 @@ import re
 import sys
 from pathlib import Path
 
-
 FORWARD_EXTRAS = {
     "MaaFramework": {"MaaLinuxControllerCreate"},
     "MaaToolkit": {
@@ -55,9 +54,14 @@ MODULES = [
 def main() -> int:
     script_dir = Path(__file__).resolve().parent
     repo_root = script_dir.parent
-    source_root = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("MAA_FRAMEWORK_SOURCE", ""))
+    source_root = Path(
+        sys.argv[1] if len(sys.argv) > 1 else os.environ.get("MAA_FRAMEWORK_SOURCE", "")
+    )
     if not source_root.is_dir():
-        print(f"usage: {Path(__file__).name} <MaaFramework source or release root>", file=sys.stderr)
+        print(
+            f"usage: {Path(__file__).name} <MaaFramework source or release root>",
+            file=sys.stderr,
+        )
         return 2
 
     java_dir = repo_root / "lib/src/main/java/io/github/craun718/maafw"
@@ -68,7 +72,9 @@ def main() -> int:
         expected = c_signatures(source_root / header_rel, aliases, macro)
         actual = java_signatures(java_dir / java_name)
         missing = sorted(expected.keys() - actual.keys())
-        extra = sorted(actual.keys() - expected.keys() - FORWARD_EXTRAS.get(name, set()))
+        extra = sorted(
+            actual.keys() - expected.keys() - FORWARD_EXTRAS.get(name, set())
+        )
         mismatches = [
             f"{fn} expected={expected[fn]} java={actual.get(fn)}"
             for fn in sorted(expected.keys() & actual.keys())
@@ -100,7 +106,9 @@ def main() -> int:
     return 0
 
 
-def c_signatures(header_dir: Path, aliases: dict[str, str], macro: str) -> dict[str, "Signature"]:
+def c_signatures(
+    header_dir: Path, aliases: dict[str, str], macro: str
+) -> dict[str, "Signature"]:
     signatures: dict[str, Signature] = {}
     api_re = re.compile(re.escape(macro) + r"\s*(.*)$", re.S)
     decl_re = re.compile(r"^\s*(.*?)\b(Maa[A-Za-z0-9_]+)\s*\((.*)\)\s*$", re.S)
@@ -163,7 +171,9 @@ def c_typedef_aliases(include_root: Path) -> dict[str, str]:
     aliases: dict[str, str] = {}
     typedef_re = re.compile(r"\btypedef\s+(.*?)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;", re.S)
     for header in sorted(include_root.rglob("*.h")):
-        for match in typedef_re.finditer(remove_comments(header.read_text(encoding="utf-8"))):
+        for match in typedef_re.finditer(
+            remove_comments(header.read_text(encoding="utf-8"))
+        ):
             rhs = normalize(match.group(1))
             lhs = match.group(2)
             if any(token in rhs for token in ("(", "{", "}", "[")):
@@ -176,7 +186,10 @@ def c_param_types(raw: str, aliases: dict[str, str]) -> list[str]:
     raw = normalize(raw)
     if not raw or raw == "void":
         return []
-    return [normalize_c_type(strip_param_name(part), aliases) for part in split_top_level(raw)]
+    return [
+        normalize_c_type(strip_param_name(part), aliases)
+        for part in split_top_level(raw)
+    ]
 
 
 def c_return_types(raw: str, aliases: dict[str, str]) -> list[str]:
@@ -208,7 +221,9 @@ def java_type(raw: str) -> str:
 def normalize_c_type(raw: str, aliases: dict[str, str]) -> str:
     value = normalize(raw.replace("MAA_CALL", " "))
     pointer_count = value.count("*")
-    base = normalize(value.replace("const", " ").replace("volatile", " ").replace("*", " "))
+    base = normalize(
+        value.replace("const", " ").replace("volatile", " ").replace("*", " ")
+    )
     if base == "MaaBool" and pointer_count == 0:
         return "byte"
 
@@ -217,7 +232,9 @@ def normalize_c_type(raw: str, aliases: dict[str, str]) -> str:
         if alias is None:
             break
         pointer_count += alias.count("*")
-        base = normalize(alias.replace("const", " ").replace("volatile", " ").replace("*", " "))
+        base = normalize(
+            alias.replace("const", " ").replace("volatile", " ").replace("*", " ")
+        )
 
     if base == "char" and pointer_count > 0:
         return "text"

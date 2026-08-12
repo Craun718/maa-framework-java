@@ -10,4 +10,11 @@ if [[ -z "${SOURCE_ROOT}" ]]; then
     exit 2
 fi
 
-exec python3 "${SCRIPT_DIR}/check-ffi-signatures.py" "${SOURCE_ROOT}"
+if command -v python3 >/dev/null 2>&1; then
+    exec python3 "${SCRIPT_DIR}/check-ffi-signatures.py" "${SOURCE_ROOT}"
+elif command -v python >/dev/null 2>&1; then
+    exec python "${SCRIPT_DIR}/check-ffi-signatures.py" "${SOURCE_ROOT}"
+else
+    echo "python3 or python is required" >&2
+    exit 1
+fi

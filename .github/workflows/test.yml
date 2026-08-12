@@ -1,0 +1,259 @@
+name: test
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+    paths-ignore:
+      - "README.md"
+      - "README.en.md"
+  pull_request:
+    paths-ignore:
+      - "README.md"
+      - "README.en.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    uses: ./.github/workflows/meta.yml
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Build Library and Examples
+        shell: bash
+        run: ./gradlew :lib:build :examples:compileJava --console=plain
+
+      - name: Stage Java Library
+        shell: bash
+        run: |
+          mkdir -p staging
+          cp lib/build/libs/lib.jar staging/maa-framework-java.jar
+
+      - name: Upload Java Library
+        uses: actions/upload-artifact@v4
+        with:
+          name: maa-framework-java-lib
+          path: staging/maa-framework-java.jar
+          if-no-files-found: error
+
+  test:
+    name: test ${{ matrix.maa_prefix }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            maa_prefix: MAA-linux
+          - os: windows-latest
+            arch: x86_64
+            maa_prefix: MAA-win
+          - os: macos-latest
+            arch: aarch64
+            maa_prefix: MAA-macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Resolve MaaFramework Release
+        id: resolve_maa_release
+        uses: actions/github-script@v9
+        env:
+          TARGET_REPOSITORY: MaaXYZ/MaaFramework
+        with:
+          result-encoding: string
+          script: |
+            const repository = process.env.TARGET_REPOSITORY
+            const [owner, repo] = repository.split('/')
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100,
+            })
+
+            const latestRelease = releases.find(release => !release.draft)
+            if (!latestRelease) {
+              core.setFailed(`No published release found for ${repository}`)
+              return ''
+            }
+
+            core.info(
+              `Resolved MaaFramework release: ${latestRelease.tag_name} (prerelease=${latestRelease.prerelease})`
+            )
+            return latestRelease.tag_name
+
+      - name: Download MaaFramework
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: MaaXYZ/MaaFramework
+          tag: ${{ steps.resolve_maa_release.outputs.result }}
+          fileName: "${{ matrix.maa_prefix }}-${{ matrix.arch }}*"
+          out-file-path: deps
+          extract: true
+
+      - name: Run FFI Surface Check
+        shell: bash
+        run: ./scripts/check-ffi-surface.sh deps
+
+      - name: Run Tests
+        shell: bash
+        env:
+          MAA_FRAMEWORK_LIB_DIR: ${{ github.workspace }}/deps/bin
+        run: ./gradlew :lib:test
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.maa_prefix }}-${{ matrix.arch }}-test-reports
+          path: |
+            lib/build/reports/tests/test
+            lib/build/test-results/test
+          if-no-files-found: warn
+
+  package:
+    name: package ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    needs: [meta, build, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            source_dir: MAA-linux-x86_64
+            maa_file_name: MAA-linux-x86_64*
+          - platform: android-arm64-v8a
+            source_dir: MAA-android-aarch64
+            maa_file_name: MAA-android-aarch64*
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Resolve MaaFramework Release
+        id: resolve_maa_release
+        uses: actions/github-script@v9
+        env:
+          TARGET_REPOSITORY: MaaXYZ/MaaFramework
+        with:
+          result-encoding: string
+          script: |
+            const repository = process.env.TARGET_REPOSITORY
+            const [owner, repo] = repository.split('/')
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100,
+            })
+
+            const latestRelease = releases.find(release => !release.draft)
+            if (!latestRelease) {
+              core.setFailed(`No published release found for ${repository}`)
+              return ''
+            }
+
+            core.info(
+              `Resolved MaaFramework release: ${latestRelease.tag_name} (prerelease=${latestRelease.prerelease})`
+            )
+            return latestRelease.tag_name
+
+      - name: Download MaaFramework
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: MaaXYZ/MaaFramework
+          tag: ${{ steps.resolve_maa_release.outputs.result }}
+          fileName: "${{ matrix.maa_file_name }}"
+          out-file-path: deps
+          extract: true
+
+      - name: Stage Release Directory
+        shell: bash
+        run: |
+          mkdir -p releases
+          mv deps releases/${{ matrix.source_dir }}
+
+      - name: Build Official Release Archive
+        shell: bash
+        env:
+          MAA_FRAMEWORK_VERSION: ${{ needs.meta.outputs.tag }}
+          MAA_FRAMEWORK_RELEASES: ${{ github.workspace }}/releases
+          MAA_FRAMEWORK_OUTPUT_DIR: ${{ github.workspace }}/dist
+        run: ./scripts/package-official-release.sh
+
+      - name: Upload Release Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: maa-framework-java-${{ matrix.platform }}-ci
+          path: dist/*.zip
+
+  release:
+    if: ${{ needs.meta.outputs.is_release == 'true' }}
+    needs: [meta, build, test, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Linux Release Archive
+        uses: actions/download-artifact@v4
+        with:
+          name: maa-framework-java-linux-x86_64-ci
+          path: dist
+
+      - name: Download Android Release Archive
+        uses: actions/download-artifact@v4
+        with:
+          name: maa-framework-java-android-arm64-v8a-ci
+          path: dist
+
+      - name: Download Java Library
+        uses: actions/download-artifact@v4
+        with:
+          name: maa-framework-java-lib
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.meta.outputs.tag }}
+          prerelease: ${{ contains(needs.meta.outputs.tag, '-alpha') || contains(needs.meta.outputs.tag, '-beta') || contains(needs.meta.outputs.tag, '-rc') }}
+          files: |
+            dist/*.zip
+            artifacts/maa-framework-java.jar

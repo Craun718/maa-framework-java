@@ -1195,7 +1195,11 @@ class RuntimeSmokeTest {
                         }
                         """);
 
-                String java = Path.of(System.getProperty("java.home"), "bin", "java").toString();
+                String javaExecutable =
+                        System.getProperty("os.name", "").toLowerCase().contains("win")
+                                ? "java.exe"
+                                : "java";
+                String java = Path.of(System.getProperty("java.home"), "bin", javaExecutable).toString();
                 ProcessBuilder processBuilder = new ProcessBuilder(
                         java,
                         "-cp",

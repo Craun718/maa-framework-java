@@ -37,7 +37,7 @@ PLATFORMS=(
     "macos-x86_64 MAA-macos-x86_64"
     "macos-aarch64 MAA-macos-aarch64"
     "android-x86_64 MAA-android-x86_64"
-    "android-arm64-v8a MAA-android-arm64-v8a"
+    "android-arm64-v8a MAA-android-arm64-v8a MAA-android-aarch64"
 )
 
 packed=0
@@ -51,11 +51,22 @@ cleanup_stage() {
 trap cleanup_stage EXIT
 
 for entry in "${PLATFORMS[@]}"; do
-    read -r platform source_dir <<< "${entry}"
+    read -r platform source_dir alt_source_dir <<< "${entry}"
     source_root="${RELEASES_ROOT}/${source_dir}"
+    if [[ ! -d "${source_root}" && -n "${alt_source_dir:-}" ]]; then
+        source_root="${RELEASES_ROOT}/${alt_source_dir}"
+    fi
     if [[ ! -d "${source_root}" ]]; then
         source_root=""
         for candidate in "${RELEASES_ROOT}"/MAA-${platform}-*; do
+            if [[ -d "${candidate}" ]]; then
+                source_root="${candidate}"
+                break
+            fi
+        done
+    fi
+    if [[ ! -d "${source_root}" && -n "${alt_source_dir:-}" ]]; then
+        for candidate in "${RELEASES_ROOT}"/${alt_source_dir}-*; do
             if [[ -d "${candidate}" ]]; then
                 source_root="${candidate}"
                 break

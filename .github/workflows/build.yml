@@ -1,0 +1,42 @@
+name: build
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build and upload
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Build Library and Examples
+        shell: bash
+        run: ./gradlew :lib:build :examples:compileJava --console=plain
+
+      - name: Stage Build Artifacts
+        shell: bash
+        run: |
+          mkdir -p staging
+          cp lib/build/libs/lib.jar staging/maa-framework-java.jar
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maa-framework-java-${{ github.event_name }}-${{ github.sha }}
+          path: staging/maa-framework-java.jar
+          if-no-files-found: error
