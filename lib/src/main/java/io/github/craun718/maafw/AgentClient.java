@@ -68,8 +68,7 @@ public final class AgentClient implements AutoCloseable {
 
     static int requireValidTcpPort(int port) {
         if (port < 0 || port > 65535) {
-            throw new IllegalArgumentException(
-                    "Invalid port number: " + port + ". Must be between 0 and 65535.");
+            throw new IllegalArgumentException("Invalid port number: " + port + ". Must be between 0 and 65535.");
         }
         return port;
     }
@@ -81,8 +80,7 @@ public final class AgentClient implements AutoCloseable {
     /** Returns the connection identifier, or {@code null} if it is not available. */
     public String identifier() {
         try (MaaStringBuffer buffer = new MaaStringBuffer()) {
-            if (!MaaStringBuffer.toBoolean(
-                    MaaLibrary.agentClient().MaaAgentClientIdentifier(handle, buffer.handle()))) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.agentClient().MaaAgentClientIdentifier(handle, buffer.handle()))) {
                 return null;
             }
             return buffer.getUtf8();
@@ -93,8 +91,7 @@ public final class AgentClient implements AutoCloseable {
     public boolean bind(Resource resource) {
         Objects.requireNonNull(resource, "resource");
         resourceHolder = resource;
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.agentClient().MaaAgentClientBindResource(handle, resource.handle()));
+        return MaaStringBuffer.toBoolean(MaaLibrary.agentClient().MaaAgentClientBindResource(handle, resource.handle()));
     }
 
     /** Registers event forwarding sinks and keeps the instances alive. */
@@ -104,12 +101,9 @@ public final class AgentClient implements AutoCloseable {
         Objects.requireNonNull(tasker, "tasker");
         sinkHolders = List.of(resource, controller, tasker);
 
-        return MaaStringBuffer.toBoolean(
-                        MaaLibrary.agentClient().MaaAgentClientRegisterResourceSink(handle, resource.handle()))
-                && MaaStringBuffer.toBoolean(
-                        MaaLibrary.agentClient().MaaAgentClientRegisterControllerSink(handle, controller.handle()))
-                && MaaStringBuffer.toBoolean(
-                        MaaLibrary.agentClient().MaaAgentClientRegisterTaskerSink(handle, tasker.handle()));
+        return MaaStringBuffer.toBoolean(MaaLibrary.agentClient().MaaAgentClientRegisterResourceSink(handle, resource.handle()))
+            && MaaStringBuffer.toBoolean(MaaLibrary.agentClient().MaaAgentClientRegisterControllerSink(handle, controller.handle()))
+            && MaaStringBuffer.toBoolean(MaaLibrary.agentClient().MaaAgentClientRegisterTaskerSink(handle, tasker.handle()));
     }
 
     public boolean connect() {
@@ -129,22 +123,19 @@ public final class AgentClient implements AutoCloseable {
     }
 
     public boolean setTimeout(long milliseconds) {
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.agentClient().MaaAgentClientSetTimeout(handle, milliseconds));
+        return MaaStringBuffer.toBoolean(MaaLibrary.agentClient().MaaAgentClientSetTimeout(handle, milliseconds));
     }
 
     public List<String> customRecognitionList() {
         try (MaaStringListBuffer buffer = new MaaStringListBuffer()) {
-            MaaStringBuffer.requireOk(MaaLibrary.agentClient()
-                    .MaaAgentClientGetCustomRecognitionList(handle, buffer.handle()));
+            MaaStringBuffer.requireOk(MaaLibrary.agentClient().MaaAgentClientGetCustomRecognitionList(handle, buffer.handle()));
             return buffer.get();
         }
     }
 
     public List<String> customActionList() {
         try (MaaStringListBuffer buffer = new MaaStringListBuffer()) {
-            MaaStringBuffer.requireOk(
-                    MaaLibrary.agentClient().MaaAgentClientGetCustomActionList(handle, buffer.handle()));
+            MaaStringBuffer.requireOk(MaaLibrary.agentClient().MaaAgentClientGetCustomActionList(handle, buffer.handle()));
             return buffer.get();
         }
     }

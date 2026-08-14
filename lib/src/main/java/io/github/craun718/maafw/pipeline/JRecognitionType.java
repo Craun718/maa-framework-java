@@ -5,16 +5,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /** Recognition type names used by pipeline v2 {@code recognition.type}. */
 public enum JRecognitionType {
-    DIRECT_HIT("DirectHit"),
-    TEMPLATE_MATCH("TemplateMatch"),
-    FEATURE_MATCH("FeatureMatch"),
-    COLOR_MATCH("ColorMatch"),
-    OCR("OCR"),
-    NEURAL_NETWORK_CLASSIFY("NeuralNetworkClassify"),
-    NEURAL_NETWORK_DETECT("NeuralNetworkDetect"),
-    AND("And"),
-    OR("Or"),
-    CUSTOM("Custom");
+
+    DIRECT_HIT("DirectHit"), TEMPLATE_MATCH("TemplateMatch"), FEATURE_MATCH("FeatureMatch"), COLOR_MATCH("ColorMatch"), OCR(
+            "OCR"), NEURAL_NETWORK_CLASSIFY(
+                    "NeuralNetworkClassify"), NEURAL_NETWORK_DETECT("NeuralNetworkDetect"), AND("And"), OR("Or"), CUSTOM("Custom");
 
     private final String nativeName;
 

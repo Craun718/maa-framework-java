@@ -52,7 +52,6 @@ public final class MaaImage {
 
     @Override
     public String toString() {
-        return "MaaImage(" + width + "x" + height + ", channels=" + channels + ", type=" + type + ", bytes="
-                + data.length + ")";
+        return "MaaImage(" + width + "x" + height + ", channels=" + channels + ", type=" + type + ", bytes=" + data.length + ")";
     }
 }

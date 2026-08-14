@@ -15,12 +15,7 @@ public final class TaskDetail {
     private final LongFunction<NodeDetail> nodeDetailFunc;
     private List<NodeDetail> nodes;
 
-    public TaskDetail(
-            long taskId,
-            String entry,
-            List<Long> nodeIdList,
-            MaaDef.Status status,
-            LongFunction<NodeDetail> nodeDetailFunc) {
+    public TaskDetail(long taskId, String entry, List<Long> nodeIdList, MaaDef.Status status, LongFunction<NodeDetail> nodeDetailFunc) {
         this.taskId = taskId;
         this.entry = entry;
         this.nodeIdList = List.copyOf(nodeIdList == null ? List.of() : nodeIdList);

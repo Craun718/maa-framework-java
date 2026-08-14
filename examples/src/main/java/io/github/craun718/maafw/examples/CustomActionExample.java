@@ -16,7 +16,8 @@ import java.util.List;
 /** Custom action example. The action-only node deliberately has a zero recognition id. */
 public final class CustomActionExample {
 
-    private CustomActionExample() {}
+    private CustomActionExample() {
+    }
 
     public static void main(String[] args) {
         Path libraryDir = args.length > 0 ? Path.of(args[0]) : Path.of("bin");
@@ -29,14 +30,8 @@ public final class CustomActionExample {
         }
         AdbDevice device = devices.getFirst();
 
-        try (AdbController controller = new AdbController(
-                        device.adbPath(),
-                        device.address(),
-                        device.screencapMethods(),
-                        device.inputMethods(),
-                        device.config());
-                Resource resource = new Resource();
-                Tasker tasker = new Tasker()) {
+        try (AdbController controller = new AdbController(device.adbPath(), device.address(), device.screencapMethods(),
+            device.inputMethods(), device.config()); Resource resource = new Resource(); Tasker tasker = new Tasker()) {
             controller.postConnection().waitFor();
             resource.postBundle(QuickStart.bundlePath("custom-action")).waitFor();
             tasker.bind(resource, controller);

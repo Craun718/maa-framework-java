@@ -8,15 +8,12 @@ import java.util.Map;
 /** Internal helpers for converting MaaFramework JSON detail values into Java values. */
 public final class MaaResultParsers {
 
-    private MaaResultParsers() {}
+    private MaaResultParsers() {
+    }
 
     static MaaRect rect(Object value) {
         if (value instanceof List<?> list && list.size() == 4) {
-            return new MaaRect(
-                    integer(list.get(0)),
-                    integer(list.get(1)),
-                    integer(list.get(2)),
-                    integer(list.get(3)));
+            return new MaaRect(integer(list.get(0)), integer(list.get(1)), integer(list.get(2)), integer(list.get(3)));
         }
         return null;
     }
@@ -32,10 +29,7 @@ public final class MaaResultParsers {
         if (!(value instanceof List<?> list)) {
             return List.of();
         }
-        return list.stream()
-                .map(MaaResultParsers::point)
-                .filter(java.util.Objects::nonNull)
-                .toList();
+        return list.stream().map(MaaResultParsers::point).filter(java.util.Objects::nonNull).toList();
     }
 
     static List<Integer> integerList(Object value) {

@@ -46,7 +46,7 @@ public final class MaaRect {
     }
 
     public int[] toArray() {
-        return new int[] {x, y, width, height};
+        return new int[] { x, y, width, height };
     }
 
     @Override

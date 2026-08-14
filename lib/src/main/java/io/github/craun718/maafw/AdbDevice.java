@@ -13,13 +13,7 @@ public final class AdbDevice {
     private final long inputMethods;
     private final Map<String, Object> config;
 
-    public AdbDevice(
-            String name,
-            Path adbPath,
-            String address,
-            long screencapMethods,
-            long inputMethods,
-            Map<String, Object> config) {
+    public AdbDevice(String name, Path adbPath, String address, long screencapMethods, long inputMethods, Map<String, Object> config) {
         this.name = name;
         this.adbPath = adbPath;
         this.address = address;

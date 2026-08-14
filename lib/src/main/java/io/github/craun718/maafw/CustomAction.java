@@ -12,13 +12,9 @@ import com.sun.jna.Pointer;
  */
 public abstract class CustomAction {
 
-    public record RunArg(
-            TaskDetail taskDetail,
-            String nodeName,
-            String customActionName,
-            String customActionParam,
-            RecognitionDetail recoDetail,
-            MaaRect box) {}
+    public record RunArg(TaskDetail taskDetail, String nodeName, String customActionName, String customActionParam,
+            RecognitionDetail recoDetail, MaaRect box) {
+    }
 
     public record RunResult(boolean success) {
 
@@ -33,7 +29,8 @@ public abstract class CustomAction {
 
     private final MaaCallbacks.CustomActionCallback callback = this::invoke;
 
-    protected CustomAction() {}
+    protected CustomAction() {
+    }
 
     public abstract RunResult run(Context context, RunArg argv);
 
@@ -41,30 +38,21 @@ public abstract class CustomAction {
         return callback;
     }
 
-    private byte invoke(
-            Pointer contextHandle,
-            long taskId,
-            String nodeName,
-            String customActionName,
-            String customActionParam,
-            long recoId,
-            Pointer boxHandle,
-            Pointer transArg) {
+    private byte invoke(Pointer contextHandle, long taskId, String nodeName, String customActionName, String customActionParam, long recoId,
+            Pointer boxHandle, Pointer transArg) {
         try {
             if (contextHandle == null || contextHandle == Pointer.NULL) {
                 return 0;
             }
             Context context = new Context(contextHandle);
             TaskDetail taskDetail = context.tasker().getTaskDetail(taskId);
-            RecognitionDetail recoDetail =
-                    recoId == 0 ? null : context.tasker().getRecognitionDetail(recoId);
+            RecognitionDetail recoDetail = recoId == 0 ? null : context.tasker().getRecognitionDetail(recoId);
             if (taskDetail == null || (recoId != 0 && recoDetail == null)) {
                 return 0;
             }
 
             MaaRect box = new MaaRectBuffer(boxHandle).get();
-            RunResult result =
-                    run(context, new RunArg(taskDetail, nodeName, customActionName, customActionParam, recoDetail, box));
+            RunResult result = run(context, new RunArg(taskDetail, nodeName, customActionName, customActionParam, recoDetail, box));
             return (result == null || result.success()) ? (byte) 1 : (byte) 0;
         } catch (RuntimeException e) {
             return 0;

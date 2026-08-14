@@ -7,7 +7,8 @@ import java.util.List;
 /** Internal helper for normalizing raw and typed next-list entries. */
 final class MaaNextItems {
 
-    private MaaNextItems() {}
+    private MaaNextItems() {
+    }
 
     static List<String> names(List<?> values) {
         if (values == null) {
@@ -20,8 +21,7 @@ final class MaaNextItems {
             } else if (value instanceof JNodeAttr attr) {
                 names.add(attr.formatName());
             } else {
-                throw new IllegalArgumentException(
-                        "Next list items must be String or JNodeAttr");
+                throw new IllegalArgumentException("Next list items must be String or JNodeAttr");
             }
         }
         return List.copyOf(names);

@@ -17,9 +17,8 @@ public final class MaaDef {
     public static final long ADB_SCREENCAP_EMULATOR_EXTRAS = 1L << 6;
     public static final long ADB_SCREENCAP_NONE = 0L;
     public static final long ADB_SCREENCAP_ALL = -1L;
-    public static final long ADB_SCREENCAP_DEFAULT =
-            ADB_SCREENCAP_ALL & ~ADB_SCREENCAP_RAW_BY_NETCAT & ~ADB_SCREENCAP_MINICAP_DIRECT
-                    & ~ADB_SCREENCAP_MINICAP_STREAM;
+    public static final long ADB_SCREENCAP_DEFAULT = ADB_SCREENCAP_ALL & ~ADB_SCREENCAP_RAW_BY_NETCAT & ~ADB_SCREENCAP_MINICAP_DIRECT
+        & ~ADB_SCREENCAP_MINICAP_STREAM;
 
     public static final long ADB_INPUT_ADB_SHELL = 1L;
     public static final long ADB_INPUT_MINITOUCH_AND_ADB_KEY = 1L << 1;
@@ -37,10 +36,8 @@ public final class MaaDef {
     public static final long WIN32_SCREENCAP_PRINT_WINDOW = 1L << 4;
     public static final long WIN32_SCREENCAP_SCREEN_DC = 1L << 5;
     public static final long WIN32_SCREENCAP_ALL = -1L;
-    public static final long WIN32_SCREENCAP_FOREGROUND =
-            WIN32_SCREENCAP_DXGI_DESKTOP_DUP_WINDOW | WIN32_SCREENCAP_SCREEN_DC;
-    public static final long WIN32_SCREENCAP_BACKGROUND =
-            WIN32_SCREENCAP_FRAME_POOL | WIN32_SCREENCAP_PRINT_WINDOW;
+    public static final long WIN32_SCREENCAP_FOREGROUND = WIN32_SCREENCAP_DXGI_DESKTOP_DUP_WINDOW | WIN32_SCREENCAP_SCREEN_DC;
+    public static final long WIN32_SCREENCAP_BACKGROUND = WIN32_SCREENCAP_FRAME_POOL | WIN32_SCREENCAP_PRINT_WINDOW;
 
     public static final long WIN32_INPUT_NONE = 0L;
     public static final long WIN32_INPUT_SEIZE = 1L;
@@ -117,14 +114,12 @@ public final class MaaDef {
     public static final int INFERENCE_EXECUTION_PROVIDER_CORE_ML = 3;
     public static final int INFERENCE_EXECUTION_PROVIDER_CUDA = 4;
 
-    private MaaDef() {}
+    private MaaDef() {
+    }
 
     public enum Status {
-        INVALID(0),
-        PENDING(1000),
-        RUNNING(2000),
-        SUCCEEDED(3000),
-        FAILED(4000);
+
+        INVALID(0), PENDING(1000), RUNNING(2000), SUCCEEDED(3000), FAILED(4000);
 
         private final int code;
 
@@ -167,14 +162,8 @@ public final class MaaDef {
     }
 
     public enum LoggingLevel {
-        OFF(0),
-        FATAL(1),
-        ERROR(2),
-        WARN(3),
-        INFO(4),
-        DEBUG(5),
-        TRACE(6),
-        ALL(7);
+
+        OFF(0), FATAL(1), ERROR(2), WARN(3), INFO(4), DEBUG(5), TRACE(6), ALL(7);
 
         private final int code;
 
@@ -188,14 +177,8 @@ public final class MaaDef {
     }
 
     public enum GlobalOption {
-        INVALID(0),
-        LOG_DIR(1),
-        SAVE_DRAW(2),
-        STDOUT_LEVEL(4),
-        DEBUG_MODE(6),
-        SAVE_ON_ERROR(7),
-        DRAW_QUALITY(8),
-        RECO_IMAGE_CACHE_LIMIT(9);
+
+        INVALID(0), LOG_DIR(1), SAVE_DRAW(2), STDOUT_LEVEL(4), DEBUG_MODE(6), SAVE_ON_ERROR(7), DRAW_QUALITY(8), RECO_IMAGE_CACHE_LIMIT(9);
 
         private final int code;
 
@@ -209,13 +192,9 @@ public final class MaaDef {
     }
 
     public enum CtrlOption {
-        INVALID(0),
-        SCREENSHOT_TARGET_LONG_SIDE(1),
-        SCREENSHOT_TARGET_SHORT_SIDE(2),
-        SCREENSHOT_USE_RAW_SIZE(3),
-        MOUSE_LOCK_FOLLOW(4),
-        SCREENSHOT_RESIZE_METHOD(6),
-        BACKGROUND_MANAGED_KEYS(7);
+
+        INVALID(0), SCREENSHOT_TARGET_LONG_SIDE(1), SCREENSHOT_TARGET_SHORT_SIDE(2), SCREENSHOT_USE_RAW_SIZE(3), MOUSE_LOCK_FOLLOW(
+                4), SCREENSHOT_RESIZE_METHOD(6), BACKGROUND_MANAGED_KEYS(7);
 
         private final int code;
 
@@ -229,9 +208,8 @@ public final class MaaDef {
     }
 
     public enum ResOption {
-        INVALID(0),
-        INFERENCE_DEVICE(1),
-        INFERENCE_EXECUTION_PROVIDER(2);
+
+        INVALID(0), INFERENCE_DEVICE(1), INFERENCE_EXECUTION_PROVIDER(2);
 
         private final int code;
 
@@ -245,8 +223,8 @@ public final class MaaDef {
     }
 
     public enum MacOSPermission {
-        SCREEN_CAPTURE(1),
-        ACCESSIBILITY(2);
+
+        SCREEN_CAPTURE(1), ACCESSIBILITY(2);
 
         private final int code;
 
@@ -260,16 +238,10 @@ public final class MaaDef {
     }
 
     public enum Algorithm {
-        DIRECT_HIT("DirectHit"),
-        TEMPLATE_MATCH("TemplateMatch"),
-        FEATURE_MATCH("FeatureMatch"),
-        COLOR_MATCH("ColorMatch"),
-        OCR("OCR"),
-        NEURAL_NETWORK_CLASSIFY("NeuralNetworkClassify"),
-        NEURAL_NETWORK_DETECT("NeuralNetworkDetect"),
-        AND("And"),
-        OR("Or"),
-        CUSTOM("Custom");
+
+        DIRECT_HIT("DirectHit"), TEMPLATE_MATCH("TemplateMatch"), FEATURE_MATCH("FeatureMatch"), COLOR_MATCH("ColorMatch"), OCR(
+                "OCR"), NEURAL_NETWORK_CLASSIFY(
+                        "NeuralNetworkClassify"), NEURAL_NETWORK_DETECT("NeuralNetworkDetect"), AND("And"), OR("Or"), CUSTOM("Custom");
 
         private final String nativeName;
 
@@ -292,27 +264,12 @@ public final class MaaDef {
     }
 
     public enum Action {
-        DO_NOTHING("DoNothing"),
-        CLICK("Click"),
-        LONG_PRESS("LongPress"),
-        SWIPE("Swipe"),
-        MULTI_SWIPE("MultiSwipe"),
-        CLICK_KEY("ClickKey"),
-        LONG_PRESS_KEY("LongPressKey"),
-        INPUT_TEXT("InputText"),
-        START_APP("StartApp"),
-        STOP_APP("StopApp"),
-        SCROLL("Scroll"),
-        TOUCH_DOWN("TouchDown"),
-        TOUCH_MOVE("TouchMove"),
-        TOUCH_UP("TouchUp"),
-        KEY_DOWN("KeyDown"),
-        KEY_UP("KeyUp"),
-        STOP_TASK("StopTask"),
-        COMMAND("Command"),
-        SHELL("Shell"),
-        SCREENCAP("Screencap"),
-        CUSTOM("Custom");
+
+        DO_NOTHING("DoNothing"), CLICK("Click"), LONG_PRESS("LongPress"), SWIPE("Swipe"), MULTI_SWIPE("MultiSwipe"), CLICK_KEY(
+                "ClickKey"), LONG_PRESS_KEY("LongPressKey"), INPUT_TEXT(
+                        "InputText"), START_APP("StartApp"), STOP_APP("StopApp"), SCROLL("Scroll"), TOUCH_DOWN("TouchDown"), TOUCH_MOVE(
+                                "TouchMove"), TOUCH_UP("TouchUp"), KEY_DOWN("KeyDown"), KEY_UP("KeyUp"), STOP_TASK(
+                                        "StopTask"), COMMAND("Command"), SHELL("Shell"), SCREENCAP("Screencap"), CUSTOM("Custom");
 
         private final String nativeName;
 
@@ -335,10 +292,8 @@ public final class MaaDef {
     }
 
     public enum NotificationType {
-        UNKNOWN,
-        STARTING,
-        SUCCEEDED,
-        FAILED;
+
+        UNKNOWN, STARTING, SUCCEEDED, FAILED;
 
         public static NotificationType of(String message) {
             if (message == null) {

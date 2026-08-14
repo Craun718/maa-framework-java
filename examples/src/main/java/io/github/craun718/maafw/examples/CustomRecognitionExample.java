@@ -19,7 +19,8 @@ import java.util.Map;
 /** Custom recognition example using the context APIs available inside the callback. */
 public final class CustomRecognitionExample {
 
-    private CustomRecognitionExample() {}
+    private CustomRecognitionExample() {
+    }
 
     public static void main(String[] args) {
         Path libraryDir = args.length > 0 ? Path.of(args[0]) : Path.of("bin");
@@ -32,14 +33,8 @@ public final class CustomRecognitionExample {
         }
         AdbDevice device = devices.getFirst();
 
-        try (AdbController controller = new AdbController(
-                        device.adbPath(),
-                        device.address(),
-                        device.screencapMethods(),
-                        device.inputMethods(),
-                        device.config());
-                Resource resource = new Resource();
-                Tasker tasker = new Tasker()) {
+        try (AdbController controller = new AdbController(device.adbPath(), device.address(), device.screencapMethods(),
+            device.inputMethods(), device.config()); Resource resource = new Resource(); Tasker tasker = new Tasker()) {
             controller.postConnection().waitFor();
             resource.postBundle(QuickStart.bundlePath("custom-recognition")).waitFor();
             tasker.bind(resource, controller);
@@ -58,9 +53,7 @@ public final class CustomRecognitionExample {
 
         @Override
         public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
-            RecognitionDetail recoDetail = context.runRecognition(
-                    "MyCustomOCR",
-                    argv.image(),
+            RecognitionDetail recoDetail = context.runRecognition("MyCustomOCR", argv.image(),
                     Map.of("MyCustomOCR", Map.of("recognition", "OCR", "roi", List.of(100, 100, 200, 300))));
             System.out.println(recoDetail);
 

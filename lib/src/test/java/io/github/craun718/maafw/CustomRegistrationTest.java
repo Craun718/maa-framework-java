@@ -11,20 +11,13 @@ class CustomRegistrationTest {
 
     @Test
     void instantiatesCustomRecognitionAndActionClasses() {
-        assertInstanceOf(
-                TestRecognition.class,
-                CustomRegistrations.newInstance(TestRecognition.class, "custom recognition"));
-        assertInstanceOf(
-                TestAction.class,
-                CustomRegistrations.newInstance(TestAction.class, "custom action"));
+        assertInstanceOf(TestRecognition.class, CustomRegistrations.newInstance(TestRecognition.class, "custom recognition"));
+        assertInstanceOf(TestAction.class, CustomRegistrations.newInstance(TestAction.class, "custom action"));
     }
 
     @Test
     void rejectsClassesWithoutNoArgConstructor() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> CustomRegistrations.newInstance(
-                        NoNoArgRecognition.class, "custom recognition"));
+        assertThrows(IllegalArgumentException.class, () -> CustomRegistrations.newInstance(NoNoArgRecognition.class, "custom recognition"));
     }
 
     @Test
@@ -35,15 +28,15 @@ class CustomRegistrationTest {
         assertMethod(AgentServer.class, "registerCustomAction", String.class, Class.class);
     }
 
-    private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes)
-            throws NoSuchMethodException {
+    private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes) throws NoSuchMethodException {
         Method method = owner.getMethod(name, parameterTypes);
         assertNotNull(method);
     }
 
     public static final class TestRecognition extends CustomRecognition {
 
-        public TestRecognition() {}
+        public TestRecognition() {
+        }
 
         @Override
         public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
@@ -53,7 +46,8 @@ class CustomRegistrationTest {
 
     public static final class TestAction extends CustomAction {
 
-        public TestAction() {}
+        public TestAction() {
+        }
 
         @Override
         public RunResult run(Context context, RunArg argv) {
@@ -64,7 +58,8 @@ class CustomRegistrationTest {
     public static final class NoNoArgRecognition extends CustomRecognition {
 
         @SuppressWarnings("unused")
-        private NoNoArgRecognition(int ignored) {}
+        private NoNoArgRecognition(int ignored) {
+        }
 
         @Override
         public AnalyzeResult analyze(Context context, AnalyzeArg argv) {

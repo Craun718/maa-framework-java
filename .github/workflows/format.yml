@@ -1,0 +1,58 @@
+name: format
+
+on:
+  schedule:
+    - cron: "30 20 * * 1-5"
+  pull_request:
+    paths:
+      - ".editorconfig"
+      - ".idea/**"
+      - ".vscode/**"
+      - ".github/workflows/format.yml"
+      - "build.gradle.kts"
+      - "config/**"
+      - "**/*.java"
+  push:
+    branches:
+      - "**"
+    paths:
+      - ".editorconfig"
+      - ".idea/**"
+      - ".vscode/**"
+      - ".github/workflows/format.yml"
+      - "build.gradle.kts"
+      - "config/**"
+      - "**/*.java"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: editorconfig and spotless
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up editorconfig-checker
+        uses: editorconfig-checker/action-editorconfig-checker@v2.2.0
+
+      - name: Run editorconfig-checker
+        shell: bash
+        run: editorconfig-checker
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Spotless Check
+        shell: bash
+        run: ./gradlew spotlessCheck --console=plain

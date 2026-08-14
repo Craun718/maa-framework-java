@@ -51,7 +51,7 @@ public abstract class CustomController extends Controller {
 
     public long getFeatures() {
         return MaaDef.CONTROLLER_FEATURE_USE_MOUSE_DOWN_UP_INSTEAD_OF_CLICK
-                | MaaDef.CONTROLLER_FEATURE_USE_KEYBOARD_DOWN_UP_INSTEAD_OF_CLICK;
+            | MaaDef.CONTROLLER_FEATURE_USE_KEYBOARD_DOWN_UP_INSTEAD_OF_CLICK;
     }
 
     public abstract boolean startApp(String intent);

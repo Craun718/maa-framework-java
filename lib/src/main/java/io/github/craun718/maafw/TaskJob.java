@@ -10,16 +10,13 @@ public class TaskJob extends JobWithResult<TaskDetail> {
 
     @FunctionalInterface
     public interface PipelineOverride {
+
         boolean apply(long taskId, String pipelineJson);
     }
 
     private final PipelineOverride overridePipelineFunc;
 
-    public TaskJob(
-            long jobId,
-            LongFunction<MaaDef.Status> statusFunc,
-            LongConsumer waitFunc,
-            LongFunction<TaskDetail> getFunc,
+    public TaskJob(long jobId, LongFunction<MaaDef.Status> statusFunc, LongConsumer waitFunc, LongFunction<TaskDetail> getFunc,
             PipelineOverride overridePipelineFunc) {
         super(jobId, statusFunc, waitFunc, getFunc);
         this.overridePipelineFunc = Objects.requireNonNull(overridePipelineFunc, "overridePipelineFunc");

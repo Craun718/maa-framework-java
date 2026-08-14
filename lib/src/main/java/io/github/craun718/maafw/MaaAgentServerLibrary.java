@@ -6,15 +6,9 @@ import com.sun.jna.Pointer;
 /** FFI surface of MaaAgentServer dynamic library. */
 public interface MaaAgentServerLibrary extends MaaFrameworkLibrary {
 
-    byte MaaAgentServerRegisterCustomRecognition(
-            String name,
-            MaaCallbacks.CustomRecognitionCallback recognition,
-            Pointer transArg);
+    byte MaaAgentServerRegisterCustomRecognition(String name, MaaCallbacks.CustomRecognitionCallback recognition, Pointer transArg);
 
-    byte MaaAgentServerRegisterCustomAction(
-            String name,
-            MaaCallbacks.CustomActionCallback action,
-            Pointer transArg);
+    byte MaaAgentServerRegisterCustomAction(String name, MaaCallbacks.CustomActionCallback action, Pointer transArg);
 
     long MaaAgentServerAddResourceSink(MaaCallbacks.EventCallback sink, Pointer transArg);
 

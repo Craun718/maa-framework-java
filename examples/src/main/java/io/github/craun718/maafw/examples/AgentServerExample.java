@@ -9,7 +9,8 @@ import java.nio.file.Path;
 /** Agent server example. The identifier must match the AgentClient identifier. */
 public final class AgentServerExample {
 
-    private AgentServerExample() {}
+    private AgentServerExample() {
+    }
 
     public static void main(String[] args) {
         Path libraryDir = args.length > 0 ? Path.of(args[0]) : Path.of("bin");

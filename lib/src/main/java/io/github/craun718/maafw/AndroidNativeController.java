@@ -7,7 +7,6 @@ public class AndroidNativeController extends Controller {
 
     public AndroidNativeController(Map<String, Object> config) {
         super();
-        setHandle(MaaLibrary.framework()
-                .MaaAndroidNativeControllerCreate(MaaJson.write(config == null ? Map.of() : config)));
+        setHandle(MaaLibrary.framework().MaaAndroidNativeControllerCreate(MaaJson.write(config == null ? Map.of() : config)));
     }
 }

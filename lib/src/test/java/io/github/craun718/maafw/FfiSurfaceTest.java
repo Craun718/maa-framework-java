@@ -32,43 +32,18 @@ class FfiSurfaceTest {
     @Test
     void exportedNamesMatchOfficialReleaseHeaders() throws Exception {
         Path sourceRoot = sourceRoot();
-        Assumptions.assumeTrue(
-                sourceRoot != null,
-                "Set MAA_FRAMEWORK_SOURCE or maafw.maaFrameworkSource to run FFI parity test");
+        Assumptions.assumeTrue(sourceRoot != null, "Set MAA_FRAMEWORK_SOURCE or maafw.maaFrameworkSource to run FFI parity test");
         Map<String, String> aliases = cTypedefAliases(sourceRoot.resolve("include"));
 
-        checkSurface(
-                "MaaFramework",
-                sourceRoot.resolve("include/MaaFramework"),
-                MaaFrameworkLibrary.class,
-                "MAA_FRAMEWORK_API",
+        checkSurface("MaaFramework", sourceRoot.resolve("include/MaaFramework"), MaaFrameworkLibrary.class, "MAA_FRAMEWORK_API", aliases);
+        checkSurface("MaaToolkit", sourceRoot.resolve("include/MaaToolkit"), MaaToolkitLibrary.class, "MAA_TOOLKIT_API", aliases);
+        checkSurface("MaaAgentClient", sourceRoot.resolve("include/MaaAgentClient"), MaaAgentClientLibrary.class, "MAA_AGENT_CLIENT_API",
                 aliases);
-        checkSurface(
-                "MaaToolkit",
-                sourceRoot.resolve("include/MaaToolkit"),
-                MaaToolkitLibrary.class,
-                "MAA_TOOLKIT_API",
-                aliases);
-        checkSurface(
-                "MaaAgentClient",
-                sourceRoot.resolve("include/MaaAgentClient"),
-                MaaAgentClientLibrary.class,
-                "MAA_AGENT_CLIENT_API",
-                aliases);
-        checkSurface(
-                "MaaAgentServer",
-                sourceRoot.resolve("include/MaaAgentServer"),
-                MaaAgentServerLibrary.class,
-                "MAA_AGENT_SERVER_API",
+        checkSurface("MaaAgentServer", sourceRoot.resolve("include/MaaAgentServer"), MaaAgentServerLibrary.class, "MAA_AGENT_SERVER_API",
                 aliases);
     }
 
-    private static void checkSurface(
-            String name,
-            Path headerDir,
-            Class<?> javaInterface,
-            String macro,
-            Map<String, String> aliases)
+    private static void checkSurface(String name, Path headerDir, Class<?> javaInterface, String macro, Map<String, String> aliases)
             throws IOException {
         Map<String, Signature> expected = headerSignatures(headerDir, aliases, macro);
         Map<String, Signature> actual = javaSignatures(javaInterface);
@@ -81,52 +56,37 @@ class FfiSurfaceTest {
         unexpected.removeAll(expectedForwardExtras(name));
 
         assertTrue(missing.isEmpty(), name + " FFI surface is missing: " + missing);
-        assertTrue(
-                unexpected.isEmpty(), name + " FFI surface has unexpected extra functions: " + unexpected);
+        assertTrue(unexpected.isEmpty(), name + " FFI surface has unexpected extra functions: " + unexpected);
 
         List<String> signatureMismatches = new ArrayList<>();
         for (String function : expected.keySet()) {
             Signature cSignature = expected.get(function);
             Signature javaSignature = actual.get(function);
             if (javaSignature == null || !cSignature.matches(javaSignature)) {
-                signatureMismatches.add(
-                        function + " expected=" + cSignature + " java=" + javaSignature);
+                signatureMismatches.add(function + " expected=" + cSignature + " java=" + javaSignature);
             }
         }
-        assertTrue(
-                signatureMismatches.isEmpty(),
-                name + " FFI signatures mismatch:\n" + String.join("\n", signatureMismatches));
+        assertTrue(signatureMismatches.isEmpty(), name + " FFI signatures mismatch:\n" + String.join("\n", signatureMismatches));
     }
 
     private static Set<String> expectedForwardExtras(String name) {
         return switch (name) {
             case "MaaFramework" -> Set.of("MaaLinuxControllerCreate");
-            case "MaaToolkit" -> Set.of(
-                    "MaaToolkitPortalHelperCreate",
-                    "MaaToolkitPortalHelperDestroy",
-                    "MaaToolkitPortalHelperGetPersist",
-                    "MaaToolkitPortalHelperGetPipeWireFD",
-                    "MaaToolkitPortalHelperGetPipeWireNodeID",
-                    "MaaToolkitPortalHelperGetRestoreToken",
-                    "MaaToolkitPortalHelperOpenStream",
-                    "MaaToolkitPortalHelperSetPersist",
+            case "MaaToolkit" -> Set.of("MaaToolkitPortalHelperCreate", "MaaToolkitPortalHelperDestroy", "MaaToolkitPortalHelperGetPersist",
+                    "MaaToolkitPortalHelperGetPipeWireFD", "MaaToolkitPortalHelperGetPipeWireNodeID",
+                    "MaaToolkitPortalHelperGetRestoreToken", "MaaToolkitPortalHelperOpenStream", "MaaToolkitPortalHelperSetPersist",
                     "MaaToolkitPortalHelperSetRestoreToken");
             default -> Set.of();
         };
     }
 
-    private static Map<String, Signature> headerSignatures(
-            Path headerDir, Map<String, String> aliases, String macro) throws IOException {
+    private static Map<String, Signature> headerSignatures(Path headerDir, Map<String, String> aliases, String macro) throws IOException {
         Map<String, Signature> signatures = new TreeMap<>();
         Pattern api = Pattern.compile(Pattern.quote(macro) + "\\s*(.*)$", Pattern.DOTALL);
-        Pattern declaration =
-                Pattern.compile("^\\s*(.*?)\\b(Maa[A-Za-z0-9_]+)\\s*\\((.*)\\)\\s*$", Pattern.DOTALL);
+        Pattern declaration = Pattern.compile("^\\s*(.*?)\\b(Maa[A-Za-z0-9_]+)\\s*\\((.*)\\)\\s*$", Pattern.DOTALL);
         List<Path> headers;
         try (Stream<Path> files = Files.walk(headerDir)) {
-            headers = files
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(".h"))
-                    .toList();
+            headers = files.filter(Files::isRegularFile).filter(path -> path.getFileName().toString().endsWith(".h")).toList();
         }
 
         for (Path header : headers) {
@@ -140,16 +100,14 @@ class FfiSurfaceTest {
                 if (!apiMatcher.find()) {
                     continue;
                 }
-                Matcher declarationMatcher =
-                        declaration.matcher(normalizeSpaces(apiMatcher.group(1)));
+                Matcher declarationMatcher = declaration.matcher(normalizeSpaces(apiMatcher.group(1)));
                 if (!declarationMatcher.matches()) {
                     continue;
                 }
                 String returnType = normalizeSpaces(declarationMatcher.group(1));
                 String name = declarationMatcher.group(2);
                 String params = declarationMatcher.group(3);
-                Signature signature = new Signature(
-                        cParamTypes(params, aliases), cReturnTypes(returnType, aliases));
+                Signature signature = new Signature(cParamTypes(params, aliases), cReturnTypes(returnType, aliases));
                 Signature previous = signatures.put(name, signature);
                 assertEquals(null, previous, name + " is declared more than once in C headers");
             }
@@ -236,14 +194,10 @@ class FfiSurfaceTest {
 
     private static Map<String, String> cTypedefAliases(Path includeRoot) throws IOException {
         Map<String, String> aliases = new TreeMap<>();
-        Pattern typedef =
-                Pattern.compile("\\btypedef\\s+(.*?)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*;", Pattern.DOTALL);
+        Pattern typedef = Pattern.compile("\\btypedef\\s+(.*?)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*;", Pattern.DOTALL);
         List<Path> headers;
         try (Stream<Path> files = Files.walk(includeRoot)) {
-            headers = files
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(".h"))
-                    .toList();
+            headers = files.filter(Files::isRegularFile).filter(path -> path.getFileName().toString().endsWith(".h")).toList();
         }
         for (Path header : headers) {
             Matcher matcher = typedef.matcher(removeCComments(Files.readString(header)));
@@ -262,8 +216,7 @@ class FfiSurfaceTest {
     private static String normalizeCType(String raw, Map<String, String> aliases) {
         String type = normalizeSpaces(raw).replace("MAA_CALL", " ");
         int pointerCount = count(type, '*');
-        String base = normalizeSpaces(
-                type.replace("const", " ").replace("volatile", " ").replace("*", " "));
+        String base = normalizeSpaces(type.replace("const", " ").replace("volatile", " ").replace("*", " "));
         if (base.equals("MaaBool") && pointerCount == 0) {
             return "byte";
         }
@@ -274,8 +227,7 @@ class FfiSurfaceTest {
                 break;
             }
             pointerCount += count(alias, '*');
-            base = normalizeSpaces(
-                    alias.replace("const", " ").replace("volatile", " ").replace("*", " "));
+            base = normalizeSpaces(alias.replace("const", " ").replace("volatile", " ").replace("*", " "));
         }
 
         if (base.equals("char") && pointerCount > 0) {

@@ -47,9 +47,7 @@ class RuntimeSmokeTest {
     @Test
     void clientModeLifecycleMatchesReleaseLibrary() throws Exception {
         Path libraryDir = libraryDir();
-        Assumptions.assumeTrue(
-                libraryDir != null,
-                "Set MAA_FRAMEWORK_LIB_DIR or maafw.libDir to run release library smoke tests");
+        Assumptions.assumeTrue(libraryDir != null, "Set MAA_FRAMEWORK_LIB_DIR or maafw.libDir to run release library smoke tests");
 
         MaaLibrary.open(libraryDir, false);
         assertTrue(MaaLibrary.isOpen());
@@ -78,22 +76,19 @@ class RuntimeSmokeTest {
     @Test
     void serverModeLoadsAgentServerLibrary() throws Exception {
         Path libraryDir = libraryDir();
-        Assumptions.assumeTrue(
-                libraryDir != null,
-                "Set MAA_FRAMEWORK_LIB_DIR or maafw.libDir to run release library smoke tests");
+        Assumptions.assumeTrue(libraryDir != null, "Set MAA_FRAMEWORK_LIB_DIR or maafw.libDir to run release library smoke tests");
 
         MaaLibrary.open(libraryDir, true);
         assertTrue(MaaLibrary.isAgentServer());
         assertFalse(MaaLibrary.version().isBlank(), "MaaAgentServer should export MaaVersion");
 
-        assertTrue(AgentServer.registerCustomRecognition(
-                "JavaSmokeReco",
-                new CustomRecognition() {
-                    @Override
-                    public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
-                        return AnalyzeResult.miss();
-                    }
-                }));
+        assertTrue(AgentServer.registerCustomRecognition("JavaSmokeReco", new CustomRecognition() {
+
+            @Override
+            public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                return AnalyzeResult.miss();
+            }
+        }));
     }
 
     private static void exerciseBuffers() {
@@ -187,32 +182,24 @@ class RuntimeSmokeTest {
 
             Path bundleDir = Files.createDirectories(tempDir.resolve("bundle"));
             Path bundlePipeline = Files.createDirectories(bundleDir.resolve("pipeline"));
-            Files.writeString(
-                    bundlePipeline.resolve("smoke.json"),
-                    """
-                            {
-                              "BundleProbe": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              }
-                            }
-                            """);
+            Files.writeString(bundlePipeline.resolve("smoke.json"), """
+                    {
+                      "BundleProbe": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
 
             try (Resource resource = new Resource()) {
-                assertTrue(
-                        resource.postOcrModel(ocrDir).waitFor().succeeded(),
-                        "postOcrModel should accept a lazy OCR model directory");
+                assertTrue(resource.postOcrModel(ocrDir).waitFor().succeeded(), "postOcrModel should accept a lazy OCR model directory");
                 assertTrue(resource.loaded());
 
-                assertTrue(
-                        resource.postImage(imageFile).waitFor().succeeded(),
-                        "postImage should decode a PNG fixture");
+                assertTrue(resource.postImage(imageFile).waitFor().succeeded(), "postImage should decode a PNG fixture");
                 assertTrue(resource.loaded());
 
-                assertTrue(
-                        resource.postBundle(bundleDir).waitFor().succeeded(),
-                        "postBundle should load a pipeline directory");
+                assertTrue(resource.postBundle(bundleDir).waitFor().succeeded(), "postBundle should load a pipeline directory");
                 assertTrue(resource.loaded());
                 assertTrue(resource.nodeList().contains("BundleProbe"));
             }
@@ -224,21 +211,17 @@ class RuntimeSmokeTest {
     private static void exerciseSinkHolderSeparation() throws Exception {
         Path pipeline = Files.createTempFile("maa-java-sink-separation-", ".json");
         try {
-            Files.writeString(
-                    pipeline,
-                    """
-                            {
-                              "SinkProbe": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              }
-                            }
-                            """);
+            Files.writeString(pipeline, """
+                    {
+                      "SinkProbe": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
 
-            try (Resource resource = new Resource();
-                    CustomController controller = newSmokeController();
-                    Tasker tasker = new Tasker()) {
+            try (Resource resource = new Resource(); CustomController controller = newSmokeController(); Tasker tasker = new Tasker()) {
                 assertTrue(controller.postConnection().waitFor().succeeded());
                 assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
                 assertTrue(tasker.bind(resource, controller));
@@ -246,19 +229,17 @@ class RuntimeSmokeTest {
                 AtomicInteger taskerEvents = new AtomicInteger();
                 AtomicInteger contextEvents = new AtomicInteger();
                 Long taskerSinkId = tasker.addSink(new TaskerEventSink() {
+
                     @Override
-                    public void onTaskerTask(
-                            Tasker tasker,
-                            MaaDef.NotificationType notificationType,
+                    public void onTaskerTask(Tasker tasker, MaaDef.NotificationType notificationType,
                             TaskerEventSink.TaskerTaskDetail detail) {
                         taskerEvents.incrementAndGet();
                     }
                 });
                 Long contextSinkId = tasker.addContextSink(new ContextEventSink() {
+
                     @Override
-                    public void onNodeRecognition(
-                            Context context,
-                            MaaDef.NotificationType notificationType,
+                    public void onNodeRecognition(Context context, MaaDef.NotificationType notificationType,
                             ContextEventSink.NodeRecognitionDetail detail) {
                         contextEvents.incrementAndGet();
                     }
@@ -277,17 +258,14 @@ class RuntimeSmokeTest {
                 postSinkProbe(tasker);
                 awaitSinkCounts(taskerEvents, contextEvents, taskerBeforeContextClear + 1, contextBeforeContextClear);
                 waitForStableSinkCounts(taskerEvents, contextEvents);
-                assertEquals(
-                        contextBeforeContextClear,
-                        contextEvents.get(),
+                assertEquals(contextBeforeContextClear, contextEvents.get(),
                         "clearContextSinks must not remove tasker sinks; context sink removal "
-                                + "should be limited to context notifications");
+                            + "should be limited to context notifications");
 
                 Long replacementContextSinkId = tasker.addContextSink(new ContextEventSink() {
+
                     @Override
-                    public void onNodeRecognition(
-                            Context context,
-                            MaaDef.NotificationType notificationType,
+                    public void onNodeRecognition(Context context, MaaDef.NotificationType notificationType,
                             ContextEventSink.NodeRecognitionDetail detail) {
                         contextEvents.incrementAndGet();
                     }
@@ -295,11 +273,7 @@ class RuntimeSmokeTest {
                 assertNotNull(replacementContextSinkId);
 
                 postSinkProbe(tasker);
-                awaitSinkCounts(
-                        taskerEvents,
-                        contextEvents,
-                        taskerBeforeContextClear + 2,
-                        contextBeforeContextClear + 1);
+                awaitSinkCounts(taskerEvents, contextEvents, taskerBeforeContextClear + 2, contextBeforeContextClear + 1);
                 waitForStableSinkCounts(taskerEvents, contextEvents);
 
                 int taskerBeforeClear = taskerEvents.get();
@@ -309,10 +283,7 @@ class RuntimeSmokeTest {
                 postSinkProbe(tasker);
                 awaitSinkCounts(taskerEvents, contextEvents, taskerBeforeClear, contextBeforeClear + 1);
                 waitForStableSinkCounts(taskerEvents, contextEvents);
-                assertEquals(
-                        taskerBeforeClear,
-                        taskerEvents.get(),
-                        "clearSinks must not remove context sinks");
+                assertEquals(taskerBeforeClear, taskerEvents.get(), "clearSinks must not remove context sinks");
             }
         } finally {
             Files.deleteIfExists(pipeline);
@@ -325,8 +296,7 @@ class RuntimeSmokeTest {
         assertTrue(detail.status().succeeded(), "SinkProbe task should succeed");
     }
 
-    private static void awaitSinkCounts(
-            AtomicInteger taskerEvents, AtomicInteger contextEvents, int taskerMinimum, int contextMinimum)
+    private static void awaitSinkCounts(AtomicInteger taskerEvents, AtomicInteger contextEvents, int taskerMinimum, int contextMinimum)
             throws InterruptedException {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
         while (System.nanoTime() < deadline) {
@@ -335,20 +305,11 @@ class RuntimeSmokeTest {
             }
             Thread.sleep(25);
         }
-        assertTrue(
-                false,
-                "sink events not delivered: tasker="
-                        + taskerEvents.get()
-                        + "/"
-                        + taskerMinimum
-                        + " context="
-                        + contextEvents.get()
-                        + "/"
-                        + contextMinimum);
+        assertTrue(false, "sink events not delivered: tasker=" + taskerEvents.get() + "/" + taskerMinimum + " context="
+            + contextEvents.get() + "/" + contextMinimum);
     }
 
-    private static void waitForStableSinkCounts(AtomicInteger taskerEvents, AtomicInteger contextEvents)
-            throws InterruptedException {
+    private static void waitForStableSinkCounts(AtomicInteger taskerEvents, AtomicInteger contextEvents) throws InterruptedException {
         int lastTasker = taskerEvents.get();
         int lastContext = contextEvents.get();
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
@@ -377,73 +338,64 @@ class RuntimeSmokeTest {
             AtomicReference<String> nodeName = new AtomicReference<>("");
             Path pipeline = Files.createTempFile("maa-java-pipeline-", ".json");
             try {
-                assertTrue(resource.registerCustomRecognition(
-                        "JavaContextReco",
-                        new CustomRecognition() {
-                            @Override
-                            public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
-                                Context cloned = context.clone();
-                                nodeName.set(argv.nodeName());
-                                taskerSame.set(
-                                        Pointer.nativeValue(cloned.tasker().handle()) == Pointer
-                                                .nativeValue(context.tasker().handle()));
-                                setAnchorOk.set(context.setAnchor("java-anchor", argv.nodeName()));
-                                anchorGot.set(context.getAnchor("java-anchor"));
-                                boolean checks = taskerSame.get()
-                                        && setAnchorOk.get()
-                                        && argv.nodeName().equals(anchorGot.get());
-                                contextChecksOk.set(checks);
+                assertTrue(resource.registerCustomRecognition("JavaContextReco", new CustomRecognition() {
 
-                                JWaitFreezes wait = new JWaitFreezes();
-                                wait.time = 1;
-                                wait.rateLimit = 1;
-                                wait.timeout = 5000;
-                                waitFreezesOk.set(
-                                        context.waitFreezes(0, MaaRect.of(0, 0, 1, 1), wait));
-                                return AnalyzeResult.hit(MaaRect.of(10, 20, 30, 40));
-                            }
-                        }));
-                assertTrue(resource.registerCustomAction(
-                        "JavaContextAction",
-                        new CustomAction() {
-                            @Override
-                            public RunResult run(Context context, RunArg argv) {
-                                return RunResult.ok();
-                            }
-                        }));
+                    @Override
+                    public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                        Context cloned = context.clone();
+                        nodeName.set(argv.nodeName());
+                        taskerSame.set(Pointer.nativeValue(cloned.tasker().handle()) == Pointer.nativeValue(context.tasker().handle()));
+                        setAnchorOk.set(context.setAnchor("java-anchor", argv.nodeName()));
+                        anchorGot.set(context.getAnchor("java-anchor"));
+                        boolean checks = taskerSame.get() && setAnchorOk.get() && argv.nodeName().equals(anchorGot.get());
+                        contextChecksOk.set(checks);
 
-                Files.writeString(
-                        pipeline,
-                        """
-                                {
-                                  "StartUpAndClickButton": {
-                                    "recognition": {"type": "DirectHit", "param": {}},
-                                    "action": {"type": "DoNothing", "param": {}},
-                                    "next": ["Click_Button"]
-                                  },
-                                  "Click_Button": {
-                                    "recognition": {"type": "OCR", "param": {"expected": ["Button"]}},
-                                    "action": {"type": "Click", "param": {}}
-                                  },
-                                  "SmokeTask": {
-                                    "pre_delay": 500,
-                                    "recognition": {"type": "DirectHit", "param": {}},
-                                    "action": {"type": "Click", "param": {}},
-                                    "next": []
-                                  },
-                                  "ContextSmoke": {
-                                    "recognition": {
-                                      "type": "Custom",
-                                      "param": {"custom_recognition": "JavaContextReco"}
-                                    },
-                                    "action": {
-                                      "type": "Custom",
-                                      "param": {"custom_action": "JavaContextAction"}
-                                    },
-                                    "next": []
-                                  }
-                                }
-                                """);
+                        JWaitFreezes wait = new JWaitFreezes();
+                        wait.time = 1;
+                        wait.rateLimit = 1;
+                        wait.timeout = 5000;
+                        waitFreezesOk.set(context.waitFreezes(0, MaaRect.of(0, 0, 1, 1), wait));
+                        return AnalyzeResult.hit(MaaRect.of(10, 20, 30, 40));
+                    }
+                }));
+                assertTrue(resource.registerCustomAction("JavaContextAction", new CustomAction() {
+
+                    @Override
+                    public RunResult run(Context context, RunArg argv) {
+                        return RunResult.ok();
+                    }
+                }));
+
+                Files.writeString(pipeline, """
+                        {
+                          "StartUpAndClickButton": {
+                            "recognition": {"type": "DirectHit", "param": {}},
+                            "action": {"type": "DoNothing", "param": {}},
+                            "next": ["Click_Button"]
+                          },
+                          "Click_Button": {
+                            "recognition": {"type": "OCR", "param": {"expected": ["Button"]}},
+                            "action": {"type": "Click", "param": {}}
+                          },
+                          "SmokeTask": {
+                            "pre_delay": 500,
+                            "recognition": {"type": "DirectHit", "param": {}},
+                            "action": {"type": "Click", "param": {}},
+                            "next": []
+                          },
+                          "ContextSmoke": {
+                            "recognition": {
+                              "type": "Custom",
+                              "param": {"custom_recognition": "JavaContextReco"}
+                            },
+                            "action": {
+                              "type": "Custom",
+                              "param": {"custom_action": "JavaContextAction"}
+                            },
+                            "next": []
+                          }
+                        }
+                        """);
                 assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
                 assertTrue(resource.loaded());
                 assertTrue(resource.nodeList().contains("StartUpAndClickButton"));
@@ -470,8 +422,7 @@ class RuntimeSmokeTest {
             }
 
             AtomicInteger clickCount = new AtomicInteger();
-            try (CustomController controller = newSmokeController(clickCount);
-                    Tasker tasker = new Tasker()) {
+            try (CustomController controller = newSmokeController(clickCount); Tasker tasker = new Tasker()) {
                 assertTrue(controller.postConnection().waitFor().succeeded());
                 assertTrue(tasker.bind(resource, controller));
                 assertTrue(tasker.inited());
@@ -485,15 +436,8 @@ class RuntimeSmokeTest {
                 assertEquals("SmokeTask", taskDetail.entry());
                 NodeDetail latest = tasker.getLatestNode("SmokeTask");
                 assertNotNull(latest);
-                assertEquals(
-                        1,
-                        clickCount.get(),
-                        "Click action should call the controller; action="
-                                + latest.action()
-                                + " box="
-                                + latest.action().box()
-                                + " result="
-                                + latest.action().result());
+                assertEquals(1, clickCount.get(), "Click action should call the controller; action=" + latest.action() + " box="
+                    + latest.action().box() + " result=" + latest.action().result());
                 assertFalse(tasker.running());
                 assertTrue(latest.completed());
                 assertEquals("Click", latest.action().action());
@@ -506,41 +450,29 @@ class RuntimeSmokeTest {
                 TaskJob contextTask = tasker.postTask("ContextSmoke");
                 TaskDetail contextDetail = contextTask.waitFor().get();
                 assertTrue(contextDetail.status().succeeded(), "Context smoke task should succeed");
-                assertTrue(
-                        contextChecksOk.get(),
-                        "Context.clone/anchor: taskerSame="
-                                + taskerSame.get()
-                                + " setAnchor="
-                                + setAnchorOk.get()
-                                + " node="
-                                + nodeName.get()
-                                + " anchorGot="
-                                + anchorGot.get());
-                assertTrue(
-                        waitFreezesOk.get(),
-                        "Typed JWaitFreezes should be accepted by MaaContextWaitFreezes");
+                assertTrue(contextChecksOk.get(), "Context.clone/anchor: taskerSame=" + taskerSame.get() + " setAnchor=" + setAnchorOk.get()
+                    + " node=" + nodeName.get() + " anchorGot=" + anchorGot.get());
+                assertTrue(waitFreezesOk.get(), "Typed JWaitFreezes should be accepted by MaaContextWaitFreezes");
 
                 assertTrue(resource.unregisterCustomRecognition("JavaContextReco"));
                 assertFalse(resource.customRecognitionList().contains("JavaContextReco"));
                 assertTrue(resource.unregisterCustomAction("JavaContextAction"));
                 assertFalse(resource.customActionList().contains("JavaContextAction"));
 
-                assertTrue(resource.registerCustomRecognition(
-                        "JavaClearReco",
-                        new CustomRecognition() {
-                            @Override
-                            public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
-                                return AnalyzeResult.miss();
-                            }
-                        }));
-                assertTrue(resource.registerCustomAction(
-                        "JavaClearAction",
-                        new CustomAction() {
-                            @Override
-                            public RunResult run(Context context, RunArg argv) {
-                                return RunResult.ok();
-                            }
-                        }));
+                assertTrue(resource.registerCustomRecognition("JavaClearReco", new CustomRecognition() {
+
+                    @Override
+                    public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                        return AnalyzeResult.miss();
+                    }
+                }));
+                assertTrue(resource.registerCustomAction("JavaClearAction", new CustomAction() {
+
+                    @Override
+                    public RunResult run(Context context, RunArg argv) {
+                        return RunResult.ok();
+                    }
+                }));
                 assertTrue(resource.customRecognitionList().contains("JavaClearReco"));
                 assertTrue(resource.customActionList().contains("JavaClearAction"));
                 assertTrue(resource.clearCustomRecognition());
@@ -570,8 +502,7 @@ class RuntimeSmokeTest {
             assertFalse(screen.isEmpty());
             assertEquals(1, screen.width());
             assertEquals(1, screen.height());
-            assertArrayEquals(
-                    new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, screen.data());
+            assertArrayEquals(new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, screen.data());
             assertEquals(Map.of("type", "custom"), controller.info());
 
             assertTrue(controller.setScreenshotTargetLongSide(1280));
@@ -622,71 +553,69 @@ class RuntimeSmokeTest {
     private static void exerciseRuntimeOverrides() throws Exception {
         Path pipeline = Files.createTempFile("maa-java-runtime-overrides-", ".json");
         try {
-            Files.writeString(
-                    pipeline,
-                    """
-                            {
-                              "ResourceTemplateHit": {
-                                "recognition": {
-                                  "type": "TemplateMatch",
-                                  "param": {
-                                    "template": ["JavaResourceTemplate.png"],
-                                    "threshold": 0.9
-                                  }
-                                },
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              },
-                              "ResourceOriginalHit": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              },
-                              "ContextEntry": {
-                                "recognition": {
-                                  "type": "Custom",
-                                  "param": {"custom_recognition": "JavaContextOverrideReco"}
-                                },
-                                "action": {
-                                  "type": "Custom",
-                                  "param": {"custom_action": "JavaContextOverrideAction"}
-                                },
-                                "next": ["ContextOriginalHit"]
-                              },
-                              "ContextOriginalHit": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              },
-                              "ContextTemplateHit": {
-                                "recognition": {
-                                  "type": "TemplateMatch",
-                                  "param": {
-                                    "template": ["JavaRuntimeTemplate.png"],
-                                    "threshold": 0.9
-                                  }
-                                },
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              },
-                              "TaskJobEntry": {
-                                "pre_delay": 1000,
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": ["TaskJobOriginalHit"]
-                              },
-                              "TaskJobOriginalHit": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              },
-                              "TaskJobOverrideHit": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              }
-                            }
-                            """);
+            Files.writeString(pipeline, """
+                    {
+                      "ResourceTemplateHit": {
+                        "recognition": {
+                          "type": "TemplateMatch",
+                          "param": {
+                            "template": ["JavaResourceTemplate.png"],
+                            "threshold": 0.9
+                          }
+                        },
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "ResourceOriginalHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "ContextEntry": {
+                        "recognition": {
+                          "type": "Custom",
+                          "param": {"custom_recognition": "JavaContextOverrideReco"}
+                        },
+                        "action": {
+                          "type": "Custom",
+                          "param": {"custom_action": "JavaContextOverrideAction"}
+                        },
+                        "next": ["ContextOriginalHit"]
+                      },
+                      "ContextOriginalHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "ContextTemplateHit": {
+                        "recognition": {
+                          "type": "TemplateMatch",
+                          "param": {
+                            "template": ["JavaRuntimeTemplate.png"],
+                            "threshold": 0.9
+                          }
+                        },
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "TaskJobEntry": {
+                        "pre_delay": 1000,
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": ["TaskJobOriginalHit"]
+                      },
+                      "TaskJobOriginalHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "TaskJobOverrideHit": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
 
             exerciseResourceOverrides(pipeline);
             exerciseContextOverrides(pipeline);
@@ -695,11 +624,9 @@ class RuntimeSmokeTest {
 
             try (CustomController controller = newRuntimeSmokeController()) {
                 assertTrue(controller.postConnection().waitFor().succeeded());
-                assertFalse(
-                        controller.setBackgroundManagedKeys(List.of(0x12, 0x34)),
+                assertFalse(controller.setBackgroundManagedKeys(List.of(0x12, 0x34)),
                         "Custom controllers do not support Win32 background managed keys");
-                assertFalse(
-                        controller.setBackgroundManagedKeys(List.of()),
+                assertFalse(controller.setBackgroundManagedKeys(List.of()),
                         "Custom controllers do not support Win32 background managed keys");
             }
         } finally {
@@ -719,70 +646,61 @@ class RuntimeSmokeTest {
                 CustomController controller = newSmokeController(clickCount);
                 Tasker tasker = new Tasker()) {
             assertTrue(controller.postConnection().waitFor().succeeded());
-            assertTrue(resource.registerCustomRecognition(
-                    "JavaDirectContextReco",
-                    new CustomRecognition() {
-                        @Override
-                        public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
-                            nestedTask.set(context.runTask("NestedTask", Map.of()));
-                            nestedRecognition.set(
-                                    context.runRecognition("NestedRecognition", gradientBgrImage(8), Map.of()));
-                            RecognitionDetail reco = context.runRecognitionDirect(
-                                    JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(8));
-                            contextRecognition.set(reco);
-                            if (reco != null && reco.hit()) {
-                                contextAction.set(context.runActionDirect(
-                                        JActionType.CLICK, new JClick(), reco.box(), ""));
-                            }
-                            return AnalyzeResult.hit(MaaRect.of(0, 0, 8, 8));
-                        }
-                    }));
-            assertTrue(resource.registerCustomAction(
-                    "JavaDirectContextAction",
-                    new CustomAction() {
-                        @Override
-                        public RunResult run(Context context, RunArg argv) {
-                            String recoDetailJson = argv.recoDetail() == null
-                                            || argv.recoDetail().rawDetailValue() == null
-                                    ? ""
-                                    : MaaJson.write(argv.recoDetail().rawDetailValue());
-                            nestedAction.set(
-                                    context.runAction("NestedAction", argv.box(), recoDetailJson, Map.of()));
-                            return RunResult.ok();
-                        }
-                    }));
+            assertTrue(resource.registerCustomRecognition("JavaDirectContextReco", new CustomRecognition() {
 
-            Files.writeString(
-                    pipeline,
-                    """
-                            {
-                              "DirectContext": {
-                                "recognition": {
-                                  "type": "Custom",
-                                  "param": {"custom_recognition": "JavaDirectContextReco"}
-                                },
-                                "action": {
-                                  "type": "Custom",
-                                  "param": {"custom_action": "JavaDirectContextAction"}
-                                },
-                                "next": []
-                              },
-                              "NestedTask": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "Click", "param": {}},
-                                "next": []
-                              },
-                              "NestedRecognition": {
-                                "recognition": {"type": "DirectHit", "param": {}},
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              },
-                              "NestedAction": {
-                                "action": {"type": "DoNothing", "param": {}},
-                                "next": []
-                              }
-                            }
-                            """);
+                @Override
+                public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                    nestedTask.set(context.runTask("NestedTask", Map.of()));
+                    nestedRecognition.set(context.runRecognition("NestedRecognition", gradientBgrImage(8), Map.of()));
+                    RecognitionDetail reco = context.runRecognitionDirect(JRecognitionType.DIRECT_HIT, new JDirectHit(),
+                            gradientBgrImage(8));
+                    contextRecognition.set(reco);
+                    if (reco != null && reco.hit()) {
+                        contextAction.set(context.runActionDirect(JActionType.CLICK, new JClick(), reco.box(), ""));
+                    }
+                    return AnalyzeResult.hit(MaaRect.of(0, 0, 8, 8));
+                }
+            }));
+            assertTrue(resource.registerCustomAction("JavaDirectContextAction", new CustomAction() {
+
+                @Override
+                public RunResult run(Context context, RunArg argv) {
+                    String recoDetailJson = argv.recoDetail() == null || argv.recoDetail().rawDetailValue() == null ? ""
+                            : MaaJson.write(argv.recoDetail().rawDetailValue());
+                    nestedAction.set(context.runAction("NestedAction", argv.box(), recoDetailJson, Map.of()));
+                    return RunResult.ok();
+                }
+            }));
+
+            Files.writeString(pipeline, """
+                    {
+                      "DirectContext": {
+                        "recognition": {
+                          "type": "Custom",
+                          "param": {"custom_recognition": "JavaDirectContextReco"}
+                        },
+                        "action": {
+                          "type": "Custom",
+                          "param": {"custom_action": "JavaDirectContextAction"}
+                        },
+                        "next": []
+                      },
+                      "NestedTask": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "Click", "param": {}},
+                        "next": []
+                      },
+                      "NestedRecognition": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      },
+                      "NestedAction": {
+                        "action": {"type": "DoNothing", "param": {}},
+                        "next": []
+                      }
+                    }
+                    """);
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
             assertTrue(tasker.bind(resource, controller));
 
@@ -803,8 +721,7 @@ class RuntimeSmokeTest {
             assertNotNull(nestedAction.get(), "Context.runAction should return a detail");
             assertTrue(nestedAction.get().success(), "Nested DoNothing action should succeed");
 
-            TaskJob recoJob = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(),
-                    gradientBgrImage(8));
+            TaskJob recoJob = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(8));
             assertTrue(recoJob.waitFor().succeeded(), "Tasker.postRecognition should succeed");
             TaskDetail recoTask = recoJob.get();
             assertNotNull(recoTask);
@@ -835,9 +752,7 @@ class RuntimeSmokeTest {
     }
 
     private static void exerciseResourceOverrides(Path pipeline) throws Exception {
-        try (Resource resource = new Resource();
-                CustomController controller = newRuntimeSmokeController();
-                Tasker tasker = new Tasker()) {
+        try (Resource resource = new Resource(); CustomController controller = newRuntimeSmokeController(); Tasker tasker = new Tasker()) {
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(controller.setScreenshotUseRawSize(true));
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
@@ -851,16 +766,9 @@ class RuntimeSmokeTest {
 
             TaskJob task = tasker.postTask("ResourceCreatedByOverride");
             TaskDetail detail = task.waitFor().get();
-            assertTrue(
-                    detail.status().succeeded(),
-                    "Resource overrides should make the task succeed; status="
-                            + detail.status()
-                            + " nodes="
-                            + detail.nodes().stream()
-                                    .map(node -> node.name() + "/" + node.completed())
-                                    .toList());
-            assertEquals(
-                    List.of("ResourceCreatedByOverride", "ResourceTemplateHit"),
+            assertTrue(detail.status().succeeded(), "Resource overrides should make the task succeed; status=" + detail.status() + " nodes="
+                + detail.nodes().stream().map(node -> node.name() + "/" + node.completed()).toList());
+            assertEquals(List.of("ResourceCreatedByOverride", "ResourceTemplateHit"),
                     detail.nodes().stream().map(NodeDetail::name).toList());
             assertNull(tasker.getLatestNode("ResourceOriginalHit"));
         }
@@ -869,31 +777,25 @@ class RuntimeSmokeTest {
     private static void exerciseContextOverrides(Path pipeline) throws Exception {
         AtomicBoolean contextNextOverridden = new AtomicBoolean();
         AtomicBoolean contextImageOverridden = new AtomicBoolean();
-        try (Resource resource = new Resource();
-                CustomController controller = newRuntimeSmokeController();
-                Tasker tasker = new Tasker()) {
+        try (Resource resource = new Resource(); CustomController controller = newRuntimeSmokeController(); Tasker tasker = new Tasker()) {
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(controller.setScreenshotUseRawSize(true));
-            assertTrue(resource.registerCustomRecognition(
-                    "JavaContextOverrideReco",
-                    new CustomRecognition() {
-                        @Override
-                        public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
-                            contextNextOverridden.set(
-                                    context.overrideNext("ContextEntry", List.of("ContextTemplateHit")));
-                            contextImageOverridden.set(context.overrideImage(
-                                    "JavaRuntimeTemplate.png", gradientBgrImage(10)));
-                            return AnalyzeResult.hit(MaaRect.of(0, 0, 20, 20));
-                        }
-                    }));
-            assertTrue(resource.registerCustomAction(
-                    "JavaContextOverrideAction",
-                    new CustomAction() {
-                        @Override
-                        public RunResult run(Context context, RunArg argv) {
-                            return RunResult.ok();
-                        }
-                    }));
+            assertTrue(resource.registerCustomRecognition("JavaContextOverrideReco", new CustomRecognition() {
+
+                @Override
+                public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                    contextNextOverridden.set(context.overrideNext("ContextEntry", List.of("ContextTemplateHit")));
+                    contextImageOverridden.set(context.overrideImage("JavaRuntimeTemplate.png", gradientBgrImage(10)));
+                    return AnalyzeResult.hit(MaaRect.of(0, 0, 20, 20));
+                }
+            }));
+            assertTrue(resource.registerCustomAction("JavaContextOverrideAction", new CustomAction() {
+
+                @Override
+                public RunResult run(Context context, RunArg argv) {
+                    return RunResult.ok();
+                }
+            }));
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
             assertTrue(tasker.bind(resource, controller));
 
@@ -902,16 +804,12 @@ class RuntimeSmokeTest {
             assertTrue(detail.status().succeeded(), "Context overrides should make the task succeed");
             assertTrue(contextNextOverridden.get(), "Context.overrideNext should succeed");
             assertTrue(contextImageOverridden.get(), "Context.overrideImage should succeed");
-            assertEquals(
-                    List.of("ContextEntry", "ContextTemplateHit"),
-                    detail.nodes().stream().map(NodeDetail::name).toList());
+            assertEquals(List.of("ContextEntry", "ContextTemplateHit"), detail.nodes().stream().map(NodeDetail::name).toList());
         }
     }
 
     private static void exerciseTaskJobOverride(Path pipeline) throws Exception {
-        try (Resource resource = new Resource();
-                CustomController controller = newRuntimeSmokeController();
-                Tasker tasker = new Tasker()) {
+        try (Resource resource = new Resource(); CustomController controller = newRuntimeSmokeController(); Tasker tasker = new Tasker()) {
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(controller.setScreenshotUseRawSize(true));
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
@@ -922,16 +820,12 @@ class RuntimeSmokeTest {
             assertTrue(tasker.running(), "Task should still be running during the pre-delay override");
             TaskDetail detail = task.waitFor().get();
             assertTrue(detail.status().succeeded(), "TaskJob.overridePipeline should not break the task");
-            assertEquals(
-                    List.of("TaskJobEntry", "TaskJobOverrideHit"),
-                    detail.nodes().stream().map(NodeDetail::name).toList());
+            assertEquals(List.of("TaskJobEntry", "TaskJobOverrideHit"), detail.nodes().stream().map(NodeDetail::name).toList());
         }
     }
 
     private static void exerciseStopOverride(Path pipeline) throws Exception {
-        try (Resource resource = new Resource();
-                CustomController controller = newRuntimeSmokeController();
-                Tasker tasker = new Tasker()) {
+        try (Resource resource = new Resource(); CustomController controller = newRuntimeSmokeController(); Tasker tasker = new Tasker()) {
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(controller.setScreenshotUseRawSize(true));
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
@@ -964,8 +858,7 @@ class RuntimeSmokeTest {
         Path tempDir = Files.createTempDirectory("maa-java-recording-");
         try {
             Path recording = tempDir.resolve("smoke.jsonl");
-            try (CustomController inner = newSmokeController();
-                    RecordController record = new RecordController(inner, recording)) {
+            try (CustomController inner = newSmokeController(); RecordController record = new RecordController(inner, recording)) {
                 assertSame(inner, record.inner());
                 assertTrue(record.postConnection().waitFor().succeeded());
                 assertTrue(record.connected());
@@ -973,14 +866,12 @@ class RuntimeSmokeTest {
 
                 Map<String, Object> recordInfo = record.info();
                 assertEquals(Boolean.TRUE, recordInfo.get("recording"));
-                assertEquals(
-                        recording.toAbsolutePath().normalize(),
+                assertEquals(recording.toAbsolutePath().normalize(),
                         Path.of((String) recordInfo.get("recording_path")).toAbsolutePath().normalize());
 
                 assertTrue(record.setScreenshotUseRawSize(true));
                 MaaImage recorded = record.postScreencap().waitFor().get();
-                assertArrayEquals(
-                        new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, recorded.data());
+                assertArrayEquals(new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, recorded.data());
                 assertTrue(record.postClick(11, 22).waitFor().succeeded());
             }
 
@@ -998,8 +889,7 @@ class RuntimeSmokeTest {
 
                 assertTrue(replay.setScreenshotUseRawSize(true));
                 MaaImage replayed = replay.postScreencap().waitFor().get();
-                assertArrayEquals(
-                        new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, replayed.data());
+                assertArrayEquals(new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 }, replayed.data());
                 assertTrue(replay.postClick(11, 22).waitFor().succeeded());
 
                 Map<String, Object> consumed = replay.info();
@@ -1048,6 +938,7 @@ class RuntimeSmokeTest {
     private static CustomController newSmokeController(AtomicInteger clickCount) {
         byte[] bgr = new byte[] { (byte) 0x10, (byte) 0x20, (byte) 0x30 };
         return new CustomController() {
+
             @Override
             public long getFeatures() {
                 return 0;
@@ -1136,6 +1027,7 @@ class RuntimeSmokeTest {
     private static CustomController newRuntimeSmokeController() {
         MaaImage screen = gradientBgrImage(20);
         return new CustomController() {
+
             @Override
             public long getFeatures() {
                 return 0;
@@ -1225,50 +1117,39 @@ class RuntimeSmokeTest {
             assertTrue(identifier.matches("\\d+"), "TCP identifier should be a port number");
             assertTrue(client.setTimeout(30_000));
 
-            try (Resource resource = new Resource();
-                    CustomController controller = newSmokeController();
-                    Tasker tasker = new Tasker()) {
+            try (Resource resource = new Resource(); CustomController controller = newSmokeController(); Tasker tasker = new Tasker()) {
                 assertTrue(tasker.bind(resource, controller));
                 assertTrue(client.bind(resource));
                 assertTrue(client.registerSink(resource, controller, tasker));
 
                 Path pipeline = Files.createTempFile("maa-java-agent-pipeline-", ".json");
                 Path sinkLog = Files.createTempFile("maa-java-agent-sinks-", ".log");
-                Files.writeString(
-                        pipeline,
-                        """
-                                {
-                                  "AgentEntry": {
-                                    "recognition": {"type": "DirectHit", "param": {}},
-                                    "action": {"type": "DoNothing", "param": {}},
-                                    "next": ["AgentCustom"]
-                                  },
-                                  "AgentCustom": {
-                                    "recognition": {
-                                      "type": "Custom",
-                                      "param": {"custom_recognition": "JavaAgentReco"}
-                                    },
-                                    "action": {
-                                      "type": "Custom",
-                                      "param": {"custom_action": "JavaAgentAction"}
-                                    },
-                                    "next": []
-                                  }
-                                }
-                                """);
+                Files.writeString(pipeline, """
+                        {
+                          "AgentEntry": {
+                            "recognition": {"type": "DirectHit", "param": {}},
+                            "action": {"type": "DoNothing", "param": {}},
+                            "next": ["AgentCustom"]
+                          },
+                          "AgentCustom": {
+                            "recognition": {
+                              "type": "Custom",
+                              "param": {"custom_recognition": "JavaAgentReco"}
+                            },
+                            "action": {
+                              "type": "Custom",
+                              "param": {"custom_action": "JavaAgentAction"}
+                            },
+                            "next": []
+                          }
+                        }
+                        """);
 
-                String javaExecutable = System.getProperty("os.name", "").toLowerCase().contains("win")
-                        ? "java.exe"
-                        : "java";
+                String javaExecutable = System.getProperty("os.name", "").toLowerCase().contains("win") ? "java.exe" : "java";
                 String java = Path.of(System.getProperty("java.home"), "bin", javaExecutable).toString();
-                ProcessBuilder processBuilder = new ProcessBuilder(
-                        java,
-                        "-cp",
-                        System.getProperty("java.class.path"),
-                        "-Dmaafw.libDir=" + libraryDir(),
-                        "-Dmaafw.sinkLog=" + sinkLog,
-                        "io.github.craun718.maafw.AgentServerProcess",
-                        identifier);
+                ProcessBuilder processBuilder = new ProcessBuilder(java, "-cp", System.getProperty("java.class.path"),
+                    "-Dmaafw.libDir=" + libraryDir(), "-Dmaafw.sinkLog=" + sinkLog, "io.github.craun718.maafw.AgentServerProcess",
+                    identifier);
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                 processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
                 Process process = processBuilder.start();
@@ -1313,9 +1194,7 @@ class RuntimeSmokeTest {
 
                     awaitSinkEvents(sinkLog);
                     assertTrue(client.disconnect());
-                    assertTrue(
-                            process.waitFor(30, TimeUnit.SECONDS),
-                            "AgentServer process should exit after disconnect");
+                    assertTrue(process.waitFor(30, TimeUnit.SECONDS), "AgentServer process should exit after disconnect");
                     assertEquals(0, process.exitValue());
                 } finally {
                     client.disconnect();
@@ -1335,19 +1214,15 @@ class RuntimeSmokeTest {
         while (System.nanoTime() < deadline) {
             if (Files.exists(sinkLog)) {
                 content = Files.readString(sinkLog);
-                if (content.contains("resource\t")
-                        && content.contains("controller\t")
-                        && content.contains("tasker\t")
-                        && content.contains("context\t")) {
+                if (content.contains("resource\t") && content.contains("controller\t") && content.contains("tasker\t")
+                    && content.contains("context\t")) {
                     return;
                 }
             }
             Thread.sleep(100);
         }
-        assertTrue(
-                false,
-                "AgentServer did not forward all sink families; log:\n"
-                        + (content == null || content.isBlank() ? "<empty>" : content));
+        assertTrue(false,
+                "AgentServer did not forward all sink families; log:\n" + (content == null || content.isBlank() ? "<empty>" : content));
     }
 
     private static Path libraryDir() {

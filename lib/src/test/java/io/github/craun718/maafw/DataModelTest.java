@@ -21,7 +21,7 @@ class DataModelTest {
 
     @Test
     void imageCopiesBytesAndReportsEmptyState() {
-        byte[] source = {1, 2, 3, 4, 5, 6};
+        byte[] source = { 1, 2, 3, 4, 5, 6 };
         MaaImage image = new MaaImage(source, 2, 1, 3, MaaImage.TYPE_8UC3);
 
         source[0] = 99;
@@ -46,16 +46,16 @@ class DataModelTest {
         assertEquals(20, rect.y());
         assertEquals(30, rect.width());
         assertEquals(40, rect.height());
-        assertArrayEquals(new int[] {10, 20, 30, 40}, rect.toArray());
-        assertArrayEquals(rect.toArray(), MaaRect.from(new int[] {10, 20, 30, 40}).toArray());
-        assertThrows(IllegalArgumentException.class, () -> MaaRect.from(new int[] {1, 2, 3}));
+        assertArrayEquals(new int[] { 10, 20, 30, 40 }, rect.toArray());
+        assertArrayEquals(rect.toArray(), MaaRect.from(new int[] { 10, 20, 30, 40 }).toArray());
+        assertThrows(IllegalArgumentException.class, () -> MaaRect.from(new int[] { 1, 2, 3 }));
 
         MaaPoint point = MaaPoint.of(7, 8);
         assertEquals(7, point.x());
         assertEquals(8, point.y());
-        assertArrayEquals(new int[] {7, 8}, point.toArray());
-        assertArrayEquals(point.toArray(), MaaPoint.from(new int[] {7, 8}).toArray());
-        assertThrows(IllegalArgumentException.class, () -> MaaPoint.from(new int[] {7}));
+        assertArrayEquals(new int[] { 7, 8 }, point.toArray());
+        assertArrayEquals(point.toArray(), MaaPoint.from(new int[] { 7, 8 }).toArray());
+        assertThrows(IllegalArgumentException.class, () -> MaaPoint.from(new int[] { 7 }));
     }
 
     @Test
@@ -128,15 +128,13 @@ class DataModelTest {
 
     @Test
     void actionResultReportsTypeAndTypedAccessors() {
-        ActionResult click = new ActionResult(
-                JActionType.CLICK,
-                MaaJson.parseObject("""
-                        {
-                          "point": [10, 20],
-                          "contact": 3,
-                          "pressure": 50
-                        }
-                        """));
+        ActionResult click = new ActionResult(JActionType.CLICK, MaaJson.parseObject("""
+                {
+                  "point": [10, 20],
+                  "contact": 3,
+                  "pressure": 50
+                }
+                """));
 
         assertEquals(JActionType.CLICK, click.type());
         assertTrue(click.asClick().isPresent());
@@ -144,32 +142,28 @@ class DataModelTest {
         assertEquals(3, click.asClick().orElseThrow().contact());
         assertFalse(click.asSwipe().isPresent());
 
-        ActionResult shell = new ActionResult(
-                JActionType.SHELL,
-                MaaJson.parseObject("""
-                        {
-                          "cmd": "ls",
-                          "shell_timeout": 5000,
-                          "success": true,
-                          "output": "out"
-                        }
-                        """));
+        ActionResult shell = new ActionResult(JActionType.SHELL, MaaJson.parseObject("""
+                {
+                  "cmd": "ls",
+                  "shell_timeout": 5000,
+                  "success": true,
+                  "output": "out"
+                }
+                """));
         assertTrue(shell.asShell().isPresent());
         assertEquals("ls", shell.asShell().orElseThrow().cmd());
         assertEquals(5000L, shell.asShell().orElseThrow().shellTimeout());
         assertTrue(shell.asShell().orElseThrow().success());
         assertEquals("out", shell.asShell().orElseThrow().output());
 
-        ActionResult screencap = new ActionResult(
-                JActionType.SCREENCAP,
-                MaaJson.parseObject("""
-                        {
-                          "filepath": "capture.jpg",
-                          "format": "jpg",
-                          "quality": 85,
-                          "success": true
-                        }
-                        """));
+        ActionResult screencap = new ActionResult(JActionType.SCREENCAP, MaaJson.parseObject("""
+                {
+                  "filepath": "capture.jpg",
+                  "format": "jpg",
+                  "quality": 85,
+                  "success": true
+                }
+                """));
         assertTrue(screencap.asScreencap().isPresent());
         assertEquals("capture.jpg", screencap.filepath());
         assertEquals("jpg", screencap.format());
@@ -179,24 +173,22 @@ class DataModelTest {
 
     @Test
     void actionResultTypedMultiSwipeKeepsNestedSwipeResults() {
-        ActionResult multi = new ActionResult(
-                JActionType.MULTI_SWIPE,
-                MaaJson.parseObject("""
-                        {
-                          "swipes": [
-                            {
-                              "begin": [1, 2],
-                              "end": [[7, 8]],
-                              "end_hold": [50],
-                              "duration": [60],
-                              "only_hover": true,
-                              "starting": 7,
-                              "contact": 1,
-                              "pressure": 200
-                            }
-                          ]
-                        }
-                        """));
+        ActionResult multi = new ActionResult(JActionType.MULTI_SWIPE, MaaJson.parseObject("""
+                {
+                  "swipes": [
+                    {
+                      "begin": [1, 2],
+                      "end": [[7, 8]],
+                      "end_hold": [50],
+                      "duration": [60],
+                      "only_hover": true,
+                      "starting": 7,
+                      "contact": 1,
+                      "pressure": 200
+                    }
+                  ]
+                }
+                """));
 
         assertTrue(multi.asMultiSwipe().isPresent());
         List<ActionResult.SwipeActionResult> swipes = multi.asMultiSwipe().orElseThrow().swipes();
@@ -237,76 +229,54 @@ class DataModelTest {
 
     @Test
     void recognitionResultReportsAlgorithmAndTypedAccessors() {
-        RecognitionResult template = new RecognitionResult(
-                JRecognitionType.TEMPLATE_MATCH,
-                MaaJson.parseObject("""
-                        {
-                          "box": [10, 20, 30, 40],
-                          "score": 0.95
-                        }
-                        """));
+        RecognitionResult template = new RecognitionResult(JRecognitionType.TEMPLATE_MATCH, MaaJson.parseObject("""
+                {
+                  "box": [10, 20, 30, 40],
+                  "score": 0.95
+                }
+                """));
         assertEquals(JRecognitionType.TEMPLATE_MATCH, template.type());
         assertTrue(template.asTemplateMatch().isPresent());
         assertEquals(MaaRect.of(10, 20, 30, 40), template.asTemplateMatch().orElseThrow().box());
         assertEquals(0.95, template.asTemplateMatch().orElseThrow().score());
         assertFalse(template.asOCR().isPresent());
 
-        RecognitionResult ocr = new RecognitionResult(
-                JRecognitionType.OCR,
-                MaaJson.parseObject("""
-                        {
-                          "box": [1, 2, 3, 4],
-                          "score": 0.8,
-                          "text": "Start"
-                        }
-                        """));
+        RecognitionResult ocr = new RecognitionResult(JRecognitionType.OCR, MaaJson.parseObject("""
+                {
+                  "box": [1, 2, 3, 4],
+                  "score": 0.8,
+                  "text": "Start"
+                }
+                """));
         assertTrue(ocr.asOCR().isPresent());
         assertEquals("Start", ocr.asOCR().orElseThrow().text());
 
-        RecognitionResult classify = new RecognitionResult(
-                JRecognitionType.NEURAL_NETWORK_CLASSIFY,
-                MaaJson.parseObject("""
-                        {
-                          "box": [1, 2, 3, 4],
-                          "score": 0.7,
-                          "cls_index": 3,
-                          "label": "button"
-                        }
-                        """));
+        RecognitionResult classify = new RecognitionResult(JRecognitionType.NEURAL_NETWORK_CLASSIFY, MaaJson.parseObject("""
+                {
+                  "box": [1, 2, 3, 4],
+                  "score": 0.7,
+                  "cls_index": 3,
+                  "label": "button"
+                }
+                """));
         assertTrue(classify.asNeuralNetworkClassify().isPresent());
         assertEquals(3, classify.asNeuralNetworkClassify().orElseThrow().clsIndex());
         assertEquals("button", classify.asNeuralNetworkClassify().orElseThrow().label());
 
-        RecognitionResult custom = new RecognitionResult(
-                JRecognitionType.CUSTOM,
-                MaaJson.parseObject("""
-                        {
-                          "box": [1, 2, 3, 4],
-                          "detail": {"confidence": 0.9}
-                        }
-                        """));
+        RecognitionResult custom = new RecognitionResult(JRecognitionType.CUSTOM, MaaJson.parseObject("""
+                {
+                  "box": [1, 2, 3, 4],
+                  "detail": {"confidence": 0.9}
+                }
+                """));
         assertTrue(custom.asCustom().isPresent());
-        assertEquals(
-                0.9,
-                ((Number) ((Map<?, ?>) custom.asCustom().orElseThrow().detail())
-                                .get("confidence"))
-                        .doubleValue());
+        assertEquals(0.9, ((Number) ((Map<?, ?>) custom.asCustom().orElseThrow().detail()).get("confidence")).doubleValue());
     }
 
     @Test
     void recognitionResultTypesAndOrSubResults() {
-        RecognitionDetail sub = new RecognitionDetail(
-                7L,
-                "Sub",
-                "OCR",
-                true,
-                MaaRect.of(1, 2, 3, 4),
-                List.of(),
-                List.of(),
-                null,
-                Map.of(),
-                MaaImage.empty(),
-                List.of());
+        RecognitionDetail sub = new RecognitionDetail(7L, "Sub", "OCR", true, MaaRect.of(1, 2, 3, 4), List.of(), List.of(), null, Map.of(),
+            MaaImage.empty(), List.of());
         List<RecognitionDetail> subResults = List.of(sub);
 
         RecognitionResult and = new RecognitionResult(JRecognitionType.AND, Map.of(), subResults);
@@ -326,21 +296,11 @@ class DataModelTest {
         List<MaaImage> draws = new ArrayList<>();
         Object rawValue = List.of("And", Map.of("node", "A"), Map.of("node", "B"));
 
-        RecognitionDetail detail = new RecognitionDetail(
-                11L,
-                "Reco",
-                "And",
-                true,
-                MaaRect.of(1, 2, 3, 4),
-                all,
-                null,
-                null,
-                rawValue,
-                MaaImage.empty(),
-                draws);
+        RecognitionDetail detail = new RecognitionDetail(11L, "Reco", "And", true, MaaRect.of(1, 2, 3, 4), all, null, null, rawValue,
+            MaaImage.empty(), draws);
 
         all.add(new RecognitionResult(Map.of()));
-        draws.add(new MaaImage(new byte[] {1}, 1, 1, 1, 0));
+        draws.add(new MaaImage(new byte[] { 1 }, 1, 1, 1, 0));
 
         assertEquals(List.of(), detail.allResults());
         assertEquals(List.of(), detail.drawImages());
@@ -354,15 +314,10 @@ class DataModelTest {
     @Test
     void taskDetailLoadsAndCachesNodes() {
         AtomicInteger loads = new AtomicInteger();
-        TaskDetail detail = new TaskDetail(
-                9L,
-                "Main",
-                new ArrayList<>(List.of(1L, 2L)),
-                MaaDef.Status.SUCCEEDED,
-                nodeId -> {
-                    loads.incrementAndGet();
-                    return new NodeDetail(nodeId, "Node-" + nodeId, null, null, true);
-                });
+        TaskDetail detail = new TaskDetail(9L, "Main", new ArrayList<>(List.of(1L, 2L)), MaaDef.Status.SUCCEEDED, nodeId -> {
+            loads.incrementAndGet();
+            return new NodeDetail(nodeId, "Node-" + nodeId, null, null, true);
+        });
 
         List<NodeDetail> first = detail.nodes();
         List<NodeDetail> second = detail.nodes();
@@ -379,34 +334,30 @@ class DataModelTest {
     @Test
     void contextSinkParsesNodeWaitFreezesDetails() {
         class Sink extends ContextEventSink {
+
             ContextEventSink.NodeWaitFreezesDetail detail;
 
             @Override
-            public void onNodeWaitFreezes(
-                    Context context,
-                    MaaDef.NotificationType notificationType,
+            public void onNodeWaitFreezes(Context context, MaaDef.NotificationType notificationType,
                     ContextEventSink.NodeWaitFreezesDetail detail) {
                 this.detail = detail;
             }
         }
 
         Sink sink = new Sink();
-        sink.onRawNotification(
-                new Pointer(0),
-                "Node.WaitFreezes.Succeeded",
-                MaaJson.parseObject("""
-                        {
-                          "task_id": 4,
-                          "wf_id": 5,
-                          "name": "Wait",
-                          "phase": "Post",
-                          "roi": [1, 2, 30, 40],
-                          "param": {"target": 200},
-                          "reco_ids": [7, 8],
-                          "elapsed": 321,
-                          "focus": "F"
-                        }
-                        """));
+        sink.onRawNotification(new Pointer(0), "Node.WaitFreezes.Succeeded", MaaJson.parseObject("""
+                {
+                  "task_id": 4,
+                  "wf_id": 5,
+                  "name": "Wait",
+                  "phase": "Post",
+                  "roi": [1, 2, 30, 40],
+                  "param": {"target": 200},
+                  "reco_ids": [7, 8],
+                  "elapsed": 321,
+                  "focus": "F"
+                }
+                """));
 
         assertEquals(4L, sink.detail.taskId());
         assertEquals(5L, sink.detail.wfId());

@@ -30,17 +30,13 @@ public final class MaaRectBuffer implements AutoCloseable {
     }
 
     public MaaRect get() {
-        return new MaaRect(
-                MaaLibrary.framework().MaaRectGetX(handle),
-                MaaLibrary.framework().MaaRectGetY(handle),
-                MaaLibrary.framework().MaaRectGetW(handle),
-                MaaLibrary.framework().MaaRectGetH(handle));
+        return new MaaRect(MaaLibrary.framework().MaaRectGetX(handle), MaaLibrary.framework().MaaRectGetY(handle),
+            MaaLibrary.framework().MaaRectGetW(handle), MaaLibrary.framework().MaaRectGetH(handle));
     }
 
     public void set(MaaRect rect) {
         Objects.requireNonNull(rect, "rect");
-        MaaStringBuffer.requireOk(MaaLibrary.framework()
-                .MaaRectSet(handle, rect.x(), rect.y(), rect.width(), rect.height()));
+        MaaStringBuffer.requireOk(MaaLibrary.framework().MaaRectSet(handle, rect.x(), rect.y(), rect.width(), rect.height()));
     }
 
     @Override

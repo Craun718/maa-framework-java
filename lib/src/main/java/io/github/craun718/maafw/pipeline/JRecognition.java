@@ -116,8 +116,7 @@ public final class JRecognition {
                 raw.forEach((key, value) -> values.put(String.valueOf(key), value));
                 result.add(JPipelineParser.parseSubRecognitionItem(values));
             } else {
-                throw new IllegalArgumentException(
-                        "Sub-recognition item must be a node name, inline recognition, or typed item");
+                throw new IllegalArgumentException("Sub-recognition item must be a node name, inline recognition, or typed item");
             }
         }
         return List.copyOf(result);

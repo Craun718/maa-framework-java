@@ -52,9 +52,7 @@ public class Controller implements AutoCloseable {
     }
 
     public Job postSwipe(int x1, int y1, int x2, int y2, int duration, int contact, int pressure) {
-        return job(
-                MaaLibrary.framework()
-                        .MaaControllerPostSwipeV2(handle, x1, y1, x2, y2, duration, contact, pressure));
+        return job(MaaLibrary.framework().MaaControllerPostSwipeV2(handle, x1, y1, x2, y2, duration, contact, pressure));
     }
 
     @Deprecated
@@ -171,8 +169,7 @@ public class Controller implements AutoCloseable {
     public MaaPoint resolution() {
         IntByReference width = new IntByReference();
         IntByReference height = new IntByReference();
-        if (!MaaStringBuffer.toBoolean(
-                MaaLibrary.framework().MaaControllerGetResolution(handle, width, height))) {
+        if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaControllerGetResolution(handle, width, height))) {
             return new MaaPoint(0, 0);
         }
         return new MaaPoint(width.getValue(), height.getValue());
@@ -187,12 +184,8 @@ public class Controller implements AutoCloseable {
             for (int i = 0; i < keys.size(); i++) {
                 memory.setInt((long) i * Integer.BYTES, keys.get(i));
             }
-            return MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaControllerSetOption(
-                            handle,
-                            MaaDef.CtrlOption.BACKGROUND_MANAGED_KEYS.code(),
-                            memory,
-                            (long) keys.size() * Integer.BYTES));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaControllerSetOption(handle,
+                    MaaDef.CtrlOption.BACKGROUND_MANAGED_KEYS.code(), memory, (long) keys.size() * Integer.BYTES));
         }
     }
 
@@ -266,16 +259,14 @@ public class Controller implements AutoCloseable {
     private boolean setIntOption(MaaDef.CtrlOption option, int value) {
         try (Memory memory = new Memory(Integer.BYTES)) {
             memory.setInt(0, value);
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaControllerSetOption(handle, option.code(), memory, Integer.BYTES));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaControllerSetOption(handle, option.code(), memory, Integer.BYTES));
         }
     }
 
     private boolean setBooleanOption(MaaDef.CtrlOption option, boolean value) {
         try (Memory memory = new Memory(1)) {
             memory.setByte(0, (byte) (value ? 1 : 0));
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaControllerSetOption(handle, option.code(), memory, 1));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaControllerSetOption(handle, option.code(), memory, 1));
         }
     }
 }

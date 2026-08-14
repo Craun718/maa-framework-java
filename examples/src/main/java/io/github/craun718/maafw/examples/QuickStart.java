@@ -15,7 +15,8 @@ import java.util.List;
 /** Minimal ADB quick-start example, equivalent to the official Python/Go samples. */
 public final class QuickStart {
 
-    private QuickStart() {}
+    private QuickStart() {
+    }
 
     public static void main(String[] args) {
         Path libraryDir = args.length > 0 ? Path.of(args[0]) : Path.of("bin");
@@ -28,14 +29,8 @@ public final class QuickStart {
         }
         AdbDevice device = devices.getFirst();
 
-        try (AdbController controller = new AdbController(
-                        device.adbPath(),
-                        device.address(),
-                        device.screencapMethods(),
-                        device.inputMethods(),
-                        device.config());
-                Resource resource = new Resource();
-                Tasker tasker = new Tasker()) {
+        try (AdbController controller = new AdbController(device.adbPath(), device.address(), device.screencapMethods(),
+            device.inputMethods(), device.config()); Resource resource = new Resource(); Tasker tasker = new Tasker()) {
             controller.postConnection().waitFor();
             resource.postBundle(bundlePath("quick-start")).waitFor();
             tasker.bind(resource, controller);

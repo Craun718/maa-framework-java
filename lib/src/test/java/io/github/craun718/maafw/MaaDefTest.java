@@ -64,11 +64,8 @@ class MaaDefTest {
         assertEquals(1L << 6, MaaDef.ADB_SCREENCAP_EMULATOR_EXTRAS);
         assertEquals(0L, MaaDef.ADB_SCREENCAP_NONE);
         assertEquals(-1L, MaaDef.ADB_SCREENCAP_ALL);
-        assertEquals(
-                MaaDef.ADB_SCREENCAP_ALL & ~MaaDef.ADB_SCREENCAP_RAW_BY_NETCAT
-                        & ~MaaDef.ADB_SCREENCAP_MINICAP_DIRECT
-                        & ~MaaDef.ADB_SCREENCAP_MINICAP_STREAM,
-                MaaDef.ADB_SCREENCAP_DEFAULT);
+        assertEquals(MaaDef.ADB_SCREENCAP_ALL & ~MaaDef.ADB_SCREENCAP_RAW_BY_NETCAT & ~MaaDef.ADB_SCREENCAP_MINICAP_DIRECT
+            & ~MaaDef.ADB_SCREENCAP_MINICAP_STREAM, MaaDef.ADB_SCREENCAP_DEFAULT);
 
         assertEquals(1L, MaaDef.ADB_INPUT_ADB_SHELL);
         assertEquals(1L << 1, MaaDef.ADB_INPUT_MINITOUCH_AND_ADB_KEY);
@@ -89,12 +86,8 @@ class MaaDefTest {
         assertEquals(1L << 4, MaaDef.WIN32_SCREENCAP_PRINT_WINDOW);
         assertEquals(1L << 5, MaaDef.WIN32_SCREENCAP_SCREEN_DC);
         assertEquals(-1L, MaaDef.WIN32_SCREENCAP_ALL);
-        assertEquals(
-                MaaDef.WIN32_SCREENCAP_DXGI_DESKTOP_DUP_WINDOW | MaaDef.WIN32_SCREENCAP_SCREEN_DC,
-                MaaDef.WIN32_SCREENCAP_FOREGROUND);
-        assertEquals(
-                MaaDef.WIN32_SCREENCAP_FRAME_POOL | MaaDef.WIN32_SCREENCAP_PRINT_WINDOW,
-                MaaDef.WIN32_SCREENCAP_BACKGROUND);
+        assertEquals(MaaDef.WIN32_SCREENCAP_DXGI_DESKTOP_DUP_WINDOW | MaaDef.WIN32_SCREENCAP_SCREEN_DC, MaaDef.WIN32_SCREENCAP_FOREGROUND);
+        assertEquals(MaaDef.WIN32_SCREENCAP_FRAME_POOL | MaaDef.WIN32_SCREENCAP_PRINT_WINDOW, MaaDef.WIN32_SCREENCAP_BACKGROUND);
 
         assertEquals(0L, MaaDef.WIN32_INPUT_NONE);
         assertEquals(1L, MaaDef.WIN32_INPUT_SEIZE);

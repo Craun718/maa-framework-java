@@ -10,7 +10,6 @@ public class WlRootsController extends Controller {
 
     public WlRootsController(String wlrSocketPath, boolean useWin32VkCode) {
         super();
-        setHandle(MaaLibrary.framework()
-                .MaaWlRootsControllerCreate(wlrSocketPath, (byte) (useWin32VkCode ? 1 : 0)));
+        setHandle(MaaLibrary.framework().MaaWlRootsControllerCreate(wlrSocketPath, (byte) (useWin32VkCode ? 1 : 0)));
     }
 }

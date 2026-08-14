@@ -34,7 +34,7 @@ public final class MaaPoint {
     }
 
     public int[] toArray() {
-        return new int[] {x, y};
+        return new int[] { x, y };
     }
 
     @Override

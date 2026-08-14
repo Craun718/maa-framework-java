@@ -10,8 +10,6 @@ public class KWinController extends Controller {
 
     public KWinController(String deviceNode, int screenWidth, int screenHeight, boolean useWin32VkCode) {
         super();
-        setHandle(MaaLibrary.framework()
-                .MaaKWinControllerCreate(
-                        deviceNode, screenWidth, screenHeight, (byte) (useWin32VkCode ? 1 : 0)));
+        setHandle(MaaLibrary.framework().MaaKWinControllerCreate(deviceNode, screenWidth, screenHeight, (byte) (useWin32VkCode ? 1 : 0)));
     }
 }

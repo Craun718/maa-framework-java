@@ -53,7 +53,7 @@ public class Tasker implements AutoCloseable {
         resourceHolder = resource;
         controllerHolder = controller;
         return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerBindResource(handle, resource.handle()))
-                && MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerBindController(handle, controller.handle()));
+            && MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerBindController(handle, controller.handle()));
     }
 
     public Resource resource() {
@@ -81,33 +81,25 @@ public class Tasker implements AutoCloseable {
     }
 
     public TaskJob postTask(String entry, Map<String, Object> pipelineOverride) {
-        return postTask(
-                entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+        return postTask(entry, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
     public TaskJob postTask(String entry, String pipelineOverride) {
-        long taskId = MaaLibrary.framework()
-                .MaaTaskerPostTask(
-                        handle, entry, MaaJson.objectJsonOrEmpty(pipelineOverride));
+        long taskId = MaaLibrary.framework().MaaTaskerPostTask(handle, entry, MaaJson.objectJsonOrEmpty(pipelineOverride));
         return taskJob(taskId);
     }
 
     public TaskJob postRecognition(JRecognitionType recoType, JRecognitionParam recoParam, MaaImage image) {
         Objects.requireNonNull(recoType, "recoType");
         Objects.requireNonNull(recoParam, "recoParam");
-        return postRecognition(
-                recoType.nativeName(), MaaJson.parseObject(MaaJson.write(recoParam)), image);
+        return postRecognition(recoType.nativeName(), MaaJson.parseObject(MaaJson.write(recoParam)), image);
     }
 
     public TaskJob postRecognition(String recoType, Map<String, Object> recoParam, MaaImage image) {
         try (MaaImageBuffer imageBuffer = new MaaImageBuffer()) {
             imageBuffer.set(image);
-            long taskId = MaaLibrary.framework()
-                    .MaaTaskerPostRecognition(
-                            handle,
-                            recoType,
-                            MaaJson.write(recoParam == null ? Map.of() : recoParam),
-                            imageBuffer.handle());
+            long taskId = MaaLibrary.framework().MaaTaskerPostRecognition(handle, recoType,
+                    MaaJson.write(recoParam == null ? Map.of() : recoParam), imageBuffer.handle());
             return taskJob(taskId);
         }
     }
@@ -120,28 +112,17 @@ public class Tasker implements AutoCloseable {
         return postAction(actionType, actionParam, box, "");
     }
 
-    public TaskJob postAction(
-            JActionType actionType, JActionParam actionParam, MaaRect box, String recoDetail) {
+    public TaskJob postAction(JActionType actionType, JActionParam actionParam, MaaRect box, String recoDetail) {
         Objects.requireNonNull(actionType, "actionType");
         Objects.requireNonNull(actionParam, "actionParam");
-        return postAction(
-                actionType.nativeName(),
-                MaaJson.parseObject(MaaJson.write(actionParam)),
-                box,
-                recoDetail);
+        return postAction(actionType.nativeName(), MaaJson.parseObject(MaaJson.write(actionParam)), box, recoDetail);
     }
 
-    public TaskJob postAction(
-            String actionType, Map<String, Object> actionParam, MaaRect box, String recoDetail) {
+    public TaskJob postAction(String actionType, Map<String, Object> actionParam, MaaRect box, String recoDetail) {
         try (MaaRectBuffer rectBuffer = new MaaRectBuffer()) {
             rectBuffer.set(box == null ? MaaRect.of(0, 0, 0, 0) : box);
-            long taskId = MaaLibrary.framework()
-                    .MaaTaskerPostAction(
-                            handle,
-                            actionType,
-                            MaaJson.write(actionParam == null ? Map.of() : actionParam),
-                            rectBuffer.handle(),
-                            recoDetail == null ? "" : recoDetail);
+            long taskId = MaaLibrary.framework().MaaTaskerPostAction(handle, actionType,
+                    MaaJson.write(actionParam == null ? Map.of() : actionParam), rectBuffer.handle(), recoDetail == null ? "" : recoDetail);
             return taskJob(taskId);
         }
     }
@@ -173,14 +154,12 @@ public class Tasker implements AutoCloseable {
     }
 
     public boolean overridePipeline(long taskId, String pipelineOverride) {
-        return MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                .MaaTaskerOverridePipeline(
-                        handle, taskId, MaaJson.objectJsonOrEmpty(pipelineOverride)));
+        return MaaStringBuffer
+                .toBoolean(MaaLibrary.framework().MaaTaskerOverridePipeline(handle, taskId, MaaJson.objectJsonOrEmpty(pipelineOverride)));
     }
 
     public boolean overridePipeline(long taskId, Map<String, Object> pipelineOverride) {
-        return overridePipeline(
-                taskId, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+        return overridePipeline(taskId, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
     public RecognitionDetail getRecognitionDetail(long recoId) {
@@ -191,35 +170,16 @@ public class Tasker implements AutoCloseable {
                 MaaImageBuffer raw = new MaaImageBuffer();
                 MaaImageListBuffer draws = new MaaImageListBuffer()) {
             ByteByReference hit = new ByteByReference();
-            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaTaskerGetRecognitionDetail(
-                            handle,
-                            recoId,
-                            name.handle(),
-                            algorithm.handle(),
-                            hit,
-                            box.handle(),
-                            detailJson.handle(),
-                            raw.handle(),
-                            draws.handle()))) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerGetRecognitionDetail(handle, recoId, name.handle(),
+                    algorithm.handle(), hit, box.handle(), detailJson.handle(), raw.handle(), draws.handle()))) {
                 return null;
             }
 
             String algorithmName = algorithm.getUtf8();
             Object rawDetailValue = MaaJson.parse(detailJson.get());
             ParsedRecognition parsed = parseRecognition(algorithmName, rawDetailValue);
-            return new RecognitionDetail(
-                    recoId,
-                    name.getUtf8(),
-                    algorithmName,
-                    hit.getValue() != 0,
-                    hit.getValue() != 0 ? box.get() : null,
-                    parsed.allResults(),
-                    parsed.filteredResults(),
-                    parsed.bestResult(),
-                    rawDetailValue,
-                    raw.get(),
-                    draws.get());
+            return new RecognitionDetail(recoId, name.getUtf8(), algorithmName, hit.getValue() != 0, hit.getValue() != 0 ? box.get() : null,
+                parsed.allResults(), parsed.filteredResults(), parsed.bestResult(), rawDetailValue, raw.get(), draws.get());
         }
     }
 
@@ -229,28 +189,13 @@ public class Tasker implements AutoCloseable {
                 MaaRectBuffer box = new MaaRectBuffer();
                 MaaStringBuffer detailJson = new MaaStringBuffer()) {
             ByteByReference success = new ByteByReference();
-            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaTaskerGetActionDetail(
-                            handle,
-                            actionId,
-                            name.handle(),
-                            action.handle(),
-                            box.handle(),
-                            success,
-                            detailJson.handle()))) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerGetActionDetail(handle, actionId, name.handle(), action.handle(),
+                    box.handle(), success, detailJson.handle()))) {
                 return null;
             }
             Map<String, Object> rawDetail = MaaJson.parseObjectOrEmpty(detailJson.get());
-            return new ActionDetail(
-                    actionId,
-                    name.getUtf8(),
-                    action.getUtf8(),
-                    box.get(),
-                    success.getValue() != 0,
-                    rawDetail.isEmpty()
-                            ? null
-                            : new ActionResult(parseActionType(action.getUtf8()), rawDetail),
-                    rawDetail);
+            return new ActionDetail(actionId, name.getUtf8(), action.getUtf8(), box.get(), success.getValue() != 0,
+                rawDetail.isEmpty() ? null : new ActionResult(parseActionType(action.getUtf8()), rawDetail), rawDetail);
         }
     }
 
@@ -261,17 +206,8 @@ public class Tasker implements AutoCloseable {
             ByteByReference success = new ByteByReference();
             LongByReference elapsedMs = new LongByReference();
             LongByReference size = new LongByReference();
-            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaTaskerGetWaitFreezesDetail(
-                            handle,
-                            wfId,
-                            name.handle(),
-                            phase.handle(),
-                            success,
-                            elapsedMs,
-                            null,
-                            size,
-                            roi.handle()))) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerGetWaitFreezesDetail(handle, wfId, name.handle(), phase.handle(),
+                    success, elapsedMs, null, size, roi.handle()))) {
                 return null;
             }
 
@@ -279,17 +215,8 @@ public class Tasker implements AutoCloseable {
             List<Long> recoIds = new ArrayList<>((int) Math.min(count, Integer.MAX_VALUE));
             if (count > 0) {
                 try (Memory ids = new Memory(count * Long.BYTES)) {
-                    if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                            .MaaTaskerGetWaitFreezesDetail(
-                                    handle,
-                                    wfId,
-                                    name.handle(),
-                                    phase.handle(),
-                                    success,
-                                    elapsedMs,
-                                    ids,
-                                    size,
-                                    roi.handle()))) {
+                    if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerGetWaitFreezesDetail(handle, wfId, name.handle(),
+                            phase.handle(), success, elapsedMs, ids, size, roi.handle()))) {
                         return null;
                     }
                     long[] values = ids.getLongArray(0, Math.toIntExact(count));
@@ -299,14 +226,8 @@ public class Tasker implements AutoCloseable {
                 }
             }
 
-            return new WaitFreezesDetail(
-                    wfId,
-                    name.getUtf8(),
-                    phase.getUtf8(),
-                    success.getValue() != 0,
-                    elapsedMs.getValue(),
-                    recoIds,
-                    roi.get());
+            return new WaitFreezesDetail(wfId, name.getUtf8(), phase.getUtf8(), success.getValue() != 0, elapsedMs.getValue(), recoIds,
+                roi.get());
         }
     }
 
@@ -315,17 +236,12 @@ public class Tasker implements AutoCloseable {
             LongByReference recoId = new LongByReference();
             LongByReference actionId = new LongByReference();
             ByteByReference completed = new ByteByReference();
-            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaTaskerGetNodeDetail(
-                            handle, nodeId, name.handle(), recoId, actionId, completed))) {
+            if (!MaaStringBuffer
+                    .toBoolean(MaaLibrary.framework().MaaTaskerGetNodeDetail(handle, nodeId, name.handle(), recoId, actionId, completed))) {
                 return null;
             }
-            return new NodeDetail(
-                    nodeId,
-                    name.getUtf8(),
-                    recoId.getValue() == 0 ? null : getRecognitionDetail(recoId.getValue()),
-                    actionId.getValue() == 0 ? null : getActionDetail(actionId.getValue()),
-                    completed.getValue() != 0);
+            return new NodeDetail(nodeId, name.getUtf8(), recoId.getValue() == 0 ? null : getRecognitionDetail(recoId.getValue()),
+                actionId.getValue() == 0 ? null : getActionDetail(actionId.getValue()), completed.getValue() != 0);
         }
     }
 
@@ -333,8 +249,8 @@ public class Tasker implements AutoCloseable {
         try (MaaStringBuffer entry = new MaaStringBuffer()) {
             LongByReference size = new LongByReference();
             IntByReference status = new IntByReference();
-            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaTaskerGetTaskDetail(handle, taskId, entry.handle(), null, size, status))) {
+            if (!MaaStringBuffer
+                    .toBoolean(MaaLibrary.framework().MaaTaskerGetTaskDetail(handle, taskId, entry.handle(), null, size, status))) {
                 return null;
             }
 
@@ -342,8 +258,8 @@ public class Tasker implements AutoCloseable {
             List<Long> nodeIds = new ArrayList<>((int) Math.min(count, Integer.MAX_VALUE));
             if (count > 0) {
                 try (Memory ids = new Memory(count * Long.BYTES)) {
-                    if (!MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                            .MaaTaskerGetTaskDetail(handle, taskId, entry.handle(), ids, size, status))) {
+                    if (!MaaStringBuffer
+                            .toBoolean(MaaLibrary.framework().MaaTaskerGetTaskDetail(handle, taskId, entry.handle(), ids, size, status))) {
                         return null;
                     }
                     long[] values = ids.getLongArray(0, Math.toIntExact(count));
@@ -353,8 +269,7 @@ public class Tasker implements AutoCloseable {
                 }
             }
 
-            return new TaskDetail(
-                    taskId, entry.getUtf8(), nodeIds, MaaDef.Status.of(status.getValue()), this::getNodeDetail);
+            return new TaskDetail(taskId, entry.getUtf8(), nodeIds, MaaDef.Status.of(status.getValue()), this::getNodeDetail);
         }
     }
 
@@ -448,8 +363,7 @@ public class Tasker implements AutoCloseable {
     }
 
     private boolean overridePipelineJson(long taskId, String pipelineJson) {
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.framework().MaaTaskerOverridePipeline(handle, taskId, pipelineJson));
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerOverridePipeline(handle, taskId, pipelineJson));
     }
 
     private MaaDef.Status status(long id) {
@@ -490,8 +404,7 @@ public class Tasker implements AutoCloseable {
         Map<String, Object> rawDetail = objectMap(rawMap);
         List<RecognitionResult> all = parseResultList(type, rawDetail.get("all"));
         List<RecognitionResult> filtered = parseResultList(type, rawDetail.get("filtered"));
-        RecognitionResult best = rawDetail.get("best") instanceof Map<?, ?> bestMap
-                ? new RecognitionResult(type, objectMap(bestMap))
+        RecognitionResult best = rawDetail.get("best") instanceof Map<?, ?> bestMap ? new RecognitionResult(type, objectMap(bestMap))
                 : null;
         return new ParsedRecognition(all, filtered, best);
     }
@@ -534,8 +447,7 @@ public class Tasker implements AutoCloseable {
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
         try (Memory memory = new Memory(bytes.length)) {
             memory.write(0, bytes, 0, bytes.length);
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, bytes.length));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, bytes.length));
         }
     }
 
@@ -549,8 +461,7 @@ public class Tasker implements AutoCloseable {
     private static boolean setGlobalIntOption(MaaDef.GlobalOption option, int value) {
         try (Memory memory = new Memory(Integer.BYTES)) {
             memory.setInt(0, value);
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Integer.BYTES));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Integer.BYTES));
         }
     }
 
@@ -561,8 +472,7 @@ public class Tasker implements AutoCloseable {
         if (Native.POINTER_SIZE == Long.BYTES) {
             try (Memory memory = new Memory(Long.BYTES)) {
                 memory.setLong(0, value);
-                return MaaStringBuffer.toBoolean(
-                        MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Long.BYTES));
+                return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Long.BYTES));
             }
         }
         if (value > 0xFFFF_FFFFL) {
@@ -570,13 +480,11 @@ public class Tasker implements AutoCloseable {
         }
         try (Memory memory = new Memory(Integer.BYTES)) {
             memory.setInt(0, (int) value);
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Integer.BYTES));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalSetOption(option.code(), memory, Integer.BYTES));
         }
     }
 
-    private record ParsedRecognition(
-            List<RecognitionResult> allResults,
-            List<RecognitionResult> filteredResults,
-            RecognitionResult bestResult) {}
+    private record ParsedRecognition(List<RecognitionResult> allResults, List<RecognitionResult> filteredResults,
+            RecognitionResult bestResult) {
+    }
 }

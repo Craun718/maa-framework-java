@@ -9,10 +9,13 @@ import java.util.Map;
 public final class MaaJson {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
-    private static final TypeReference<Object> ANY_TYPE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
+    };
+    private static final TypeReference<Object> ANY_TYPE = new TypeReference<>() {
+    };
 
-    private MaaJson() {}
+    private MaaJson() {
+    }
 
     public static String write(Object value) {
         try {
@@ -35,7 +38,8 @@ public final class MaaJson {
 
     public static List<Map<String, Object>> parseObjectList(String json) {
         try {
-            return MAPPER.readValue(json, new TypeReference<>() {});
+            return MAPPER.readValue(json, new TypeReference<>() {
+            });
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse JSON object list", e);
         }

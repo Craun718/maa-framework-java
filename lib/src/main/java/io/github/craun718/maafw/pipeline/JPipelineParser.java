@@ -10,7 +10,8 @@ import java.util.Objects;
 /** Converts pipeline v2 node JSON into typed pipeline models. */
 public final class JPipelineParser {
 
-    private JPipelineParser() {}
+    private JPipelineParser() {
+    }
 
     public static JPipelineData parse(String json) {
         return parse(MaaJson.parseObject(json));
@@ -58,8 +59,7 @@ public final class JPipelineParser {
             recognition = new JRecognition();
             String recognitionTypeName = string(recognitionData.get("type"));
             recognition.type = JRecognitionType.of(recognitionTypeName);
-            recognition.param = parseRecognitionParam(
-                    recognition.type, mapOrEmpty(recognitionData.get("param")));
+            recognition.param = parseRecognitionParam(recognition.type, mapOrEmpty(recognitionData.get("param")));
         }
 
         JAction action = null;
@@ -102,8 +102,7 @@ public final class JPipelineParser {
         return nodes;
     }
 
-    public static JRecognitionParam parseRecognitionParam(
-            JRecognitionType type, Map<String, Object> data) {
+    public static JRecognitionParam parseRecognitionParam(JRecognitionType type, Map<String, Object> data) {
         if (type == null) {
             throw new IllegalArgumentException("Recognition type is null");
         }
@@ -666,8 +665,7 @@ public final class JPipelineParser {
         return List.copyOf(items);
     }
 
-    static List<JSubRecognitionItem> subRecognitionList(
-            Object value, List<JSubRecognitionItem> fallback) {
+    static List<JSubRecognitionItem> subRecognitionList(Object value, List<JSubRecognitionItem> fallback) {
         if (value == null) {
             return fallback;
         }

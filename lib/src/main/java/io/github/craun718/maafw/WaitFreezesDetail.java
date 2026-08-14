@@ -13,14 +13,7 @@ public final class WaitFreezesDetail {
     private final List<Long> recoIdList;
     private final MaaRect roi;
 
-    public WaitFreezesDetail(
-            long wfId,
-            String name,
-            String phase,
-            boolean success,
-            long elapsedMs,
-            List<Long> recoIdList,
-            MaaRect roi) {
+    public WaitFreezesDetail(long wfId, String name, String phase, boolean success, long elapsedMs, List<Long> recoIdList, MaaRect roi) {
         this.wfId = wfId;
         this.name = name;
         this.phase = phase;

@@ -33,16 +33,12 @@ public final class ActionResult {
     }
 
     public Optional<LongPressActionResult> asLongPress() {
-        return typed(
-                JActionType.LONG_PRESS,
-                () -> new LongPressActionResult(point(), duration(), contact(), pressure()));
+        return typed(JActionType.LONG_PRESS, () -> new LongPressActionResult(point(), duration(), contact(), pressure()));
     }
 
     public Optional<SwipeActionResult> asSwipe() {
-        return typed(
-                JActionType.SWIPE,
-                () -> new SwipeActionResult(
-                        begin(), end(), endHold(), durations(), onlyHover(), starting(), contact(), pressure()));
+        return typed(JActionType.SWIPE,
+                () -> new SwipeActionResult(begin(), end(), endHold(), durations(), onlyHover(), starting(), contact(), pressure()));
     }
 
     public Optional<MultiSwipeActionResult> asMultiSwipe() {
@@ -50,18 +46,14 @@ public final class ActionResult {
     }
 
     public Optional<ClickKeyActionResult> asClickKey() {
-        if (type != JActionType.CLICK_KEY
-                && type != JActionType.KEY_DOWN
-                && type != JActionType.KEY_UP) {
+        if (type != JActionType.CLICK_KEY && type != JActionType.KEY_DOWN && type != JActionType.KEY_UP) {
             return Optional.empty();
         }
         return Optional.of(new ClickKeyActionResult(keycodes()));
     }
 
     public Optional<LongPressKeyActionResult> asLongPressKey() {
-        return typed(
-                JActionType.LONG_PRESS_KEY,
-                () -> new LongPressKeyActionResult(keycodes(), duration()));
+        return typed(JActionType.LONG_PRESS_KEY, () -> new LongPressKeyActionResult(keycodes(), duration()));
     }
 
     public Optional<InputTextActionResult> asInputText() {
@@ -80,24 +72,18 @@ public final class ActionResult {
     }
 
     public Optional<TouchActionResult> asTouch() {
-        if (type != JActionType.TOUCH_DOWN
-                && type != JActionType.TOUCH_MOVE
-                && type != JActionType.TOUCH_UP) {
+        if (type != JActionType.TOUCH_DOWN && type != JActionType.TOUCH_MOVE && type != JActionType.TOUCH_UP) {
             return Optional.empty();
         }
         return Optional.of(new TouchActionResult(contact(), point(), pressure()));
     }
 
     public Optional<ShellActionResult> asShell() {
-        return typed(
-                JActionType.SHELL,
-                () -> new ShellActionResult(cmd(), shellTimeout(), success(), output()));
+        return typed(JActionType.SHELL, () -> new ShellActionResult(cmd(), shellTimeout(), success(), output()));
     }
 
     public Optional<ScreencapActionResult> asScreencap() {
-        return typed(
-                JActionType.SCREENCAP,
-                () -> new ScreencapActionResult(filepath(), format(), quality(), success()));
+        return typed(JActionType.SCREENCAP, () -> new ScreencapActionResult(filepath(), format(), quality(), success()));
     }
 
     /** Returns the typed value for the reported action type, or {@code null} for unknown types. */
@@ -216,22 +202,15 @@ public final class ActionResult {
         if (!(value instanceof List<?> list)) {
             return List.of();
         }
-        return list.stream()
-                .filter(item -> item instanceof Map<?, ?>)
-                .map(item -> {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> typed = (Map<String, Object>) item;
-                    return new ActionResult(JActionType.SWIPE, typed);
-                })
-                .toList();
+        return list.stream().filter(item -> item instanceof Map<?, ?>).map(item -> {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typed = (Map<String, Object>) item;
+            return new ActionResult(JActionType.SWIPE, typed);
+        }).toList();
     }
 
     public List<SwipeActionResult> swipeResults() {
-        return swipes().stream()
-                .map(ActionResult::asSwipe)
-                .filter(Optional::isPresent)
-                .map(Optional::orElseThrow)
-                .toList();
+        return swipes().stream().map(ActionResult::asSwipe).filter(Optional::isPresent).map(Optional::orElseThrow).toList();
     }
 
     private <T> Optional<T> typed(JActionType expected, java.util.function.Supplier<T> supplier) {
@@ -246,35 +225,40 @@ public final class ActionResult {
         return "ActionResult" + raw;
     }
 
-    public record ClickActionResult(MaaPoint point, Integer contact, Integer pressure) {}
+    public record ClickActionResult(MaaPoint point, Integer contact, Integer pressure) {
+    }
 
-    public record LongPressActionResult(MaaPoint point, Integer duration, Integer contact, Integer pressure) {}
+    public record LongPressActionResult(MaaPoint point, Integer duration, Integer contact, Integer pressure) {
+    }
 
-    public record SwipeActionResult(
-            MaaPoint begin,
-            List<MaaPoint> end,
-            List<Integer> endHold,
-            List<Integer> durations,
-            Boolean onlyHover,
-            Integer starting,
-            Integer contact,
-            Integer pressure) {}
+    public record SwipeActionResult(MaaPoint begin, List<MaaPoint> end, List<Integer> endHold, List<Integer> durations, Boolean onlyHover,
+            Integer starting, Integer contact, Integer pressure) {
+    }
 
-    public record MultiSwipeActionResult(List<SwipeActionResult> swipes) {}
+    public record MultiSwipeActionResult(List<SwipeActionResult> swipes) {
+    }
 
-    public record ClickKeyActionResult(List<Integer> keycodes) {}
+    public record ClickKeyActionResult(List<Integer> keycodes) {
+    }
 
-    public record LongPressKeyActionResult(List<Integer> keycodes, Integer duration) {}
+    public record LongPressKeyActionResult(List<Integer> keycodes, Integer duration) {
+    }
 
-    public record InputTextActionResult(String text) {}
+    public record InputTextActionResult(String text) {
+    }
 
-    public record AppActionResult(String packageName) {}
+    public record AppActionResult(String packageName) {
+    }
 
-    public record ScrollActionResult(MaaPoint point, Integer dx, Integer dy) {}
+    public record ScrollActionResult(MaaPoint point, Integer dx, Integer dy) {
+    }
 
-    public record TouchActionResult(Integer contact, MaaPoint point, Integer pressure) {}
+    public record TouchActionResult(Integer contact, MaaPoint point, Integer pressure) {
+    }
 
-    public record ShellActionResult(String cmd, Long shellTimeout, Boolean success, String output) {}
+    public record ShellActionResult(String cmd, Long shellTimeout, Boolean success, String output) {
+    }
 
-    public record ScreencapActionResult(String filepath, String format, Integer quality, Boolean success) {}
+    public record ScreencapActionResult(String filepath, String format, Integer quality, Boolean success) {
+    }
 }

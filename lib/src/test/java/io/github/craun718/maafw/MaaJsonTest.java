@@ -13,11 +13,7 @@ class MaaJsonTest {
 
     @Test
     void roundTripsNestedObjects() {
-        Map<String, Object> value =
-                Map.of(
-                        "name", "Maa",
-                        "count", 3,
-                        "nested", Map.of("enabled", true));
+        Map<String, Object> value = Map.of("name", "Maa", "count", 3, "nested", Map.of("enabled", true));
 
         Map<String, Object> parsed = MaaJson.parseObject(MaaJson.write(value));
 

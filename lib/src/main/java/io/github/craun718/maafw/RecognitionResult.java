@@ -40,8 +40,7 @@ public final class RecognitionResult {
         this(null, raw, subResults);
     }
 
-    public RecognitionResult(
-            JRecognitionType type, Map<String, Object> raw, List<RecognitionDetail> subResults) {
+    public RecognitionResult(JRecognitionType type, Map<String, Object> raw, List<RecognitionDetail> subResults) {
         this.type = type;
         this.raw = MaaResultParsers.unmodifiableMap(raw);
         this.box = null;
@@ -79,15 +78,11 @@ public final class RecognitionResult {
     }
 
     public Optional<NeuralNetworkClassifyResult> asNeuralNetworkClassify() {
-        return typed(
-                JRecognitionType.NEURAL_NETWORK_CLASSIFY,
-                () -> new NeuralNetworkClassifyResult(box(), score(), clsIndex(), label()));
+        return typed(JRecognitionType.NEURAL_NETWORK_CLASSIFY, () -> new NeuralNetworkClassifyResult(box(), score(), clsIndex(), label()));
     }
 
     public Optional<NeuralNetworkDetectResult> asNeuralNetworkDetect() {
-        return typed(
-                JRecognitionType.NEURAL_NETWORK_DETECT,
-                () -> new NeuralNetworkDetectResult(box(), score(), clsIndex(), label()));
+        return typed(JRecognitionType.NEURAL_NETWORK_DETECT, () -> new NeuralNetworkDetectResult(box(), score(), clsIndex(), label()));
     }
 
     public Optional<CustomRecognitionResult> asCustom() {
@@ -165,21 +160,30 @@ public final class RecognitionResult {
         return "RecognitionResult" + raw;
     }
 
-    public record TemplateMatchResult(MaaRect box, Double score) {}
+    public record TemplateMatchResult(MaaRect box, Double score) {
+    }
 
-    public record FeatureMatchResult(MaaRect box, Integer count) {}
+    public record FeatureMatchResult(MaaRect box, Integer count) {
+    }
 
-    public record ColorMatchResult(MaaRect box, Integer count) {}
+    public record ColorMatchResult(MaaRect box, Integer count) {
+    }
 
-    public record OCRResult(MaaRect box, Double score, String text) {}
+    public record OCRResult(MaaRect box, Double score, String text) {
+    }
 
-    public record NeuralNetworkClassifyResult(MaaRect box, Double score, Integer clsIndex, String label) {}
+    public record NeuralNetworkClassifyResult(MaaRect box, Double score, Integer clsIndex, String label) {
+    }
 
-    public record NeuralNetworkDetectResult(MaaRect box, Double score, Integer clsIndex, String label) {}
+    public record NeuralNetworkDetectResult(MaaRect box, Double score, Integer clsIndex, String label) {
+    }
 
-    public record CustomRecognitionResult(MaaRect box, Object detail) {}
+    public record CustomRecognitionResult(MaaRect box, Object detail) {
+    }
 
-    public record AndRecognitionResult(List<RecognitionDetail> subResults) {}
+    public record AndRecognitionResult(List<RecognitionDetail> subResults) {
+    }
 
-    public record OrRecognitionResult(List<RecognitionDetail> subResults) {}
+    public record OrRecognitionResult(List<RecognitionDetail> subResults) {
+    }
 }

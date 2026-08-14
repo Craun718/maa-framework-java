@@ -15,8 +15,7 @@ class JPipelineParserTest {
 
     @Test
     void parsesTypedNodeSectionsAndAttributes() {
-        String json =
-                """
+        String json = """
                 {
                   "recognition": {
                     "type": "TemplateMatch",
@@ -116,41 +115,22 @@ class JPipelineParserTest {
     void parsesAllRecognitionVariants() {
         Map<String, Object> empty = Map.of();
         assertInstanceOf(JDirectHit.class, parseRecognition(JRecognitionType.DIRECT_HIT, empty));
-        assertInstanceOf(
-                JTemplateMatch.class,
-                parseRecognition(JRecognitionType.TEMPLATE_MATCH, Map.of("template", "a.png")));
-        assertInstanceOf(
-                JFeatureMatch.class,
-                parseRecognition(JRecognitionType.FEATURE_MATCH, Map.of("template", "a.png")));
-        assertInstanceOf(
-                JColorMatch.class,
-                parseRecognition(
-                        JRecognitionType.COLOR_MATCH,
-                        Map.of("lower", List.of(List.of(0, 0, 0)), "upper", List.of(List.of(255, 255, 255)))));
+        assertInstanceOf(JTemplateMatch.class, parseRecognition(JRecognitionType.TEMPLATE_MATCH, Map.of("template", "a.png")));
+        assertInstanceOf(JFeatureMatch.class, parseRecognition(JRecognitionType.FEATURE_MATCH, Map.of("template", "a.png")));
+        assertInstanceOf(JColorMatch.class, parseRecognition(JRecognitionType.COLOR_MATCH,
+                Map.of("lower", List.of(List.of(0, 0, 0)), "upper", List.of(List.of(255, 255, 255)))));
         assertInstanceOf(JOCR.class, parseRecognition(JRecognitionType.OCR, empty));
-        assertInstanceOf(
-                JNeuralNetworkClassify.class,
-                parseRecognition(JRecognitionType.NEURAL_NETWORK_CLASSIFY, Map.of("model", "m")));
-        assertInstanceOf(
-                JNeuralNetworkDetect.class,
-                parseRecognition(JRecognitionType.NEURAL_NETWORK_DETECT, Map.of("model", "m")));
-        assertInstanceOf(
-                JCustomRecognition.class,
-                parseRecognition(JRecognitionType.CUSTOM, Map.of("custom_recognition", "reco")));
-        JAnd and = assertInstanceOf(
-                JAnd.class,
-                parseRecognition(
-                        JRecognitionType.AND,
-                        Map.of("all_of", List.of("A"), "box_index", 1)));
+        assertInstanceOf(JNeuralNetworkClassify.class, parseRecognition(JRecognitionType.NEURAL_NETWORK_CLASSIFY, Map.of("model", "m")));
+        assertInstanceOf(JNeuralNetworkDetect.class, parseRecognition(JRecognitionType.NEURAL_NETWORK_DETECT, Map.of("model", "m")));
+        assertInstanceOf(JCustomRecognition.class, parseRecognition(JRecognitionType.CUSTOM, Map.of("custom_recognition", "reco")));
+        JAnd and = assertInstanceOf(JAnd.class, parseRecognition(JRecognitionType.AND, Map.of("all_of", List.of("A"), "box_index", 1)));
         assertEquals(1, and.boxIndex);
-        assertInstanceOf(
-                JOr.class, parseRecognition(JRecognitionType.OR, Map.of("any_of", List.of("A"))));
+        assertInstanceOf(JOr.class, parseRecognition(JRecognitionType.OR, Map.of("any_of", List.of("A"))));
     }
 
     @Test
     void parsesMixedAndOrSubRecognitionItems() {
-        String andJson =
-                """
+        String andJson = """
                 {
                   "Main": {
                     "recognition": {
@@ -167,9 +147,7 @@ class JPipelineParserTest {
                 }
                 """;
 
-        JAnd and = assertInstanceOf(
-                JAnd.class,
-                JPipelineParser.parseAll(andJson).get("Main").recognition.param);
+        JAnd and = assertInstanceOf(JAnd.class, JPipelineParser.parseAll(andJson).get("Main").recognition.param);
         assertEquals(1, and.boxIndex);
         assertEquals(2, and.allOf.size());
         assertFalse(and.allOf.getFirst().isInline());
@@ -187,12 +165,9 @@ class JPipelineParserTest {
         Map<String, Object> inlineJson = map(andItems.get(1));
         assertEquals("InlineSub", inlineJson.get("sub_name"));
         assertEquals("DirectHit", inlineJson.get("type"));
-        assertEquals(
-                Map.of("roi", List.of(0, 0, 0, 0), "roi_offset", List.of(0, 0, 0, 0)),
-                inlineJson.get("param"));
+        assertEquals(Map.of("roi", List.of(0, 0, 0, 0), "roi_offset", List.of(0, 0, 0, 0)), inlineJson.get("param"));
 
-        String orJson =
-                """
+        String orJson = """
                 {
                   "Main": {
                     "recognition": {
@@ -212,9 +187,7 @@ class JPipelineParserTest {
                 }
                 """;
 
-        JOr or = assertInstanceOf(
-                JOr.class,
-                JPipelineParser.parseAll(orJson).get("Main").recognition.param);
+        JOr or = assertInstanceOf(JOr.class, JPipelineParser.parseAll(orJson).get("Main").recognition.param);
         assertEquals(2, or.anyOf.size());
         assertEquals("OtherRef", or.anyOf.getFirst().nodeName());
         JInlineRecognition orInline = or.anyOf.get(1).inline();
@@ -227,18 +200,8 @@ class JPipelineParserTest {
 
     @Test
     void parsesLegacyInlineSubRecognitionShape() {
-        JAnd and = assertInstanceOf(
-                JAnd.class,
-                parseRecognition(
-                        JRecognitionType.AND,
-                        Map.of(
-                                "all_of",
-                                List.of(
-                                        Map.of(
-                                                "sub_name", "Legacy",
-                                                "recognition", "TemplateMatch",
-                                                "template", "a.png",
-                                                "threshold", 0.8)))));
+        JAnd and = assertInstanceOf(JAnd.class, parseRecognition(JRecognitionType.AND, Map.of("all_of",
+                List.of(Map.of("sub_name", "Legacy", "recognition", "TemplateMatch", "template", "a.png", "threshold", 0.8)))));
 
         JSubRecognitionItem item = and.allOf.getFirst();
         assertTrue(item.isInline());
@@ -250,17 +213,13 @@ class JPipelineParserTest {
 
     @Test
     void builderAcceptsMixedSubRecognitionItemsAndRoundTrips() {
-        JRecognition and = JRecognition.and(
-                "A",
-                JRecognition.directHit(),
-                JSubRecognitionItem.inline("Sub", JRecognition.ocr(new JOCR())));
+        JRecognition and = JRecognition.and("A", JRecognition.directHit(), JSubRecognitionItem.inline("Sub", JRecognition.ocr(new JOCR())));
         JAnd andParam = assertInstanceOf(JAnd.class, and.param);
         assertEquals(3, andParam.allOf.size());
         assertEquals("A", andParam.allOf.getFirst().nodeName());
         assertTrue(andParam.allOf.get(1).isInline());
         assertNull(andParam.allOf.get(1).inline().subName);
-        assertEquals(
-                JRecognitionType.DIRECT_HIT, andParam.allOf.get(1).inline().type);
+        assertEquals(JRecognitionType.DIRECT_HIT, andParam.allOf.get(1).inline().type);
         assertTrue(andParam.allOf.get(2).isInline());
         assertEquals("Sub", andParam.allOf.get(2).inline().subName);
         assertEquals(JRecognitionType.OCR, andParam.allOf.get(2).inline().type);
@@ -272,14 +231,11 @@ class JPipelineParserTest {
         assertEquals(1, ((Number) andParamJson.get("box_index")).intValue());
         List<?> andItems = (List<?>) andParamJson.get("all_of");
         assertEquals("A", andItems.getFirst());
-        assertEquals(
-                JRecognitionType.DIRECT_HIT.nativeName(),
-                map(andItems.get(1)).get("type"));
+        assertEquals(JRecognitionType.DIRECT_HIT.nativeName(), map(andItems.get(1)).get("type"));
         assertEquals("Sub", map(andItems.get(2)).get("sub_name"));
         assertEquals(JRecognitionType.OCR.nativeName(), map(andItems.get(2)).get("type"));
 
-        JRecognition or =
-                JRecognition.or(List.of("B", JSubRecognitionItem.inline("Sub2", JRecognition.directHit())));
+        JRecognition or = JRecognition.or(List.of("B", JSubRecognitionItem.inline("Sub2", JRecognition.directHit())));
         JOr orParam = assertInstanceOf(JOr.class, or.param);
         assertEquals(2, orParam.anyOf.size());
         assertEquals("B", orParam.anyOf.getFirst().nodeName());
@@ -299,21 +255,16 @@ class JPipelineParserTest {
         assertInstanceOf(JClick.class, parseAction(JActionType.CLICK, Map.of()));
         assertInstanceOf(JLongPress.class, parseAction(JActionType.LONG_PRESS, Map.of()));
         assertInstanceOf(JSwipe.class, parseAction(JActionType.SWIPE, Map.of()));
-        assertInstanceOf(
-                JMultiSwipe.class,
-                parseAction(
-                        JActionType.MULTI_SWIPE,
-                        Map.of("swipes", List.of(Map.of("end", List.of(Map.of("x", 1)))))));
+        assertInstanceOf(JMultiSwipe.class,
+                parseAction(JActionType.MULTI_SWIPE, Map.of("swipes", List.of(Map.of("end", List.of(Map.of("x", 1)))))));
         assertInstanceOf(JTouch.class, parseAction(JActionType.TOUCH_DOWN, Map.of()));
         assertInstanceOf(JTouch.class, parseAction(JActionType.TOUCH_MOVE, Map.of()));
         assertInstanceOf(JTouchUp.class, parseAction(JActionType.TOUCH_UP, Map.of()));
         assertInstanceOf(JClickKey.class, parseAction(JActionType.CLICK_KEY, Map.of("key", List.of(1))));
-        assertInstanceOf(
-                JLongPressKey.class, parseAction(JActionType.LONG_PRESS_KEY, Map.of("key", List.of(1))));
+        assertInstanceOf(JLongPressKey.class, parseAction(JActionType.LONG_PRESS_KEY, Map.of("key", List.of(1))));
         assertInstanceOf(JKey.class, parseAction(JActionType.KEY_DOWN, Map.of("key", 1)));
         assertInstanceOf(JKey.class, parseAction(JActionType.KEY_UP, Map.of("key", 1)));
-        assertInstanceOf(
-                JInputText.class, parseAction(JActionType.INPUT_TEXT, Map.of("input_text", "hello")));
+        assertInstanceOf(JInputText.class, parseAction(JActionType.INPUT_TEXT, Map.of("input_text", "hello")));
         assertInstanceOf(JStartApp.class, parseAction(JActionType.START_APP, Map.of("package", "app")));
         assertInstanceOf(JStopApp.class, parseAction(JActionType.STOP_APP, Map.of("package", "app")));
         assertInstanceOf(JStopTask.class, parseAction(JActionType.STOP_TASK, Map.of()));
@@ -321,43 +272,30 @@ class JPipelineParserTest {
         assertInstanceOf(JCommand.class, parseAction(JActionType.COMMAND, Map.of("exec", "echo")));
         assertInstanceOf(JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi")));
         assertInstanceOf(JScreencap.class, parseAction(JActionType.SCREENCAP, Map.of()));
-        assertInstanceOf(
-                JCustomAction.class,
-                parseAction(JActionType.CUSTOM, Map.of("custom_action", "action")));
+        assertInstanceOf(JCustomAction.class, parseAction(JActionType.CUSTOM, Map.of("custom_action", "action")));
     }
 
     @Test
     void parsesScalarKeysAndLegacyKeyCode() {
-        JClickKey clickKey = assertInstanceOf(
-                JClickKey.class,
-                parseAction(JActionType.CLICK_KEY, Map.of("key", 27)));
+        JClickKey clickKey = assertInstanceOf(JClickKey.class, parseAction(JActionType.CLICK_KEY, Map.of("key", 27)));
         assertEquals(List.of(27), clickKey.key);
 
-        JClickKey clickKeyCode = assertInstanceOf(
-                JClickKey.class,
-                parseAction(JActionType.CLICK_KEY, Map.of("key_code", 28)));
+        JClickKey clickKeyCode = assertInstanceOf(JClickKey.class, parseAction(JActionType.CLICK_KEY, Map.of("key_code", 28)));
         assertEquals(List.of(28), clickKeyCode.key);
 
-        JLongPressKey longPressKey = assertInstanceOf(
-                JLongPressKey.class,
-                parseAction(JActionType.LONG_PRESS_KEY, Map.of("key_code", 29)));
+        JLongPressKey longPressKey = assertInstanceOf(JLongPressKey.class, parseAction(JActionType.LONG_PRESS_KEY, Map.of("key_code", 29)));
         assertEquals(List.of(29), longPressKey.key);
 
-        JKey keyDown = assertInstanceOf(
-                JKey.class,
-                parseAction(JActionType.KEY_DOWN, Map.of("key_code", 30)));
+        JKey keyDown = assertInstanceOf(JKey.class, parseAction(JActionType.KEY_DOWN, Map.of("key_code", 30)));
         assertEquals(30, keyDown.key);
 
-        JKey keyUp = assertInstanceOf(
-                JKey.class,
-                parseAction(JActionType.KEY_UP, Map.of("key_code", 31)));
+        JKey keyUp = assertInstanceOf(JKey.class, parseAction(JActionType.KEY_UP, Map.of("key_code", 31)));
         assertEquals(31, keyUp.key);
     }
 
     @Test
     void parseAllNormalizesStringAndListAnchors() {
-        String json =
-                """
+        String json = """
                 {
                   "A": {"anchor": "selfA", "next": ["B"]},
                   "B": {"anchor": ["selfB", "shared"], "next": []}
@@ -373,21 +311,11 @@ class JPipelineParserTest {
 
     @Test
     void parsesSwipeActionWithNestedEndpoints() {
-        JSwipe swipe = assertInstanceOf(
-                JSwipe.class,
-                parseAction(
-                        JActionType.SWIPE,
-                        Map.of(
-                                "starting", 2,
-                                "begin", List.of(10, 20),
-                                "begin_offset", List.of(1, 2, 3, 4),
-                                "end", List.of(Map.of("x", 100, "y", 200)),
-                                "end_offset", List.of(List.of(5, 6, 7, 8)),
-                                "end_hold", List.of(150),
-                                "duration", List.of(300, 400),
-                                "only_hover", true,
-                                "contact", 2,
-                                "pressure", 3)));
+        JSwipe swipe = assertInstanceOf(JSwipe.class,
+                parseAction(JActionType.SWIPE,
+                        Map.of("starting", 2, "begin", List.of(10, 20), "begin_offset", List.of(1, 2, 3, 4), "end",
+                                List.of(Map.of("x", 100, "y", 200)), "end_offset", List.of(List.of(5, 6, 7, 8)), "end_hold", List.of(150),
+                                "duration", List.of(300, 400), "only_hover", true, "contact", 2, "pressure", 3)));
 
         assertEquals(2, swipe.starting);
         assertEquals(List.of(10, 20), swipe.begin);
@@ -403,14 +331,8 @@ class JPipelineParserTest {
 
     @Test
     void parsesSwipeScalarEndDurationAndEndHold() {
-        JSwipe swipe = assertInstanceOf(
-                JSwipe.class,
-                parseAction(
-                        JActionType.SWIPE,
-                        Map.of(
-                                "end", "someNode",
-                                "duration", 500,
-                                "end_hold", 60)));
+        JSwipe swipe = assertInstanceOf(JSwipe.class,
+                parseAction(JActionType.SWIPE, Map.of("end", "someNode", "duration", 500, "end_hold", 60)));
 
         assertEquals(List.of("someNode"), swipe.end);
         assertEquals(List.of(500L), swipe.duration);
@@ -419,26 +341,10 @@ class JPipelineParserTest {
 
     @Test
     void parsesMultiSwipeWithNestedSwipeFields() {
-        JMultiSwipe multi = assertInstanceOf(
-                JMultiSwipe.class,
-                parseAction(
-                        JActionType.MULTI_SWIPE,
-                        Map.of(
-                                "swipes",
-                                List.of(
-                                        Map.of(
-                                                "starting", 1,
-                                                "begin", List.of(1, 2),
-                                                "end", List.of(Map.of("x", 3, "y", 4)),
-                                                "end_offset", List.of(List.of(5, 6, 7, 8)),
-                                                "duration", List.of(250),
-                                                "contact", 1,
-                                                "pressure", 2),
-                                        Map.of(
-                                                "begin", List.of(9, 10),
-                                                "end", List.of(Map.of("x", 11, "y", 12)),
-                                                "only_hover", true,
-                                                "end_hold", List.of(500))))));
+        JMultiSwipe multi = assertInstanceOf(JMultiSwipe.class, parseAction(JActionType.MULTI_SWIPE, Map.of("swipes", List.of(
+                Map.of("starting", 1, "begin", List.of(1, 2), "end", List.of(Map.of("x", 3, "y", 4)), "end_offset",
+                        List.of(List.of(5, 6, 7, 8)), "duration", List.of(250), "contact", 1, "pressure", 2),
+                Map.of("begin", List.of(9, 10), "end", List.of(Map.of("x", 11, "y", 12)), "only_hover", true, "end_hold", List.of(500))))));
 
         assertEquals(2, multi.swipes.size());
         JSwipe first = multi.swipes.getFirst();
@@ -460,40 +366,30 @@ class JPipelineParserTest {
 
     @Test
     void parsesCommandShellAndScreencapWithNativeFields() {
-        JCommand command = assertInstanceOf(
-                JCommand.class,
-                parseAction(
-                        JActionType.COMMAND,
-                        Map.of("exec", "adb", "args", List.of("shell", "echo"), "detach", true)));
+        JCommand command = assertInstanceOf(JCommand.class,
+                parseAction(JActionType.COMMAND, Map.of("exec", "adb", "args", List.of("shell", "echo"), "detach", true)));
         assertEquals("adb", command.exec);
         assertEquals(List.of("shell", "echo"), command.args);
         assertTrue(command.detach);
 
-        JCommand defaultCommand =
-                assertInstanceOf(JCommand.class, parseAction(JActionType.COMMAND, Map.of("exec", "adb")));
+        JCommand defaultCommand = assertInstanceOf(JCommand.class, parseAction(JActionType.COMMAND, Map.of("exec", "adb")));
         assertEquals(List.of(), defaultCommand.args);
         assertFalse(defaultCommand.detach);
 
-        JShell shell = assertInstanceOf(
-                JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi", "shell_timeout", -1)));
+        JShell shell = assertInstanceOf(JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi", "shell_timeout", -1)));
         assertEquals("echo hi", shell.cmd);
         assertEquals(-1, shell.shellTimeout);
 
-        JShell defaultShell =
-                assertInstanceOf(JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi")));
+        JShell defaultShell = assertInstanceOf(JShell.class, parseAction(JActionType.SHELL, Map.of("cmd", "echo hi")));
         assertEquals(20000, defaultShell.shellTimeout);
 
-        JScreencap screencap = assertInstanceOf(
-                JScreencap.class,
-                parseAction(
-                        JActionType.SCREENCAP,
-                        Map.of("filename", "shot.png", "format", "jpg", "quality", 85)));
+        JScreencap screencap = assertInstanceOf(JScreencap.class,
+                parseAction(JActionType.SCREENCAP, Map.of("filename", "shot.png", "format", "jpg", "quality", 85)));
         assertEquals("shot.png", screencap.filename);
         assertEquals("jpg", screencap.format);
         assertEquals(85, screencap.quality);
 
-        JScreencap defaultScreencap =
-                assertInstanceOf(JScreencap.class, parseAction(JActionType.SCREENCAP, Map.of()));
+        JScreencap defaultScreencap = assertInstanceOf(JScreencap.class, parseAction(JActionType.SCREENCAP, Map.of()));
         assertEquals("", defaultScreencap.filename);
         assertEquals("png", defaultScreencap.format);
         assertEquals(100, defaultScreencap.quality);

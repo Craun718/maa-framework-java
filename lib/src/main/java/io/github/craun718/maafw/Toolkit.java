@@ -9,7 +9,8 @@ import java.util.Map;
 /** Static helpers for device discovery and platform-specific MaaToolkit features. */
 public final class Toolkit {
 
-    private Toolkit() {}
+    private Toolkit() {
+    }
 
     public static boolean initOption(String userPath) {
         return initOption(userPath, Map.of());
@@ -18,14 +19,11 @@ public final class Toolkit {
     public static boolean initOption(String userPath, Map<String, Object> defaultConfig) {
         if (MaaLibrary.isAgentServer()) {
             Object logging = defaultConfig == null ? null : defaultConfig.get("logging");
-            String logDir = logging == null || !Boolean.FALSE.equals(logging)
-                    ? Path.of(userPath, "debug").toString()
-                    : "";
+            String logDir = logging == null || !Boolean.FALSE.equals(logging) ? Path.of(userPath, "debug").toString() : "";
             return Tasker.setLogDir(logDir);
         }
-        return MaaStringBuffer.toBoolean(MaaLibrary.toolkit()
-                .MaaToolkitConfigInitOption(
-                        userPath, MaaJson.write(defaultConfig == null ? Map.of() : defaultConfig)));
+        return MaaStringBuffer.toBoolean(
+                MaaLibrary.toolkit().MaaToolkitConfigInitOption(userPath, MaaJson.write(defaultConfig == null ? Map.of() : defaultConfig)));
     }
 
     public static boolean initOption(Path userPath) {
@@ -48,31 +46,25 @@ public final class Toolkit {
         try {
             boolean found;
             if (specifiedAdb == null || specifiedAdb.isBlank()) {
-                found = MaaStringBuffer.toBoolean(
-                        MaaLibrary.toolkit().MaaToolkitAdbDeviceFind(list));
+                found = MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitAdbDeviceFind(list));
             } else {
-                found = MaaStringBuffer.toBoolean(
-                        MaaLibrary.toolkit().MaaToolkitAdbDeviceFindSpecified(specifiedAdb, list));
+                found = MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitAdbDeviceFindSpecified(specifiedAdb, list));
             }
             if (!found) {
-                throw new IllegalStateException(
-                        specifiedAdb == null || specifiedAdb.isBlank()
-                                ? "Failed to find ADB devices"
-                                : "Failed to find ADB devices with adb: " + specifiedAdb);
+                throw new IllegalStateException(specifiedAdb == null || specifiedAdb.isBlank() ? "Failed to find ADB devices"
+                        : "Failed to find ADB devices with adb: " + specifiedAdb);
             }
 
             long size = MaaLibrary.toolkit().MaaToolkitAdbDeviceListSize(list);
             List<AdbDevice> devices = new ArrayList<>((int) Math.min(size, Integer.MAX_VALUE));
             for (long i = 0; i < size; i++) {
                 Pointer device = MaaLibrary.toolkit().MaaToolkitAdbDeviceListAt(list, i);
-                devices.add(new AdbDevice(
-                        stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetName(device)),
-                        Path.of(stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetAdbPath(device))),
-                        stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetAddress(device)),
-                        MaaLibrary.toolkit().MaaToolkitAdbDeviceGetScreencapMethods(device),
-                        MaaLibrary.toolkit().MaaToolkitAdbDeviceGetInputMethods(device),
-                        MaaJson.parseObject(
-                                stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetConfig(device)))));
+                devices.add(new AdbDevice(stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetName(device)),
+                    Path.of(stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetAdbPath(device))),
+                    stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetAddress(device)),
+                    MaaLibrary.toolkit().MaaToolkitAdbDeviceGetScreencapMethods(device),
+                    MaaLibrary.toolkit().MaaToolkitAdbDeviceGetInputMethods(device),
+                    MaaJson.parseObject(stringOrEmpty(MaaLibrary.toolkit().MaaToolkitAdbDeviceGetConfig(device)))));
             }
             return List.copyOf(devices);
         } finally {
@@ -101,10 +93,8 @@ public final class Toolkit {
                 if (windowHandle == null) {
                     windowHandle = Pointer.NULL;
                 }
-                windows.add(new DesktopWindow(
-                        windowHandle,
-                        stringOrEmpty(MaaLibrary.toolkit().MaaToolkitDesktopWindowGetClassName(window)),
-                        stringOrEmpty(MaaLibrary.toolkit().MaaToolkitDesktopWindowGetWindowName(window))));
+                windows.add(new DesktopWindow(windowHandle, stringOrEmpty(MaaLibrary.toolkit().MaaToolkitDesktopWindowGetClassName(window)),
+                    stringOrEmpty(MaaLibrary.toolkit().MaaToolkitDesktopWindowGetWindowName(window))));
             }
             return List.copyOf(windows);
         } finally {
@@ -113,18 +103,15 @@ public final class Toolkit {
     }
 
     public static boolean macosCheckPermission(MaaDef.MacOSPermission permission) {
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.toolkit().MaaToolkitMacOSCheckPermission(permission.code()));
+        return MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitMacOSCheckPermission(permission.code()));
     }
 
     public static boolean macosRequestPermission(MaaDef.MacOSPermission permission) {
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.toolkit().MaaToolkitMacOSRequestPermission(permission.code()));
+        return MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitMacOSRequestPermission(permission.code()));
     }
 
     public static boolean macosRevealPermissionSettings(MaaDef.MacOSPermission permission) {
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.toolkit().MaaToolkitMacOSRevealPermissionSettings(permission.code()));
+        return MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitMacOSRevealPermissionSettings(permission.code()));
     }
 
     public static PortalHelper portalHelperCreate() {

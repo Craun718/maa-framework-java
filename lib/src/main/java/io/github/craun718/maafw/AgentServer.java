@@ -12,14 +12,15 @@ public final class AgentServer {
     private static final Map<String, CustomAction> CUSTOM_ACTIONS = new HashMap<>();
     private static final Map<Long, EventSink> SINK_HOLDERS = new HashMap<>();
 
-    private AgentServer() {}
+    private AgentServer() {
+    }
 
     public static boolean registerCustomRecognition(String name, CustomRecognition recognition) {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(recognition, "recognition");
         CUSTOM_RECOGNITIONS.put(name, recognition);
-        return MaaStringBuffer.toBoolean(MaaLibrary.agentServer()
-                .MaaAgentServerRegisterCustomRecognition(name, recognition.callback(), null));
+        return MaaStringBuffer
+                .toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomRecognition(name, recognition.callback(), null));
     }
 
     /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
@@ -29,19 +30,16 @@ public final class AgentServer {
     }
 
     /** Registers a recognizer instantiated from {@code recognitionClass}, matching class-based decorator bindings. */
-    public static boolean registerCustomRecognition(
-            String name, Class<? extends CustomRecognition> recognitionClass) {
+    public static boolean registerCustomRecognition(String name, Class<? extends CustomRecognition> recognitionClass) {
         Objects.requireNonNull(recognitionClass, "recognitionClass");
-        return registerCustomRecognition(
-                name, CustomRegistrations.newInstance(recognitionClass, "custom recognition"));
+        return registerCustomRecognition(name, CustomRegistrations.newInstance(recognitionClass, "custom recognition"));
     }
 
     public static boolean registerCustomAction(String name, CustomAction action) {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(action, "action");
         CUSTOM_ACTIONS.put(name, action);
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.agentServer().MaaAgentServerRegisterCustomAction(name, action.callback(), null));
+        return MaaStringBuffer.toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomAction(name, action.callback(), null));
     }
 
     /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
@@ -53,8 +51,7 @@ public final class AgentServer {
     /** Registers an action instantiated from {@code actionClass}, matching class-based decorator bindings. */
     public static boolean registerCustomAction(String name, Class<? extends CustomAction> actionClass) {
         Objects.requireNonNull(actionClass, "actionClass");
-        return registerCustomAction(
-                name, CustomRegistrations.newInstance(actionClass, "custom action"));
+        return registerCustomAction(name, CustomRegistrations.newInstance(actionClass, "custom action"));
     }
 
     public static Long addResourceSink(ResourceEventSink sink) {

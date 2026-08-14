@@ -9,11 +9,7 @@ public class JobWithResult<T> extends Job {
 
     private final LongFunction<T> getFunc;
 
-    public JobWithResult(
-            long jobId,
-            LongFunction<MaaDef.Status> statusFunc,
-            LongConsumer waitFunc,
-            LongFunction<T> getFunc) {
+    public JobWithResult(long jobId, LongFunction<MaaDef.Status> statusFunc, LongConsumer waitFunc, LongFunction<T> getFunc) {
         super(jobId, statusFunc, waitFunc);
         this.getFunc = Objects.requireNonNull(getFunc, "getFunc");
     }

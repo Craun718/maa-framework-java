@@ -13,13 +13,7 @@ public final class ActionDetail {
     private final ActionResult result;
     private final Map<String, Object> rawDetail;
 
-    public ActionDetail(
-            long actionId,
-            String name,
-            String action,
-            MaaRect box,
-            boolean success,
-            ActionResult result,
+    public ActionDetail(long actionId, String name, String action, MaaRect box, boolean success, ActionResult result,
             Map<String, Object> rawDetail) {
         this.actionId = actionId;
         this.name = name;

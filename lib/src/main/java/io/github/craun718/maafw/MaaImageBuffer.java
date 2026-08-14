@@ -58,8 +58,8 @@ public final class MaaImageBuffer implements AutoCloseable {
         byte[] data = image.data();
         try (Memory memory = new Memory(Math.max(data.length, 1))) {
             memory.write(0, data, 0, data.length);
-            MaaStringBuffer.requireOk(MaaLibrary.framework()
-                    .MaaImageBufferSetRawData(handle, memory, image.width(), image.height(), image.type()));
+            MaaStringBuffer.requireOk(
+                    MaaLibrary.framework().MaaImageBufferSetRawData(handle, memory, image.width(), image.height(), image.type()));
         }
     }
 
@@ -96,8 +96,7 @@ public final class MaaImageBuffer implements AutoCloseable {
             throw new IllegalArgumentException(description + " size must not be negative: " + size);
         }
         if (size > Integer.MAX_VALUE) {
-            throw new IllegalStateException(
-                    description + " is too large for a Java byte[]: " + size + " bytes");
+            throw new IllegalStateException(description + " is too large for a Java byte[]: " + size + " bytes");
         }
         return (int) size;
     }

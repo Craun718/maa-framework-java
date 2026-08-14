@@ -19,23 +19,14 @@ class ControllerOverloadTest {
         assertConstructor(KWinController.class, String.class, int.class, int.class);
 
         assertConstructor(AdbController.class, String.class, String.class, Map.class);
-        assertConstructor(
-                AdbController.class, String.class, String.class, long.class, long.class, Map.class);
+        assertConstructor(AdbController.class, String.class, String.class, long.class, long.class, Map.class);
         assertConstructor(AdbController.class, Path.class, String.class);
         assertConstructor(AdbController.class, Path.class, String.class, Map.class);
-        assertConstructor(
-                AdbController.class, Path.class, String.class, long.class, long.class);
-        assertConstructor(
-                AdbController.class,
-                Path.class,
-                String.class,
-                long.class,
-                long.class,
-                Map.class);
+        assertConstructor(AdbController.class, Path.class, String.class, long.class, long.class);
+        assertConstructor(AdbController.class, Path.class, String.class, long.class, long.class, Map.class);
     }
 
-    private static void assertConstructor(Class<?> type, Class<?>... parameterTypes)
-            throws NoSuchMethodException {
+    private static void assertConstructor(Class<?> type, Class<?>... parameterTypes) throws NoSuchMethodException {
         Constructor<?> constructor = type.getConstructor(parameterTypes);
         assertNotNull(constructor);
     }

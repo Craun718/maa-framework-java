@@ -117,21 +117,14 @@ public interface MaaFrameworkLibrary extends Library {
 
     void MaaResourceClearSinks(Pointer resource);
 
-    byte MaaResourceRegisterCustomRecognition(
-            Pointer resource,
-            String name,
-            MaaCallbacks.CustomRecognitionCallback recognition,
+    byte MaaResourceRegisterCustomRecognition(Pointer resource, String name, MaaCallbacks.CustomRecognitionCallback recognition,
             Pointer transArg);
 
     byte MaaResourceUnregisterCustomRecognition(Pointer resource, String name);
 
     byte MaaResourceClearCustomRecognition(Pointer resource);
 
-    byte MaaResourceRegisterCustomAction(
-            Pointer resource,
-            String name,
-            MaaCallbacks.CustomActionCallback action,
-            Pointer transArg);
+    byte MaaResourceRegisterCustomAction(Pointer resource, String name, MaaCallbacks.CustomActionCallback action, Pointer transArg);
 
     byte MaaResourceUnregisterCustomAction(Pointer resource, String name);
 
@@ -175,19 +168,10 @@ public interface MaaFrameworkLibrary extends Library {
 
     byte MaaResourceGetDefaultActionParam(Pointer resource, String actionType, Pointer buffer);
 
-    Pointer MaaAdbControllerCreate(
-            String adbPath,
-            String address,
-            long screencapMethods,
-            long inputMethods,
-            String config,
+    Pointer MaaAdbControllerCreate(String adbPath, String address, long screencapMethods, long inputMethods, String config,
             String agentPath);
 
-    Pointer MaaWin32ControllerCreate(
-            Pointer windowHandle,
-            long screencapMethod,
-            long mouseMethod,
-            long keyboardMethod);
+    Pointer MaaWin32ControllerCreate(Pointer windowHandle, long screencapMethod, long mouseMethod, long keyboardMethod);
 
     Pointer MaaMacOSControllerCreate(int windowId, long screencapMethod, long inputMethod);
 
@@ -205,18 +189,11 @@ public interface MaaFrameworkLibrary extends Library {
 
     Pointer MaaWlRootsControllerCreate(String wlrSocketPath, byte useWin32VkCode);
 
-    Pointer MaaKWinControllerCreate(
-            String deviceNode,
-            int screenWidth,
-            int screenHeight,
-            byte useWin32VkCode);
+    Pointer MaaKWinControllerCreate(String deviceNode, int screenWidth, int screenHeight, byte useWin32VkCode);
 
     Pointer MaaLinuxControllerCreate(String configJson);
 
-    Pointer MaaGamepadControllerCreate(
-            Pointer windowHandle,
-            long gamepadType,
-            long screencapMethod);
+    Pointer MaaGamepadControllerCreate(Pointer windowHandle, long gamepadType, long screencapMethod);
 
     void MaaControllerDestroy(Pointer controller);
 
@@ -236,15 +213,7 @@ public interface MaaFrameworkLibrary extends Library {
 
     long MaaControllerPostSwipe(Pointer controller, int x1, int y1, int x2, int y2, int duration);
 
-    long MaaControllerPostSwipeV2(
-            Pointer controller,
-            int x1,
-            int y1,
-            int x2,
-            int y2,
-            int duration,
-            int contact,
-            int pressure);
+    long MaaControllerPostSwipeV2(Pointer controller, int x1, int y1, int x2, int y2, int duration, int contact, int pressure);
 
     long MaaControllerPostClickKey(Pointer controller, int keycode);
 
@@ -318,18 +287,9 @@ public interface MaaFrameworkLibrary extends Library {
 
     long MaaTaskerPostTask(Pointer tasker, String entry, String pipelineOverride);
 
-    long MaaTaskerPostRecognition(
-            Pointer tasker,
-            String recoType,
-            String recoParam,
-            Pointer image);
+    long MaaTaskerPostRecognition(Pointer tasker, String recoType, String recoParam, Pointer image);
 
-    long MaaTaskerPostAction(
-            Pointer tasker,
-            String actionType,
-            String actionParam,
-            Pointer box,
-            String recoDetail);
+    long MaaTaskerPostAction(Pointer tasker, String actionType, String actionParam, Pointer box, String recoDetail);
 
     int MaaTaskerStatus(Pointer tasker, long id);
 
@@ -349,88 +309,34 @@ public interface MaaFrameworkLibrary extends Library {
 
     byte MaaTaskerOverridePipeline(Pointer tasker, long taskId, String pipelineOverride);
 
-    byte MaaTaskerGetRecognitionDetail(
-            Pointer tasker,
-            long recoId,
-            Pointer nodeName,
-            Pointer algorithm,
-            ByteByReference hit,
-            Pointer box,
-            Pointer detailJson,
-            Pointer raw,
-            Pointer draws);
+    byte MaaTaskerGetRecognitionDetail(Pointer tasker, long recoId, Pointer nodeName, Pointer algorithm, ByteByReference hit, Pointer box,
+            Pointer detailJson, Pointer raw, Pointer draws);
 
-    byte MaaTaskerGetActionDetail(
-            Pointer tasker,
-            long actionId,
-            Pointer nodeName,
-            Pointer action,
-            Pointer box,
-            ByteByReference success,
+    byte MaaTaskerGetActionDetail(Pointer tasker, long actionId, Pointer nodeName, Pointer action, Pointer box, ByteByReference success,
             Pointer detailJson);
 
-    byte MaaTaskerGetWaitFreezesDetail(
-            Pointer tasker,
-            long wfId,
-            Pointer nodeName,
-            Pointer phase,
-            ByteByReference success,
-            LongByReference elapsedMs,
-            Pointer recoIdList,
-            LongByReference recoIdListSize,
-            Pointer roi);
+    byte MaaTaskerGetWaitFreezesDetail(Pointer tasker, long wfId, Pointer nodeName, Pointer phase, ByteByReference success,
+            LongByReference elapsedMs, Pointer recoIdList, LongByReference recoIdListSize, Pointer roi);
 
-    byte MaaTaskerGetNodeDetail(
-            Pointer tasker,
-            long nodeId,
-            Pointer nodeName,
-            LongByReference recoId,
-            LongByReference actionId,
+    byte MaaTaskerGetNodeDetail(Pointer tasker, long nodeId, Pointer nodeName, LongByReference recoId, LongByReference actionId,
             ByteByReference completed);
 
-    byte MaaTaskerGetTaskDetail(
-            Pointer tasker,
-            long taskId,
-            Pointer entry,
-            Pointer nodeIdList,
-            LongByReference nodeIdListSize,
+    byte MaaTaskerGetTaskDetail(Pointer tasker, long taskId, Pointer entry, Pointer nodeIdList, LongByReference nodeIdListSize,
             IntByReference status);
 
     byte MaaTaskerGetLatestNode(Pointer tasker, String nodeName, LongByReference latestId);
 
     long MaaContextRunTask(Pointer context, String entry, String pipelineOverride);
 
-    long MaaContextRunRecognition(
-            Pointer context,
-            String entry,
-            String pipelineOverride,
-            Pointer image);
+    long MaaContextRunRecognition(Pointer context, String entry, String pipelineOverride, Pointer image);
 
-    long MaaContextRunAction(
-            Pointer context,
-            String entry,
-            String pipelineOverride,
-            Pointer box,
-            String recoDetail);
+    long MaaContextRunAction(Pointer context, String entry, String pipelineOverride, Pointer box, String recoDetail);
 
-    long MaaContextRunRecognitionDirect(
-            Pointer context,
-            String recoType,
-            String recoParam,
-            Pointer image);
+    long MaaContextRunRecognitionDirect(Pointer context, String recoType, String recoParam, Pointer image);
 
-    long MaaContextRunActionDirect(
-            Pointer context,
-            String actionType,
-            String actionParam,
-            Pointer box,
-            String recoDetail);
+    long MaaContextRunActionDirect(Pointer context, String actionType, String actionParam, Pointer box, String recoDetail);
 
-    byte MaaContextWaitFreezes(
-            Pointer context,
-            long time,
-            Pointer box,
-            String waitFreezesParam);
+    byte MaaContextWaitFreezes(Pointer context, long time, Pointer box, String waitFreezesParam);
 
     byte MaaContextOverridePipeline(Pointer context, String pipelineOverride);
 

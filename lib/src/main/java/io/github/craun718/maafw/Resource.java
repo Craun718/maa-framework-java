@@ -79,15 +79,12 @@ public class Resource implements AutoCloseable {
 
     /** Overrides the pipeline using a raw JSON object string. */
     public boolean overridePipeline(String pipelineOverride) {
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.framework()
-                        .MaaResourceOverridePipeline(
-                                handle, MaaJson.objectJsonOrEmpty(pipelineOverride)));
+        return MaaStringBuffer
+                .toBoolean(MaaLibrary.framework().MaaResourceOverridePipeline(handle, MaaJson.objectJsonOrEmpty(pipelineOverride)));
     }
 
     public boolean overridePipeline(Map<String, Object> pipelineOverride) {
-        return overridePipeline(
-                MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
+        return overridePipeline(MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
     /**
@@ -100,16 +97,14 @@ public class Resource implements AutoCloseable {
     public boolean overrideNext(String name, List<?> nextList) {
         try (MaaStringListBuffer buffer = new MaaStringListBuffer()) {
             buffer.set(MaaNextItems.names(nextList));
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaResourceOverrideNext(handle, name, buffer.handle()));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceOverrideNext(handle, name, buffer.handle()));
         }
     }
 
     public boolean overrideImage(String imageName, MaaImage image) {
         try (MaaImageBuffer buffer = new MaaImageBuffer()) {
             buffer.set(image);
-            return MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaResourceOverrideImage(handle, imageName, buffer.handle()));
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceOverrideImage(handle, imageName, buffer.handle()));
         }
     }
 
@@ -151,8 +146,8 @@ public class Resource implements AutoCloseable {
     /** Returns the default recognition parameter JSON for a native algorithm name. */
     public Map<String, Object> getDefaultRecognitionParam(String recoType) {
         try (MaaStringBuffer buffer = new MaaStringBuffer()) {
-            if (!MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaResourceGetDefaultRecognitionParam(handle, recoType, buffer.handle()))) {
+            if (!MaaStringBuffer
+                    .toBoolean(MaaLibrary.framework().MaaResourceGetDefaultRecognitionParam(handle, recoType, buffer.handle()))) {
                 return Map.of();
             }
             String json = buffer.get();
@@ -163,8 +158,7 @@ public class Resource implements AutoCloseable {
     /** Returns the default action parameter JSON for a native action name. */
     public Map<String, Object> getDefaultActionParam(String actionType) {
         try (MaaStringBuffer buffer = new MaaStringBuffer()) {
-            if (!MaaStringBuffer.toBoolean(
-                    MaaLibrary.framework().MaaResourceGetDefaultActionParam(handle, actionType, buffer.handle()))) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceGetDefaultActionParam(handle, actionType, buffer.handle()))) {
                 return Map.of();
             }
             String json = buffer.get();
@@ -265,8 +259,8 @@ public class Resource implements AutoCloseable {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(recognition, "recognition");
         customRecognitions.put(name, recognition);
-        return MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                .MaaResourceRegisterCustomRecognition(handle, name, recognition.callback(), null));
+        return MaaStringBuffer
+                .toBoolean(MaaLibrary.framework().MaaResourceRegisterCustomRecognition(handle, name, recognition.callback(), null));
     }
 
     /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
@@ -276,17 +270,14 @@ public class Resource implements AutoCloseable {
     }
 
     /** Registers a recognizer instantiated from {@code recognitionClass}, matching class-based decorator bindings. */
-    public boolean registerCustomRecognition(
-            String name, Class<? extends CustomRecognition> recognitionClass) {
+    public boolean registerCustomRecognition(String name, Class<? extends CustomRecognition> recognitionClass) {
         Objects.requireNonNull(recognitionClass, "recognitionClass");
-        return registerCustomRecognition(
-                name, CustomRegistrations.newInstance(recognitionClass, "custom recognition"));
+        return registerCustomRecognition(name, CustomRegistrations.newInstance(recognitionClass, "custom recognition"));
     }
 
     public boolean unregisterCustomRecognition(String name) {
         customRecognitions.remove(name);
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.framework().MaaResourceUnregisterCustomRecognition(handle, name));
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceUnregisterCustomRecognition(handle, name));
     }
 
     public boolean clearCustomRecognition() {
@@ -298,8 +289,7 @@ public class Resource implements AutoCloseable {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(action, "action");
         customActions.put(name, action);
-        return MaaStringBuffer.toBoolean(
-                MaaLibrary.framework().MaaResourceRegisterCustomAction(handle, name, action.callback(), null));
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceRegisterCustomAction(handle, name, action.callback(), null));
     }
 
     /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
@@ -311,8 +301,7 @@ public class Resource implements AutoCloseable {
     /** Registers an action instantiated from {@code actionClass}, matching class-based decorator bindings. */
     public boolean registerCustomAction(String name, Class<? extends CustomAction> actionClass) {
         Objects.requireNonNull(actionClass, "actionClass");
-        return registerCustomAction(
-                name, CustomRegistrations.newInstance(actionClass, "custom action"));
+        return registerCustomAction(name, CustomRegistrations.newInstance(actionClass, "custom action"));
     }
 
     public boolean unregisterCustomAction(String name) {
@@ -367,20 +356,11 @@ public class Resource implements AutoCloseable {
     }
 
     public boolean setInference(int executionProvider, int deviceId) {
-        try (Memory executionProviderValue = intMemory(executionProvider);
-                Memory deviceValue = intMemory(deviceId)) {
-            boolean providerOk = MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaResourceSetOption(
-                            handle,
-                            MaaDef.ResOption.INFERENCE_EXECUTION_PROVIDER.code(),
-                            executionProviderValue,
-                            Integer.BYTES));
-            boolean deviceOk = MaaStringBuffer.toBoolean(MaaLibrary.framework()
-                    .MaaResourceSetOption(
-                            handle,
-                            MaaDef.ResOption.INFERENCE_DEVICE.code(),
-                            deviceValue,
-                            Integer.BYTES));
+        try (Memory executionProviderValue = intMemory(executionProvider); Memory deviceValue = intMemory(deviceId)) {
+            boolean providerOk = MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
+                    MaaDef.ResOption.INFERENCE_EXECUTION_PROVIDER.code(), executionProviderValue, Integer.BYTES));
+            boolean deviceOk = MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
+                    MaaDef.ResOption.INFERENCE_DEVICE.code(), deviceValue, Integer.BYTES));
             return providerOk && deviceOk;
         }
     }

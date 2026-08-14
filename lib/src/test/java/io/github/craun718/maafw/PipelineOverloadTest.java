@@ -19,8 +19,7 @@ class PipelineOverloadTest {
         assertMethod(Resource.class, "overridePipeline", String.class);
         assertMethod(Context.class, "runTask", String.class, String.class);
         assertMethod(Context.class, "runRecognition", String.class, MaaImage.class, String.class);
-        assertMethod(
-                Context.class, "runAction", String.class, MaaRect.class, String.class, String.class);
+        assertMethod(Context.class, "runAction", String.class, MaaRect.class, String.class, String.class);
         assertMethod(Context.class, "overridePipeline", String.class);
         assertMethod(Tasker.class, "postTask", String.class, String.class);
         assertMethod(Tasker.class, "overridePipeline", long.class, String.class);
@@ -32,15 +31,11 @@ class PipelineOverloadTest {
     @Test
     void taskJobPassesJsonStringAndMapOverridesThrough() {
         AtomicReference<String> received = new AtomicReference<>();
-        TaskJob job = new TaskJob(
-                1L,
-                id -> MaaDef.Status.PENDING,
-                id -> {},
-                id -> null,
-                (taskId, pipelineJson) -> {
-                    received.set(pipelineJson);
-                    return true;
-                });
+        TaskJob job = new TaskJob(1L, id -> MaaDef.Status.PENDING, id -> {
+        }, id -> null, (taskId, pipelineJson) -> {
+            received.set(pipelineJson);
+            return true;
+        });
 
         assertTrue(job.overridePipeline("{\"a\":1}"));
         assertEquals("{\"a\":1}", received.get());
@@ -65,21 +60,13 @@ class PipelineOverloadTest {
 
     @Test
     void nextListNormalizesRawStringsAndNodeAttrs() {
-        assertEquals(
-                List.of("A", "[JumpBack]B", "[Anchor]C", "[JumpBack][Anchor]D"),
-                MaaNextItems.names(
-                        List.of(
-                                "A",
-                                JNodeAttr.of("B", true, false),
-                                JNodeAttr.of("C", false, true),
-                                JNodeAttr.of("D", true, true))));
+        assertEquals(List.of("A", "[JumpBack]B", "[Anchor]C", "[JumpBack][Anchor]D"), MaaNextItems
+                .names(List.of("A", JNodeAttr.of("B", true, false), JNodeAttr.of("C", false, true), JNodeAttr.of("D", true, true))));
         assertEquals(List.of(), MaaNextItems.names(null));
-        assertThrows(
-                IllegalArgumentException.class, () -> MaaNextItems.names(List.of(42)));
+        assertThrows(IllegalArgumentException.class, () -> MaaNextItems.names(List.of(42)));
     }
 
-    private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes)
-            throws NoSuchMethodException {
+    private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes) throws NoSuchMethodException {
         Method method = owner.getMethod(name, parameterTypes);
         assertNotNull(method);
     }

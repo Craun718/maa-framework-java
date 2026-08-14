@@ -24,19 +24,9 @@ class JPipelineTest {
         click.target = List.of(100, 200);
 
         JPipeline pipeline = new JPipeline();
-        pipeline.add(
-                new JPipelineData()
-                        .name("Startup")
-                        .recognition(JRecognition.templateMatch(match))
-                        .action(JAction.click(click))
-                        .addNext("Idle")
-                        .addNext(JNodeAttr.of("Retry", true, true))
-                        .addOnError("Fail")
-                        .addAnchor("entry")
-                        .setAnchorTarget("next", "Idle")
-                        .preDelay(10)
-                        .timeout(5000)
-                        .attach(Map.of("k", "v")));
+        pipeline.add(new JPipelineData().name("Startup").recognition(JRecognition.templateMatch(match)).action(JAction.click(click))
+                .addNext("Idle").addNext(JNodeAttr.of("Retry", true, true)).addOnError("Fail").addAnchor("entry")
+                .setAnchorTarget("next", "Idle").preDelay(10).timeout(5000).attach(Map.of("k", "v")));
         pipeline.add("Idle", new JPipelineData().action(JAction.doNothing()));
 
         assertEquals(2, pipeline.size());
@@ -77,17 +67,11 @@ class JPipelineTest {
 
         JRecognition and = JRecognition.and("A", "B");
         assertEquals(JRecognitionType.AND, and.type);
-        assertEquals(
-                List.of("A", "B"),
-                assertInstanceOf(JAnd.class, and.param).allOf.stream()
-                        .map(JSubRecognitionItem::nodeName)
-                        .toList());
+        assertEquals(List.of("A", "B"), assertInstanceOf(JAnd.class, and.param).allOf.stream().map(JSubRecognitionItem::nodeName).toList());
 
         JRecognition custom = JRecognition.custom("MyReco");
         assertEquals(JRecognitionType.CUSTOM, custom.type);
-        assertEquals(
-                "MyReco",
-                assertInstanceOf(JCustomRecognition.class, custom.param).customRecognition);
+        assertEquals("MyReco", assertInstanceOf(JCustomRecognition.class, custom.param).customRecognition);
 
         assertEquals(JActionType.DO_NOTHING, JAction.doNothing().type);
         assertEquals(JActionType.CLICK, JAction.click().type);
@@ -111,13 +95,8 @@ class JPipelineTest {
     @Test
     void fromJsonRoundTripsBuilderOutput() {
         JPipeline original = new JPipeline();
-        original.add(
-                new JPipelineData()
-                        .name("Main")
-                        .recognition(JRecognition.ocr(new JOCR()))
-                        .action(JAction.inputText("hello"))
-                        .addNext("End")
-                        .rateLimit(250));
+        original.add(new JPipelineData().name("Main").recognition(JRecognition.ocr(new JOCR())).action(JAction.inputText("hello"))
+                .addNext("End").rateLimit(250));
         original.add("End", new JPipelineData().action(JAction.doNothing()));
 
         JPipeline parsed = JPipeline.fromJson(original.toJson());
@@ -128,20 +107,12 @@ class JPipelineTest {
         assertEquals(JActionType.INPUT_TEXT, parsed.get("Main").action.type);
         assertEquals(List.of("End"), nodeNames(MaaJson.parseObject(parsed.get("Main").toJson()).get("next")));
         assertEquals(250, parsed.get("Main").rateLimit);
-        assertEquals(
-                MaaJson.parseObject(original.toJson()),
-                MaaJson.parseObject(parsed.toJson()));
+        assertEquals(MaaJson.parseObject(original.toJson()), MaaJson.parseObject(parsed.toJson()));
     }
 
     @Test
     void pipelineNodeListsSupportReplacementAndRemoval() {
-        JPipelineData node = new JPipelineData()
-                .name("Node")
-                .addNext("A")
-                .addNext("A")
-                .addNext("B")
-                .addOnError("E")
-                .addAnchor("self");
+        JPipelineData node = new JPipelineData().name("Node").addNext("A").addNext("A").addNext("B").addOnError("E").addAnchor("self");
 
         assertEquals(List.of("A", "B"), node.next.stream().map(attr -> attr.name).toList());
         assertEquals(List.of("E"), node.onError.stream().map(attr -> attr.name).toList());
@@ -166,9 +137,7 @@ class JPipelineTest {
     @Test
     void requiresNameBeforeAddingNode() {
         JPipeline pipeline = new JPipeline();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> pipeline.add(new JPipelineData().action(JAction.doNothing())));
+        assertThrows(IllegalArgumentException.class, () -> pipeline.add(new JPipelineData().action(JAction.doNothing())));
     }
 
     private static Map<String, Object> map(Object value) {
@@ -178,9 +147,7 @@ class JPipelineTest {
     }
 
     private static List<String> nodeNames(Object value) {
-        return mapList(value).stream()
-                .map(item -> formatName(map(item)))
-                .toList();
+        return mapList(value).stream().map(item -> formatName(map(item))).toList();
     }
 
     private static String formatName(Map<String, Object> attr) {

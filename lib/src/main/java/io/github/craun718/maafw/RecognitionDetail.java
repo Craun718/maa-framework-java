@@ -20,30 +20,10 @@ public final class RecognitionDetail {
     private final MaaImage rawImage;
     private final List<MaaImage> drawImages;
 
-    public RecognitionDetail(
-            long recoId,
-            String name,
-            String algorithm,
-            boolean hit,
-            MaaRect box,
-            List<RecognitionResult> allResults,
-            List<RecognitionResult> filteredResults,
-            RecognitionResult bestResult,
-            Map<String, Object> rawDetail,
-            MaaImage rawImage,
+    public RecognitionDetail(long recoId, String name, String algorithm, boolean hit, MaaRect box, List<RecognitionResult> allResults,
+            List<RecognitionResult> filteredResults, RecognitionResult bestResult, Map<String, Object> rawDetail, MaaImage rawImage,
             List<MaaImage> drawImages) {
-        this(
-                recoId,
-                name,
-                algorithm,
-                hit,
-                box,
-                allResults,
-                filteredResults,
-                bestResult,
-                (Object) rawDetail,
-                rawDetail,
-                rawImage,
+        this(recoId, name, algorithm, hit, box, allResults, filteredResults, bestResult, (Object) rawDetail, rawDetail, rawImage,
                 drawImages);
     }
 
@@ -51,46 +31,16 @@ public final class RecognitionDetail {
      * Creates a detail whose raw JSON may be a non-object form, such as the And/Or sub-result
      * array returned by the native tasker.
      */
-    public RecognitionDetail(
-            long recoId,
-            String name,
-            String algorithm,
-            boolean hit,
-            MaaRect box,
-            List<RecognitionResult> allResults,
-            List<RecognitionResult> filteredResults,
-            RecognitionResult bestResult,
-            Object rawDetailValue,
-            MaaImage rawImage,
+    public RecognitionDetail(long recoId, String name, String algorithm, boolean hit, MaaRect box, List<RecognitionResult> allResults,
+            List<RecognitionResult> filteredResults, RecognitionResult bestResult, Object rawDetailValue, MaaImage rawImage,
             List<MaaImage> drawImages) {
-        this(
-                recoId,
-                name,
-                algorithm,
-                hit,
-                box,
-                allResults,
-                filteredResults,
-                bestResult,
-                rawDetailValue,
-                rawDetailValue instanceof Map<?, ?> map ? MaaResultParsers.objectMap(map) : Map.of(),
-                rawImage,
-                drawImages);
+        this(recoId, name, algorithm, hit, box, allResults, filteredResults, bestResult, rawDetailValue,
+                rawDetailValue instanceof Map<?, ?> map ? MaaResultParsers.objectMap(map) : Map.of(), rawImage, drawImages);
     }
 
-    private RecognitionDetail(
-            long recoId,
-            String name,
-            String algorithm,
-            boolean hit,
-            MaaRect box,
-            List<RecognitionResult> allResults,
-            List<RecognitionResult> filteredResults,
-            RecognitionResult bestResult,
-            Object rawDetailValue,
-            Map<String, Object> rawDetail,
-            MaaImage rawImage,
-            List<MaaImage> drawImages) {
+    private RecognitionDetail(long recoId, String name, String algorithm, boolean hit, MaaRect box, List<RecognitionResult> allResults,
+            List<RecognitionResult> filteredResults, RecognitionResult bestResult, Object rawDetailValue, Map<String, Object> rawDetail,
+            MaaImage rawImage, List<MaaImage> drawImages) {
         this.recoId = recoId;
         this.name = name;
         this.algorithm = algorithm;

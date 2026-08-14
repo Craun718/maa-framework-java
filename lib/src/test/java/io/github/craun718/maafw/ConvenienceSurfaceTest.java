@@ -24,19 +24,13 @@ class ConvenienceSurfaceTest {
     void taskJobGetDetailDoesNotWait() {
         AtomicBoolean waited = new AtomicBoolean();
         TaskDetail detail = new TaskDetail(1L, "Entry", List.of(), MaaDef.Status.SUCCEEDED, null);
-        TaskJob job = new TaskJob(
-                1L,
-                id -> MaaDef.Status.SUCCEEDED,
-                id -> waited.set(true),
-                id -> detail,
-                (taskId, pipelineJson) -> true);
+        TaskJob job = new TaskJob(1L, id -> MaaDef.Status.SUCCEEDED, id -> waited.set(true), id -> detail, (taskId, pipelineJson) -> true);
 
         assertSame(detail, job.getDetail());
         assertFalse(waited.get(), "getDetail should not block");
     }
 
-    private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes)
-            throws NoSuchMethodException {
+    private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes) throws NoSuchMethodException {
         Method method = owner.getMethod(name, parameterTypes);
         assertNotNull(method);
     }

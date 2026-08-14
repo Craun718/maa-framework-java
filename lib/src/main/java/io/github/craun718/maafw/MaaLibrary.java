@@ -18,8 +18,7 @@ import java.util.Objects;
  */
 public final class MaaLibrary {
 
-    private static final Map<String, String> LIBRARY_OPTIONS =
-            Map.of(Library.OPTION_STRING_ENCODING, StandardCharsets.UTF_8.name());
+    private static final Map<String, String> LIBRARY_OPTIONS = Map.of(Library.OPTION_STRING_ENCODING, StandardCharsets.UTF_8.name());
 
     private static volatile boolean agentServerMode;
     private static volatile MaaFrameworkLibrary framework;
@@ -32,7 +31,8 @@ public final class MaaLibrary {
     private static volatile Path agentClientPath;
     private static volatile Path agentServerPath;
 
-    private MaaLibrary() {}
+    private MaaLibrary() {
+    }
 
     /** Returns whether native libraries are currently loaded. */
     public static synchronized boolean isOpen() {
@@ -55,18 +55,15 @@ public final class MaaLibrary {
             if (!Files.isRegularFile(agentServerPath)) {
                 throw new IllegalArgumentException("MaaAgentServer library not found: " + agentServerPath);
             }
-            MaaAgentServerLibrary loadedAgentServer = Native.loadLibrary(
-                    agentServerPath.toString(), MaaAgentServerLibrary.class, LIBRARY_OPTIONS);
+            MaaAgentServerLibrary loadedAgentServer = Native.loadLibrary(agentServerPath.toString(), MaaAgentServerLibrary.class,
+                    LIBRARY_OPTIONS);
             MaaLibrary.agentServer = loadedAgentServer;
         } else {
             frameworkPath = resolve(directory, "MaaFramework", platform);
             toolkitPath = resolve(directory, "MaaToolkit", platform);
             agentClientPath = resolve(directory, "MaaAgentClient", platform);
-            if (!Files.isRegularFile(frameworkPath)
-                    || !Files.isRegularFile(toolkitPath)
-                    || !Files.isRegularFile(agentClientPath)) {
-                throw new IllegalArgumentException(
-                        "MaaFramework, MaaToolkit and MaaAgentClient libraries are required under " + directory);
+            if (!Files.isRegularFile(frameworkPath) || !Files.isRegularFile(toolkitPath) || !Files.isRegularFile(agentClientPath)) {
+                throw new IllegalArgumentException("MaaFramework, MaaToolkit and MaaAgentClient libraries are required under " + directory);
             }
             framework = Native.load(frameworkPath.toString(), MaaFrameworkLibrary.class, LIBRARY_OPTIONS);
             toolkit = Native.load(toolkitPath.toString(), MaaToolkitLibrary.class, LIBRARY_OPTIONS);

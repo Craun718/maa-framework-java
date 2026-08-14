@@ -12,13 +12,9 @@ import java.util.Map;
  */
 public abstract class CustomRecognition {
 
-    public record AnalyzeArg(
-            TaskDetail taskDetail,
-            String nodeName,
-            String customRecognitionName,
-            String customRecognitionParam,
-            MaaImage image,
-            MaaRect roi) {}
+    public record AnalyzeArg(TaskDetail taskDetail, String nodeName, String customRecognitionName, String customRecognitionParam,
+            MaaImage image, MaaRect roi) {
+    }
 
     public record AnalyzeResult(MaaRect box, Map<String, Object> detail) {
 
@@ -33,7 +29,8 @@ public abstract class CustomRecognition {
 
     private final MaaCallbacks.CustomRecognitionCallback callback = this::invoke;
 
-    protected CustomRecognition() {}
+    protected CustomRecognition() {
+    }
 
     public abstract AnalyzeResult analyze(Context context, AnalyzeArg argv);
 
@@ -41,17 +38,8 @@ public abstract class CustomRecognition {
         return callback;
     }
 
-    private byte invoke(
-            Pointer contextHandle,
-            long taskId,
-            String nodeName,
-            String customRecognitionName,
-            String customRecognitionParam,
-            Pointer imageHandle,
-            Pointer roiHandle,
-            Pointer transArg,
-            Pointer outBoxHandle,
-            Pointer outDetailHandle) {
+    private byte invoke(Pointer contextHandle, long taskId, String nodeName, String customRecognitionName, String customRecognitionParam,
+            Pointer imageHandle, Pointer roiHandle, Pointer transArg, Pointer outBoxHandle, Pointer outDetailHandle) {
         try {
             if (contextHandle == null || contextHandle == Pointer.NULL) {
                 return 0;
@@ -64,11 +52,10 @@ public abstract class CustomRecognition {
 
             MaaImage image = new MaaImageBuffer(imageHandle).get();
             MaaRect roi = new MaaRectBuffer(roiHandle).get();
-            AnalyzeResult result =
-                    analyze(context, new AnalyzeArg(taskDetail, nodeName, customRecognitionName, customRecognitionParam, image, roi));
+            AnalyzeResult result = analyze(context,
+                    new AnalyzeArg(taskDetail, nodeName, customRecognitionName, customRecognitionParam, image, roi));
 
-            try (MaaRectBuffer outBox = new MaaRectBuffer(outBoxHandle);
-                    MaaStringBuffer outDetail = new MaaStringBuffer(outDetailHandle)) {
+            try (MaaRectBuffer outBox = new MaaRectBuffer(outBoxHandle); MaaStringBuffer outDetail = new MaaStringBuffer(outDetailHandle)) {
                 if (result == null) {
                     return 0;
                 }

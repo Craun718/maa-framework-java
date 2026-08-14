@@ -11,7 +11,8 @@ import java.nio.file.Path;
 /** Agent client example. Start AgentServerExample in another process first. */
 public final class AgentClientExample {
 
-    private AgentClientExample() {}
+    private AgentClientExample() {
+    }
 
     public static void main(String[] args) {
         Path libraryDir = args.length > 0 ? Path.of(args[0]) : Path.of("bin");

@@ -27,11 +27,7 @@ class JobSemanticsTest {
     @Test
     void jobWithResultGetDoesNotWaitByDefault() {
         AtomicBoolean waited = new AtomicBoolean();
-        JobWithResult<String> job = new JobWithResult<>(
-                1L,
-                id -> MaaDef.Status.PENDING,
-                id -> waited.set(true),
-                id -> "result");
+        JobWithResult<String> job = new JobWithResult<>(1L, id -> MaaDef.Status.PENDING, id -> waited.set(true), id -> "result");
 
         assertEquals("result", job.get());
         assertFalse(waited.get(), "get() should not block by default");
@@ -40,11 +36,7 @@ class JobSemanticsTest {
     @Test
     void jobWithResultGetWaitsWhenRequested() {
         AtomicBoolean waited = new AtomicBoolean();
-        JobWithResult<String> job = new JobWithResult<>(
-                1L,
-                id -> MaaDef.Status.SUCCEEDED,
-                id -> waited.set(true),
-                id -> "result");
+        JobWithResult<String> job = new JobWithResult<>(1L, id -> MaaDef.Status.SUCCEEDED, id -> waited.set(true), id -> "result");
 
         assertEquals("result", job.get(true));
         assertTrue(waited.get(), "get(true) should block until the job completes");
@@ -54,12 +46,7 @@ class JobSemanticsTest {
     void taskJobWaitForBlocksButGetDetailDoesNot() {
         AtomicBoolean waited = new AtomicBoolean();
         TaskDetail detail = new TaskDetail(1L, "Entry", List.of(), MaaDef.Status.PENDING, null);
-        TaskJob job = new TaskJob(
-                1L,
-                id -> MaaDef.Status.PENDING,
-                id -> waited.set(true),
-                id -> detail,
-                (taskId, pipelineJson) -> true);
+        TaskJob job = new TaskJob(1L, id -> MaaDef.Status.PENDING, id -> waited.set(true), id -> detail, (taskId, pipelineJson) -> true);
 
         assertSame(detail, job.getDetail());
         assertFalse(waited.get(), "getDetail() should not block");
