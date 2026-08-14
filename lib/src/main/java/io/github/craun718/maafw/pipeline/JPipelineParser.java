@@ -200,13 +200,13 @@ public final class JPipelineParser {
             }
             case AND -> {
                 JAnd param = new JAnd();
-                param.allOf = objectList(values.get("all_of"), param.allOf);
+                param.allOf = subRecognitionList(values.get("all_of"), param.allOf);
                 param.boxIndex = integer(values.get("box_index"), param.boxIndex);
                 yield param;
             }
             case OR -> {
                 JOr param = new JOr();
-                param.anyOf = objectList(values.get("any_of"), param.anyOf);
+                param.anyOf = subRecognitionList(values.get("any_of"), param.anyOf);
                 yield param;
             }
         };
@@ -664,6 +664,56 @@ public final class JPipelineParser {
         }
         List<Object> items = list(value);
         return List.copyOf(items);
+    }
+
+    static List<JSubRecognitionItem> subRecognitionList(
+            Object value, List<JSubRecognitionItem> fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        List<Object> items = list(value);
+        if (items == null) {
+            return List.of(parseSubRecognitionItem(value));
+        }
+        List<JSubRecognitionItem> result = new ArrayList<>(items.size());
+        for (Object item : items) {
+            result.add(parseSubRecognitionItem(item));
+        }
+        return List.copyOf(result);
+    }
+
+    static JSubRecognitionItem parseSubRecognitionItem(Object value) {
+        if (value instanceof String name) {
+            return JSubRecognitionItem.ref(name);
+        }
+        Map<String, Object> values = map(value);
+        if (values == null) {
+            throw new IllegalArgumentException("Sub-recognition item must be a string or object");
+        }
+        return JSubRecognitionItem.inline(parseInlineRecognition(values));
+    }
+
+    private static JInlineRecognition parseInlineRecognition(Map<String, Object> values) {
+        JInlineRecognition inline = new JInlineRecognition();
+        inline.subName = string(values.get("sub_name"));
+
+        String typeName = string(values.get("type"));
+        boolean legacyShape = false;
+        if (typeName == null) {
+            typeName = string(values.get("recognition"));
+            legacyShape = true;
+        }
+        if (typeName == null) {
+            throw new IllegalArgumentException("Inline recognition type is required");
+        }
+        inline.type = JRecognitionType.of(typeName);
+
+        Map<String, Object> paramValues = mapOrEmpty(values.get("param"));
+        if (legacyShape && !values.containsKey("param")) {
+            paramValues = values;
+        }
+        inline.param = parseRecognitionParam(inline.type, paramValues);
+        return inline;
     }
 
     private static List<JSwipe> requiredSwipeList(Object value) {

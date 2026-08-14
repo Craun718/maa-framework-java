@@ -601,6 +601,21 @@ class RuntimeSmokeTest {
             JobWithResult<String> shell = controller.postShell("echo blank");
             assertTrue(shell.waitFor().succeeded());
             assertEquals("", shell.get());
+
+            assertTrue(controller.postClick(100, 200).waitFor().succeeded());
+            assertTrue(controller.postSwipe(100, 200, 400, 300, 100).waitFor().succeeded());
+            assertTrue(controller.postClickKey(4).waitFor().succeeded());
+            assertTrue(controller.postKeyDown(4).waitFor().succeeded());
+            assertTrue(controller.postKeyUp(4).waitFor().succeeded());
+            assertTrue(controller.postInputText("hello").waitFor().succeeded());
+            assertTrue(controller.postStartApp("com.android.settings").waitFor().succeeded());
+            assertTrue(controller.postStopApp("com.android.settings").waitFor().succeeded());
+            assertTrue(controller.postTouchDown(0, 100, 200, 1000).waitFor().succeeded());
+            assertTrue(controller.postTouchMove(0, 200, 300, 1000).waitFor().succeeded());
+            assertTrue(controller.postTouchUp(0).waitFor().succeeded());
+            assertTrue(controller.postRelativeMove(12, 34).waitFor().succeeded());
+            assertTrue(controller.postScroll(0, 10).waitFor().succeeded());
+            assertTrue(controller.postInactive().waitFor().succeeded());
         }
     }
 
@@ -696,6 +711,9 @@ class RuntimeSmokeTest {
         AtomicInteger clickCount = new AtomicInteger();
         AtomicReference<RecognitionDetail> contextRecognition = new AtomicReference<>();
         AtomicReference<ActionDetail> contextAction = new AtomicReference<>();
+        AtomicReference<TaskDetail> nestedTask = new AtomicReference<>();
+        AtomicReference<RecognitionDetail> nestedRecognition = new AtomicReference<>();
+        AtomicReference<ActionDetail> nestedAction = new AtomicReference<>();
         Path pipeline = Files.createTempFile("maa-java-typed-direct-", ".json");
         try (Resource resource = new Resource();
                 CustomController controller = newSmokeController(clickCount);
@@ -706,6 +724,9 @@ class RuntimeSmokeTest {
                     new CustomRecognition() {
                         @Override
                         public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                            nestedTask.set(context.runTask("NestedTask", Map.of()));
+                            nestedRecognition.set(
+                                    context.runRecognition("NestedRecognition", gradientBgrImage(8), Map.of()));
                             RecognitionDetail reco = context.runRecognitionDirect(
                                     JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(8));
                             contextRecognition.set(reco);
@@ -714,6 +735,20 @@ class RuntimeSmokeTest {
                                         JActionType.CLICK, new JClick(), reco.box(), ""));
                             }
                             return AnalyzeResult.hit(MaaRect.of(0, 0, 8, 8));
+                        }
+                    }));
+            assertTrue(resource.registerCustomAction(
+                    "JavaDirectContextAction",
+                    new CustomAction() {
+                        @Override
+                        public RunResult run(Context context, RunArg argv) {
+                            String recoDetailJson = argv.recoDetail() == null
+                                            || argv.recoDetail().rawDetailValue() == null
+                                    ? ""
+                                    : MaaJson.write(argv.recoDetail().rawDetailValue());
+                            nestedAction.set(
+                                    context.runAction("NestedAction", argv.box(), recoDetailJson, Map.of()));
+                            return RunResult.ok();
                         }
                     }));
 
@@ -726,6 +761,20 @@ class RuntimeSmokeTest {
                                   "type": "Custom",
                                   "param": {"custom_recognition": "JavaDirectContextReco"}
                                 },
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "NestedTask": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "Click", "param": {}},
+                                "next": []
+                              },
+                              "NestedRecognition": {
+                                "recognition": {"type": "DirectHit", "param": {}},
+                                "action": {"type": "DoNothing", "param": {}},
+                                "next": []
+                              },
+                              "NestedAction": {
                                 "action": {"type": "DoNothing", "param": {}},
                                 "next": []
                               }
@@ -743,6 +792,13 @@ class RuntimeSmokeTest {
             assertNotNull(contextAction.get(), "Context.runActionDirect should return a detail");
             assertTrue(contextAction.get().success(), "Click direct action should succeed");
             assertEquals("Click", contextAction.get().action());
+            assertNotNull(nestedTask.get(), "Context.runTask should return a detail");
+            assertTrue(nestedTask.get().status().succeeded(), "Nested task should succeed");
+            assertNotNull(nestedRecognition.get(), "Context.runRecognition should return a detail");
+            assertTrue(nestedRecognition.get().hit(), "Nested DirectHit should hit");
+            assertEquals("DirectHit", nestedRecognition.get().algorithm());
+            assertNotNull(nestedAction.get(), "Context.runAction should return a detail");
+            assertTrue(nestedAction.get().success(), "Nested DoNothing action should succeed");
 
             TaskJob recoJob = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(),
                     gradientBgrImage(8));

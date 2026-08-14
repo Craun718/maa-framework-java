@@ -77,7 +77,11 @@ class JPipelineTest {
 
         JRecognition and = JRecognition.and("A", "B");
         assertEquals(JRecognitionType.AND, and.type);
-        assertEquals(List.of("A", "B"), assertInstanceOf(JAnd.class, and.param).allOf);
+        assertEquals(
+                List.of("A", "B"),
+                assertInstanceOf(JAnd.class, and.param).allOf.stream()
+                        .map(JSubRecognitionItem::nodeName)
+                        .toList());
 
         JRecognition custom = JRecognition.custom("MyReco");
         assertEquals(JRecognitionType.CUSTOM, custom.type);

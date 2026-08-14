@@ -7,7 +7,7 @@ import java.util.List;
 public final class JAnd implements JRecognitionParam {
 
     @JsonProperty("all_of")
-    public List<Object> allOf = List.of();
+    public List<JSubRecognitionItem> allOf = List.of();
     @JsonProperty("box_index")
     public int boxIndex;
 }

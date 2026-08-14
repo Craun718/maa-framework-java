@@ -3,6 +3,7 @@ package io.github.craun718.maafw.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.craun718.maafw.MaaJson;
@@ -144,6 +145,152 @@ class JPipelineParserTest {
         assertEquals(1, and.boxIndex);
         assertInstanceOf(
                 JOr.class, parseRecognition(JRecognitionType.OR, Map.of("any_of", List.of("A"))));
+    }
+
+    @Test
+    void parsesMixedAndOrSubRecognitionItems() {
+        String andJson =
+                """
+                {
+                  "Main": {
+                    "recognition": {
+                      "type": "And",
+                      "param": {
+                        "all_of": [
+                          "RefNode",
+                          {"sub_name": "InlineSub", "type": "DirectHit", "param": {}}
+                        ],
+                        "box_index": 1
+                      }
+                    }
+                  }
+                }
+                """;
+
+        JAnd and = assertInstanceOf(
+                JAnd.class,
+                JPipelineParser.parseAll(andJson).get("Main").recognition.param);
+        assertEquals(1, and.boxIndex);
+        assertEquals(2, and.allOf.size());
+        assertFalse(and.allOf.getFirst().isInline());
+        assertEquals("RefNode", and.allOf.getFirst().nodeName());
+        JInlineRecognition inline = and.allOf.get(1).inline();
+        assertTrue(and.allOf.get(1).isInline());
+        assertEquals("InlineSub", inline.subName);
+        assertEquals(JRecognitionType.DIRECT_HIT, inline.type);
+        assertInstanceOf(JDirectHit.class, inline.param);
+
+        Map<String, Object> andJsonObject = MaaJson.parseObject(MaaJson.write(and));
+        assertFalse(andJsonObject.containsKey("sub_name"));
+        List<?> andItems = (List<?>) andJsonObject.get("all_of");
+        assertEquals("RefNode", andItems.getFirst());
+        Map<String, Object> inlineJson = map(andItems.get(1));
+        assertEquals("InlineSub", inlineJson.get("sub_name"));
+        assertEquals("DirectHit", inlineJson.get("type"));
+        assertEquals(
+                Map.of("roi", List.of(0, 0, 0, 0), "roi_offset", List.of(0, 0, 0, 0)),
+                inlineJson.get("param"));
+
+        String orJson =
+                """
+                {
+                  "Main": {
+                    "recognition": {
+                      "type": "Or",
+                      "param": {
+                        "any_of": [
+                          "OtherRef",
+                          {
+                            "sub_name": "Sub2",
+                            "type": "TemplateMatch",
+                            "param": {"template": ["a.png"], "threshold": [0.8]}
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+                """;
+
+        JOr or = assertInstanceOf(
+                JOr.class,
+                JPipelineParser.parseAll(orJson).get("Main").recognition.param);
+        assertEquals(2, or.anyOf.size());
+        assertEquals("OtherRef", or.anyOf.getFirst().nodeName());
+        JInlineRecognition orInline = or.anyOf.get(1).inline();
+        assertEquals("Sub2", orInline.subName);
+        assertEquals(JRecognitionType.TEMPLATE_MATCH, orInline.type);
+        JTemplateMatch template = assertInstanceOf(JTemplateMatch.class, orInline.param);
+        assertEquals(List.of("a.png"), template.template);
+        assertEquals(List.of(0.8), template.threshold);
+    }
+
+    @Test
+    void parsesLegacyInlineSubRecognitionShape() {
+        JAnd and = assertInstanceOf(
+                JAnd.class,
+                parseRecognition(
+                        JRecognitionType.AND,
+                        Map.of(
+                                "all_of",
+                                List.of(
+                                        Map.of(
+                                                "sub_name", "Legacy",
+                                                "recognition", "TemplateMatch",
+                                                "template", "a.png",
+                                                "threshold", 0.8)))));
+
+        JSubRecognitionItem item = and.allOf.getFirst();
+        assertTrue(item.isInline());
+        assertEquals("Legacy", item.inline().subName);
+        JTemplateMatch param = assertInstanceOf(JTemplateMatch.class, item.inline().param);
+        assertEquals(List.of("a.png"), param.template);
+        assertEquals(List.of(0.8), param.threshold);
+    }
+
+    @Test
+    void builderAcceptsMixedSubRecognitionItemsAndRoundTrips() {
+        JRecognition and = JRecognition.and(
+                "A",
+                JRecognition.directHit(),
+                JSubRecognitionItem.inline("Sub", JRecognition.ocr(new JOCR())));
+        JAnd andParam = assertInstanceOf(JAnd.class, and.param);
+        assertEquals(3, andParam.allOf.size());
+        assertEquals("A", andParam.allOf.getFirst().nodeName());
+        assertTrue(andParam.allOf.get(1).isInline());
+        assertNull(andParam.allOf.get(1).inline().subName);
+        assertEquals(
+                JRecognitionType.DIRECT_HIT, andParam.allOf.get(1).inline().type);
+        assertTrue(andParam.allOf.get(2).isInline());
+        assertEquals("Sub", andParam.allOf.get(2).inline().subName);
+        assertEquals(JRecognitionType.OCR, andParam.allOf.get(2).inline().type);
+        andParam.boxIndex = 1;
+
+        Map<String, Object> andJson = MaaJson.parseObject(MaaJson.write(and));
+        assertEquals("And", andJson.get("type"));
+        Map<String, Object> andParamJson = map(andJson.get("param"));
+        assertEquals(1, ((Number) andParamJson.get("box_index")).intValue());
+        List<?> andItems = (List<?>) andParamJson.get("all_of");
+        assertEquals("A", andItems.getFirst());
+        assertEquals(
+                JRecognitionType.DIRECT_HIT.nativeName(),
+                map(andItems.get(1)).get("type"));
+        assertEquals("Sub", map(andItems.get(2)).get("sub_name"));
+        assertEquals(JRecognitionType.OCR.nativeName(), map(andItems.get(2)).get("type"));
+
+        JRecognition or =
+                JRecognition.or(List.of("B", JSubRecognitionItem.inline("Sub2", JRecognition.directHit())));
+        JOr orParam = assertInstanceOf(JOr.class, or.param);
+        assertEquals(2, orParam.anyOf.size());
+        assertEquals("B", orParam.anyOf.getFirst().nodeName());
+        assertEquals("Sub2", orParam.anyOf.get(1).inline().subName);
+
+        Map<String, Object> orJson = MaaJson.parseObject(MaaJson.write(or));
+        Map<String, Object> orParamJson = map(orJson.get("param"));
+        List<?> orItems = (List<?>) orParamJson.get("any_of");
+        assertEquals("B", orItems.getFirst());
+        assertEquals("Sub2", map(orItems.get(1)).get("sub_name"));
+        assertEquals("DirectHit", map(orItems.get(1)).get("type"));
     }
 
     @Test
@@ -507,5 +654,10 @@ class JPipelineParserTest {
 
     private static List<Long> longValues(List<?> values) {
         return values.stream().map(value -> ((Number) value).longValue()).toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> map(Object value) {
+        return (Map<String, Object>) value;
     }
 }

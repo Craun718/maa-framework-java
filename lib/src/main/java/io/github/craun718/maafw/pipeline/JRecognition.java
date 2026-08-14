@@ -1,6 +1,9 @@
 package io.github.craun718.maafw.pipeline;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Pipeline v2 recognition section. */
 public final class JRecognition {
@@ -69,26 +72,55 @@ public final class JRecognition {
 
     public static JRecognition and(Object... allOf) {
         JAnd param = new JAnd();
+        param.allOf = subRecognitionItems(allOf);
+        return of(JRecognitionType.AND, param);
+    }
+
+    public static JRecognition and(JSubRecognitionItem... allOf) {
+        JAnd param = new JAnd();
         param.allOf = List.of(allOf);
         return of(JRecognitionType.AND, param);
     }
 
-    public static JRecognition and(List<Object> allOf) {
-        JAnd param = new JAnd();
-        param.allOf = List.copyOf(allOf);
-        return of(JRecognitionType.AND, param);
+    public static JRecognition and(List<?> allOf) {
+        return and(allOf == null ? new Object[0] : allOf.toArray());
     }
 
     public static JRecognition or(Object... anyOf) {
+        JOr param = new JOr();
+        param.anyOf = subRecognitionItems(anyOf);
+        return of(JRecognitionType.OR, param);
+    }
+
+    public static JRecognition or(JSubRecognitionItem... anyOf) {
         JOr param = new JOr();
         param.anyOf = List.of(anyOf);
         return of(JRecognitionType.OR, param);
     }
 
-    public static JRecognition or(List<Object> anyOf) {
-        JOr param = new JOr();
-        param.anyOf = List.copyOf(anyOf);
-        return of(JRecognitionType.OR, param);
+    public static JRecognition or(List<?> anyOf) {
+        return or(anyOf == null ? new Object[0] : anyOf.toArray());
+    }
+
+    private static List<JSubRecognitionItem> subRecognitionItems(Object... items) {
+        List<JSubRecognitionItem> result = new ArrayList<>(items.length);
+        for (Object item : items) {
+            if (item instanceof JSubRecognitionItem sub) {
+                result.add(sub);
+            } else if (item instanceof String name) {
+                result.add(JSubRecognitionItem.ref(name));
+            } else if (item instanceof JRecognition recognition) {
+                result.add(JSubRecognitionItem.inline(recognition));
+            } else if (item instanceof Map<?, ?> raw) {
+                Map<String, Object> values = new LinkedHashMap<>();
+                raw.forEach((key, value) -> values.put(String.valueOf(key), value));
+                result.add(JPipelineParser.parseSubRecognitionItem(values));
+            } else {
+                throw new IllegalArgumentException(
+                        "Sub-recognition item must be a node name, inline recognition, or typed item");
+            }
+        }
+        return List.copyOf(result);
     }
 
     public static JRecognition custom(JCustomRecognition param) {

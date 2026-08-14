@@ -7,5 +7,5 @@ import java.util.List;
 public final class JOr implements JRecognitionParam {
 
     @JsonProperty("any_of")
-    public List<Object> anyOf = List.of();
+    public List<JSubRecognitionItem> anyOf = List.of();
 }
