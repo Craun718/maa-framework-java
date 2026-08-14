@@ -761,7 +761,10 @@ class RuntimeSmokeTest {
                                   "type": "Custom",
                                   "param": {"custom_recognition": "JavaDirectContextReco"}
                                 },
-                                "action": {"type": "DoNothing", "param": {}},
+                                "action": {
+                                  "type": "Custom",
+                                  "param": {"custom_action": "JavaDirectContextAction"}
+                                },
                                 "next": []
                               },
                               "NestedTask": {
