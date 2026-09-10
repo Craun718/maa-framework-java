@@ -128,9 +128,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - platform: win-x86_64
+            source_dir: MAA-win-x86_64
+            maa_file_name: MAA-win-x86_64*
+          - platform: win-aarch64
+            source_dir: MAA-win-aarch64
+            maa_file_name: MAA-win-aarch64*
           - platform: linux-x86_64
             source_dir: MAA-linux-x86_64
             maa_file_name: MAA-linux-x86_64*
+          - platform: linux-aarch64
+            source_dir: MAA-linux-aarch64
+            maa_file_name: MAA-linux-aarch64*
+          - platform: macos-x86_64
+            source_dir: MAA-macos-x86_64
+            maa_file_name: MAA-macos-x86_64*
+          - platform: macos-aarch64
+            source_dir: MAA-macos-aarch64
+            maa_file_name: MAA-macos-aarch64*
+          - platform: android-x86_64
+            source_dir: MAA-android-x86_64
+            maa_file_name: MAA-android-x86_64*
           - platform: android-arm64-v8a
             source_dir: MAA-android-aarch64
             maa_file_name: MAA-android-aarch64*
@@ -192,17 +210,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Download Linux Release Archive
+      - name: Download Release Archives
         uses: actions/download-artifact@v8
         with:
-          name: maa-framework-java-linux-x86_64-ci
+          pattern: maa-framework-java-*-ci
           path: dist
-
-      - name: Download Android Release Archive
-        uses: actions/download-artifact@v8
-        with:
-          name: maa-framework-java-android-arm64-v8a-ci
-          path: dist
+          merge-multiple: true
 
       - name: Download Java Library
         uses: actions/download-artifact@v8
