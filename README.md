@@ -43,15 +43,16 @@ dependencies {
 Java jar 本身是平台中立的，不包含原生二进制。若要像官方 MaaFramework release 一样分发，可把各平台的 release 目录解压到同一个目录，然后运行：
 
 ```bash
-MAA_FRAMEWORK_VERSION=v5.13.0 \
 MAA_FRAMEWORK_RELEASES=/path/to/extracted-releases \
 ./scripts/package-official-release.sh
 ```
 
+分发包中的 MaaFramework 版本由顶层 `.maa-framework-version` 锚定。CI 会下载该文件指定的官方 release，而不是解析 latest。
+
 脚本会识别 `MAA-win-*`、`MAA-linux-*`、`MAA-macos-*` 和 `MAA-android-*` 目录，包括名称带 release tag 的解压目录，例如 `MAA-macos-aarch64-v5.13.0`。对每个可用平台，脚本会构建 `lib/maa-framework-java.jar`，并复制完整的官方 release 目录树，包括 `bin/`、`include/`、`symbols/`、文档、示例、schema、许可证和 `share/MaaAgentBinary/`。每个 zip 写入：
 
 ```text
-build/distributions/maa-framework-java-${MAA_FRAMEWORK_VERSION}-${platform}.zip
+build/distributions/maa-framework-java-<MaaFramework版本>-${platform}.zip
 ```
 
 输出布局与官方 release 范围保持一致：
@@ -91,6 +92,8 @@ MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 同样的检查也可以通过 `FfiSurfaceTest` 运行；只有设置了 `MAA_FRAMEWORK_SOURCE` 或 `maafw.maaFrameworkSource` 时才运行，否则跳过。
 
 ## 完整性与对齐
+
+顶层 `.maa-framework-version` 是 MaaFramework ABI/二进制跟踪版本的唯一锚点。
 
 本绑定以 MaaFramework `v5.13.0` 头文件、文档和 Python 绑定为跟踪目标：
 

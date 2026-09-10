@@ -3,13 +3,19 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASES_ROOT="${1:-${MAA_FRAMEWORK_RELEASES:-}}"
-VERSION="${MAA_FRAMEWORK_VERSION:-dev}"
+VERSION_FILE="${REPO_ROOT}/.maa-framework-version"
+VERSION="$(tr -d '[:space:]' < "${VERSION_FILE}")"
 OUT_DIR="${MAA_FRAMEWORK_OUTPUT_DIR:-${REPO_ROOT}/build/distributions}"
+
+if [[ ! "${VERSION}" =~ ^v[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.-]+)?$ ]]; then
+    echo "invalid MaaFramework version in ${VERSION_FILE}: ${VERSION}" >&2
+    exit 2
+fi
 
 if [[ -z "${RELEASES_ROOT}" ]]; then
     echo "usage: $0 <directory containing extracted MAA-* releases>" >&2
     echo "       MAA_FRAMEWORK_RELEASES=<path> $0" >&2
-    echo "       MAA_FRAMEWORK_VERSION=v5.13.0 MAA_FRAMEWORK_OUTPUT_DIR=dist $0" >&2
+    echo "       The version is read from ${VERSION_FILE}. Set MAA_FRAMEWORK_OUTPUT_DIR=dist to change the output directory." >&2
     exit 2
 fi
 

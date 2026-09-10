@@ -86,38 +86,16 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Resolve MaaFramework Release
-        id: resolve_maa_release
-        uses: actions/github-script@v9
-        env:
-          TARGET_REPOSITORY: MaaXYZ/MaaFramework
-        with:
-          result-encoding: string
-          script: |
-            const repository = process.env.TARGET_REPOSITORY
-            const [owner, repo] = repository.split('/')
-            const releases = await github.paginate(github.rest.repos.listReleases, {
-              owner,
-              repo,
-              per_page: 100,
-            })
-
-            const latestRelease = releases.find(release => !release.draft)
-            if (!latestRelease) {
-              core.setFailed(`No published release found for ${repository}`)
-              return ''
-            }
-
-            core.info(
-              `Resolved MaaFramework release: ${latestRelease.tag_name} (prerelease=${latestRelease.prerelease})`
-            )
-            return latestRelease.tag_name
+      - name: Read MaaFramework Version
+        id: maa_version
+        shell: bash
+        run: echo "tag=$(tr -d '[:space:]' < .maa-framework-version)" >> "$GITHUB_OUTPUT"
 
       - name: Download MaaFramework
         uses: robinraju/release-downloader@v1.13
         with:
           repository: MaaXYZ/MaaFramework
-          tag: ${{ steps.resolve_maa_release.outputs.result }}
+          tag: ${{ steps.maa_version.outputs.tag }}
           fileName: "${{ matrix.maa_prefix }}-${{ matrix.arch }}*"
           out-file-path: deps
           extract: true
@@ -170,38 +148,16 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Resolve MaaFramework Release
-        id: resolve_maa_release
-        uses: actions/github-script@v9
-        env:
-          TARGET_REPOSITORY: MaaXYZ/MaaFramework
-        with:
-          result-encoding: string
-          script: |
-            const repository = process.env.TARGET_REPOSITORY
-            const [owner, repo] = repository.split('/')
-            const releases = await github.paginate(github.rest.repos.listReleases, {
-              owner,
-              repo,
-              per_page: 100,
-            })
-
-            const latestRelease = releases.find(release => !release.draft)
-            if (!latestRelease) {
-              core.setFailed(`No published release found for ${repository}`)
-              return ''
-            }
-
-            core.info(
-              `Resolved MaaFramework release: ${latestRelease.tag_name} (prerelease=${latestRelease.prerelease})`
-            )
-            return latestRelease.tag_name
+      - name: Read MaaFramework Version
+        id: maa_version
+        shell: bash
+        run: echo "tag=$(tr -d '[:space:]' < .maa-framework-version)" >> "$GITHUB_OUTPUT"
 
       - name: Download MaaFramework
         uses: robinraju/release-downloader@v1.13
         with:
           repository: MaaXYZ/MaaFramework
-          tag: ${{ steps.resolve_maa_release.outputs.result }}
+          tag: ${{ steps.maa_version.outputs.tag }}
           fileName: "${{ matrix.maa_file_name }}"
           out-file-path: deps
           extract: true
@@ -215,7 +171,6 @@ jobs:
       - name: Build Official Release Archive
         shell: bash
         env:
-          MAA_FRAMEWORK_VERSION: ${{ needs.meta.outputs.tag }}
           MAA_FRAMEWORK_RELEASES: ${{ github.workspace }}/releases
           MAA_FRAMEWORK_OUTPUT_DIR: ${{ github.workspace }}/dist
         run: ./scripts/package-official-release.sh

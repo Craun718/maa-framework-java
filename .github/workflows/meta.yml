@@ -29,7 +29,7 @@ jobs:
           fi
           if [[ $tag != v* ]]; then
             if $is_release; then echo "::error::Failed to get tag on releasing" && exit 1; fi
-            ver_core=$(curl -sX GET "https://api.github.com/repos/MaaXYZ/MaaFramework/releases/latest" --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' | awk '/tag_name/{print $4}' FS='["]' || true)
+            ver_core=$(<.maa-framework-version)
             tag=$(date "+$ver_core-1%m%d-${commit_hash}")
             if [[ $tag != v* ]]; then
               tag=$(date "+v%Y.%-m.%-d-2%H%M-${commit_hash}")
@@ -40,8 +40,9 @@ jobs:
             version=${tag#v}
           else
             ver_core=${tag%-*-*}
-            suffixs=(${tag//-/ })
-            tag=${ver_core}-post.${suffixs[-2]}-ci.${{ github.run_id }}
+            ci_date=${tag#"${ver_core}"-}
+            ci_date=${ci_date%-*}
+            tag=${ver_core}-post.${ci_date}-ci.${{ github.run_id }}
             version=${tag#v}+${commit_hash}.$(date +%Y%m%d)
           fi
 

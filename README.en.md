@@ -50,10 +50,11 @@ with the same files as an official MaaFramework release, extract the per-platfor
 directories into one folder and run:
 
 ```bash
-MAA_FRAMEWORK_VERSION=v5.13.0 \
 MAA_FRAMEWORK_RELEASES=/path/to/extracted-releases \
 ./scripts/package-official-release.sh
 ```
+
+The MaaFramework version in distributed archives is anchored by the top-level `.maa-framework-version` file. CI downloads the official release named by that file instead of resolving latest.
 
 The script recognizes `MAA-win-*`, `MAA-linux-*`, `MAA-macos-*`, and `MAA-android-*`
 directories, including extracted folders whose names carry a release tag such as
@@ -63,7 +64,7 @@ directories, including extracted folders whose names carry a release tag such as
 `share/MaaAgentBinary/`. Each zip is written to:
 
 ```text
-build/distributions/maa-framework-java-${MAA_FRAMEWORK_VERSION}-${platform}.zip
+build/distributions/maa-framework-java-<MaaFramework-version>-${platform}.zip
 ```
 
 The output layout mirrors the official release scope:
@@ -109,6 +110,8 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 `maafw.maaFrameworkSource` is set, and skips otherwise.
 
 ## Completeness and Parity
+
+The top-level `.maa-framework-version` file is the single anchor for the tracked MaaFramework ABI/binary version.
 
 This binding is tracked against MaaFramework `v5.13.0` headers, documentation, and Python
 binding:
