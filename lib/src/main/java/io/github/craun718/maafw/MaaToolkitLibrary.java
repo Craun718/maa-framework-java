@@ -48,6 +48,22 @@ public interface MaaToolkitLibrary extends Library {
 
     String MaaToolkitDesktopWindowGetWindowName(Pointer window);
 
+    Pointer MaaToolkitGamescopeInstanceListCreate();
+
+    void MaaToolkitGamescopeInstanceListDestroy(Pointer handle);
+
+    byte MaaToolkitGamescopeInstanceFindAll(Pointer buffer);
+
+    long MaaToolkitGamescopeInstanceListSize(Pointer list);
+
+    Pointer MaaToolkitGamescopeInstanceListAt(Pointer list, long index);
+
+    int MaaToolkitGamescopeInstanceGetDisplayNo(Pointer instance);
+
+    int MaaToolkitGamescopeInstanceGetPipeWireNodeId(Pointer instance);
+
+    String MaaToolkitGamescopeInstanceGetEisSocketPath(Pointer instance);
+
     byte MaaToolkitMacOSCheckPermission(int permission);
 
     byte MaaToolkitMacOSRequestPermission(int permission);

@@ -50,6 +50,7 @@ public final class MaaDef {
     public static final long WIN32_INPUT_SEND_MESSAGE_WITH_WINDOW_POS = 1L << 7;
     public static final long WIN32_INPUT_POST_MESSAGE_WITH_WINDOW_POS = 1L << 8;
     public static final long WIN32_INPUT_INTERCEPTION = 1L << 9;
+    public static final long WIN32_INPUT_ANCHORED_TOUCH = 1L << 10;
 
     public static final long MACOS_SCREENCAP_NONE = 0L;
     public static final long MACOS_SCREENCAP_SCREEN_CAPTURE_KIT = 1L;
@@ -64,6 +65,7 @@ public final class MaaDef {
     public static final long LINUX_INPUT_NONE = 0L;
     public static final long LINUX_INPUT_WLR = 1L;
     public static final long LINUX_INPUT_UINPUT = 1L << 1;
+    public static final long LINUX_INPUT_LIBEI = 1L << 2;
 
     public static final long GAMEPAD_XBOX360 = 0L;
     public static final long GAMEPAD_DUAL_SHOCK_4 = 1L;
@@ -194,7 +196,7 @@ public final class MaaDef {
     public enum CtrlOption {
 
         INVALID(0), SCREENSHOT_TARGET_LONG_SIDE(1), SCREENSHOT_TARGET_SHORT_SIDE(2), SCREENSHOT_USE_RAW_SIZE(3), MOUSE_LOCK_FOLLOW(
-                4), SCREENSHOT_RESIZE_METHOD(6), BACKGROUND_MANAGED_KEYS(7);
+                4), SCREENSHOT_RESIZE_METHOD(6), BACKGROUND_MANAGED_KEYS(7), SCREENSHOT_TARGET_EXPAND(8);
 
         private final int code;
 

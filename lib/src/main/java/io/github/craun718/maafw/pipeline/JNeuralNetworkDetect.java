@@ -7,7 +7,7 @@ import java.util.List;
 public final class JNeuralNetworkDetect implements JRecognitionParam {
 
     public String model;
-    public List<Integer> expected = List.of();
+    public List<Object> expected = List.of();
     public Object roi = List.of(0, 0, 0, 0);
     @JsonProperty("roi_offset")
     public List<Integer> roiOffset = List.of(0, 0, 0, 0);

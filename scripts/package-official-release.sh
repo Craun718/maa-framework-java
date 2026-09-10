@@ -9,7 +9,7 @@ OUT_DIR="${MAA_FRAMEWORK_OUTPUT_DIR:-${REPO_ROOT}/build/distributions}"
 if [[ -z "${RELEASES_ROOT}" ]]; then
     echo "usage: $0 <directory containing extracted MAA-* releases>" >&2
     echo "       MAA_FRAMEWORK_RELEASES=<path> $0" >&2
-    echo "       MAA_FRAMEWORK_VERSION=v5.12.3 MAA_FRAMEWORK_OUTPUT_DIR=dist $0" >&2
+    echo "       MAA_FRAMEWORK_VERSION=v5.13.0 MAA_FRAMEWORK_OUTPUT_DIR=dist $0" >&2
     exit 2
 fi
 

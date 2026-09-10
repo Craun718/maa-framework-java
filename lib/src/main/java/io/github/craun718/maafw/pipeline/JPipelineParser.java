@@ -169,7 +169,7 @@ public final class JPipelineParser {
             case NEURAL_NETWORK_CLASSIFY -> {
                 JNeuralNetworkClassify param = new JNeuralNetworkClassify();
                 param.model = requiredString(values.get("model"));
-                param.expected = intList(values.get("expected"), param.expected);
+                param.expected = neuralNetworkExpectedList(values.get("expected"), param.expected);
                 param.roi = target(values.get("roi"), param.roi);
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.labels = stringList(values.get("labels"), param.labels);
@@ -180,7 +180,7 @@ public final class JPipelineParser {
             case NEURAL_NETWORK_DETECT -> {
                 JNeuralNetworkDetect param = new JNeuralNetworkDetect();
                 param.model = requiredString(values.get("model"));
-                param.expected = intList(values.get("expected"), param.expected);
+                param.expected = neuralNetworkExpectedList(values.get("expected"), param.expected);
                 param.roi = target(values.get("roi"), param.roi);
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.labels = stringList(values.get("labels"), param.labels);
@@ -549,6 +549,30 @@ public final class JPipelineParser {
         List<Integer> result = new ArrayList<>(items.size());
         for (Object item : items) {
             result.add(integer(item, 0));
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<Object> neuralNetworkExpectedList(Object value, List<Object> fallback) {
+        if (value instanceof Number number) {
+            return List.of(number.intValue());
+        }
+        if (value instanceof String text) {
+            return List.of(text);
+        }
+        List<Object> items = list(value);
+        if (items == null) {
+            return fallback;
+        }
+        List<Object> result = new ArrayList<>(items.size());
+        for (Object item : items) {
+            if (item instanceof Number number) {
+                result.add(number.intValue());
+            } else if (item instanceof String text) {
+                result.add(text);
+            } else {
+                throw new IllegalArgumentException("Neural network expected values must be integers or strings");
+            }
         }
         return List.copyOf(result);
     }

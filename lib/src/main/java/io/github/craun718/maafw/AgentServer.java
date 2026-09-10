@@ -17,10 +17,16 @@ public final class AgentServer {
 
     public static boolean registerCustomRecognition(String name, CustomRecognition recognition) {
         Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Custom name must not be blank");
+        }
         Objects.requireNonNull(recognition, "recognition");
-        CUSTOM_RECOGNITIONS.put(name, recognition);
-        return MaaStringBuffer
+        boolean registered = MaaStringBuffer
                 .toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomRecognition(name, recognition.callback(), null));
+        if (registered) {
+            CUSTOM_RECOGNITIONS.put(name, recognition);
+        }
+        return registered;
     }
 
     /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
@@ -37,9 +43,16 @@ public final class AgentServer {
 
     public static boolean registerCustomAction(String name, CustomAction action) {
         Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Custom name must not be blank");
+        }
         Objects.requireNonNull(action, "action");
-        CUSTOM_ACTIONS.put(name, action);
-        return MaaStringBuffer.toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomAction(name, action.callback(), null));
+        boolean registered = MaaStringBuffer
+                .toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomAction(name, action.callback(), null));
+        if (registered) {
+            CUSTOM_ACTIONS.put(name, action);
+        }
+        return registered;
     }
 
     /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */

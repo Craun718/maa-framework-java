@@ -26,6 +26,11 @@ class ControllerOverloadTest {
         assertConstructor(AdbController.class, Path.class, String.class, long.class, long.class, Map.class);
     }
 
+    @Test
+    void v513ControllerOptionIsExposed() throws Exception {
+        assertNotNull(Controller.class.getMethod("setScreenshotTargetExpand", int.class, int.class));
+    }
+
     private static void assertConstructor(Class<?> type, Class<?>... parameterTypes) throws NoSuchMethodException {
         Constructor<?> constructor = type.getConstructor(parameterTypes);
         assertNotNull(constructor);

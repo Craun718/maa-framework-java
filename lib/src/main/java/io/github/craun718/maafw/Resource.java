@@ -257,10 +257,16 @@ public class Resource implements AutoCloseable {
 
     public boolean registerCustomRecognition(String name, CustomRecognition recognition) {
         Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Custom name must not be blank");
+        }
         Objects.requireNonNull(recognition, "recognition");
-        customRecognitions.put(name, recognition);
-        return MaaStringBuffer
+        boolean registered = MaaStringBuffer
                 .toBoolean(MaaLibrary.framework().MaaResourceRegisterCustomRecognition(handle, name, recognition.callback(), null));
+        if (registered) {
+            customRecognitions.put(name, recognition);
+        }
+        return registered;
     }
 
     /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
@@ -287,9 +293,16 @@ public class Resource implements AutoCloseable {
 
     public boolean registerCustomAction(String name, CustomAction action) {
         Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Custom name must not be blank");
+        }
         Objects.requireNonNull(action, "action");
-        customActions.put(name, action);
-        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceRegisterCustomAction(handle, name, action.callback(), null));
+        boolean registered = MaaStringBuffer
+                .toBoolean(MaaLibrary.framework().MaaResourceRegisterCustomAction(handle, name, action.callback(), null));
+        if (registered) {
+            customActions.put(name, action);
+        }
+        return registered;
     }
 
     /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */

@@ -102,6 +102,29 @@ public final class Toolkit {
         }
     }
 
+    public static List<GamescopeInstance> findGamescopeInstances() {
+        Pointer list = MaaLibrary.toolkit().MaaToolkitGamescopeInstanceListCreate();
+        if (list == null || list == Pointer.NULL) {
+            throw new IllegalStateException("Failed to create gamescope instance list");
+        }
+        try {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitGamescopeInstanceFindAll(list))) {
+                throw new IllegalStateException("Failed to find gamescope instances");
+            }
+            long size = MaaLibrary.toolkit().MaaToolkitGamescopeInstanceListSize(list);
+            List<GamescopeInstance> instances = new ArrayList<>((int) Math.min(size, Integer.MAX_VALUE));
+            for (long i = 0; i < size; i++) {
+                Pointer instance = MaaLibrary.toolkit().MaaToolkitGamescopeInstanceListAt(list, i);
+                instances.add(new GamescopeInstance(MaaLibrary.toolkit().MaaToolkitGamescopeInstanceGetDisplayNo(instance),
+                    MaaLibrary.toolkit().MaaToolkitGamescopeInstanceGetPipeWireNodeId(instance),
+                    stringOrEmpty(MaaLibrary.toolkit().MaaToolkitGamescopeInstanceGetEisSocketPath(instance))));
+            }
+            return List.copyOf(instances);
+        } finally {
+            MaaLibrary.toolkit().MaaToolkitGamescopeInstanceListDestroy(list);
+        }
+    }
+
     public static boolean macosCheckPermission(MaaDef.MacOSPermission permission) {
         return MaaStringBuffer.toBoolean(MaaLibrary.toolkit().MaaToolkitMacOSCheckPermission(permission.code()));
     }

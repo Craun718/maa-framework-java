@@ -100,6 +100,7 @@ class MaaDefTest {
         assertEquals(1L << 7, MaaDef.WIN32_INPUT_SEND_MESSAGE_WITH_WINDOW_POS);
         assertEquals(1L << 8, MaaDef.WIN32_INPUT_POST_MESSAGE_WITH_WINDOW_POS);
         assertEquals(1L << 9, MaaDef.WIN32_INPUT_INTERCEPTION);
+        assertEquals(1L << 10, MaaDef.WIN32_INPUT_ANCHORED_TOUCH);
     }
 
     @Test
@@ -117,6 +118,7 @@ class MaaDefTest {
         assertEquals(0L, MaaDef.LINUX_INPUT_NONE);
         assertEquals(1L, MaaDef.LINUX_INPUT_WLR);
         assertEquals(1L << 1, MaaDef.LINUX_INPUT_UINPUT);
+        assertEquals(1L << 2, MaaDef.LINUX_INPUT_LIBEI);
 
         assertEquals(0L, MaaDef.GAMEPAD_XBOX360);
         assertEquals(1L, MaaDef.GAMEPAD_DUAL_SHOCK_4);
@@ -190,6 +192,7 @@ class MaaDefTest {
         assertEquals(4, MaaDef.CtrlOption.MOUSE_LOCK_FOLLOW.code());
         assertEquals(6, MaaDef.CtrlOption.SCREENSHOT_RESIZE_METHOD.code());
         assertEquals(7, MaaDef.CtrlOption.BACKGROUND_MANAGED_KEYS.code());
+        assertEquals(8, MaaDef.CtrlOption.SCREENSHOT_TARGET_EXPAND.code());
 
         assertEquals(0, MaaDef.ResOption.INVALID.code());
         assertEquals(1, MaaDef.ResOption.INFERENCE_DEVICE.code());

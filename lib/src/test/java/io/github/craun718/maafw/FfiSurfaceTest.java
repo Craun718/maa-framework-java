@@ -53,8 +53,6 @@ class FfiSurfaceTest {
         missing.removeAll(actual.keySet());
         Set<String> unexpected = new TreeSet<>(actual.keySet());
         unexpected.removeAll(expected.keySet());
-        unexpected.removeAll(expectedForwardExtras(name));
-
         assertTrue(missing.isEmpty(), name + " FFI surface is missing: " + missing);
         assertTrue(unexpected.isEmpty(), name + " FFI surface has unexpected extra functions: " + unexpected);
 
@@ -67,17 +65,6 @@ class FfiSurfaceTest {
             }
         }
         assertTrue(signatureMismatches.isEmpty(), name + " FFI signatures mismatch:\n" + String.join("\n", signatureMismatches));
-    }
-
-    private static Set<String> expectedForwardExtras(String name) {
-        return switch (name) {
-            case "MaaFramework" -> Set.of("MaaLinuxControllerCreate");
-            case "MaaToolkit" -> Set.of("MaaToolkitPortalHelperCreate", "MaaToolkitPortalHelperDestroy", "MaaToolkitPortalHelperGetPersist",
-                    "MaaToolkitPortalHelperGetPipeWireFD", "MaaToolkitPortalHelperGetPipeWireNodeID",
-                    "MaaToolkitPortalHelperGetRestoreToken", "MaaToolkitPortalHelperOpenStream", "MaaToolkitPortalHelperSetPersist",
-                    "MaaToolkitPortalHelperSetRestoreToken");
-            default -> Set.of();
-        };
     }
 
     private static Map<String, Signature> headerSignatures(Path headerDir, Map<String, String> aliases, String macro) throws IOException {

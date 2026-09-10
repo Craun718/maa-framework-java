@@ -197,6 +197,15 @@ public class Controller implements AutoCloseable {
         return setIntOption(MaaDef.CtrlOption.SCREENSHOT_TARGET_SHORT_SIDE, shortSide);
     }
 
+    public boolean setScreenshotTargetExpand(int width, int height) {
+        try (Memory memory = new Memory(2L * Integer.BYTES)) {
+            memory.setInt(0, width);
+            memory.setInt((long) Integer.BYTES, height);
+            return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaControllerSetOption(handle,
+                    MaaDef.CtrlOption.SCREENSHOT_TARGET_EXPAND.code(), memory, 2L * Integer.BYTES));
+        }
+    }
+
     public boolean setScreenshotUseRawSize(boolean enable) {
         return setBooleanOption(MaaDef.CtrlOption.SCREENSHOT_USE_RAW_SIZE, enable);
     }

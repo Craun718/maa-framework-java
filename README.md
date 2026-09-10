@@ -43,12 +43,12 @@ dependencies {
 Java jar 本身是平台中立的，不包含原生二进制。若要像官方 MaaFramework release 一样分发，可把各平台的 release 目录解压到同一个目录，然后运行：
 
 ```bash
-MAA_FRAMEWORK_VERSION=v5.12.3 \
+MAA_FRAMEWORK_VERSION=v5.13.0 \
 MAA_FRAMEWORK_RELEASES=/path/to/extracted-releases \
 ./scripts/package-official-release.sh
 ```
 
-脚本会识别 `MAA-win-*`、`MAA-linux-*`、`MAA-macos-*` 和 `MAA-android-*` 目录，包括名称带 release tag 的解压目录，例如 `MAA-macos-aarch64-v5.12.3`。对每个可用平台，脚本会构建 `lib/maa-framework-java.jar`，并复制完整的官方 release 目录树，包括 `bin/`、`include/`、`symbols/`、文档、示例、schema、许可证和 `share/MaaAgentBinary/`。每个 zip 写入：
+脚本会识别 `MAA-win-*`、`MAA-linux-*`、`MAA-macos-*` 和 `MAA-android-*` 目录，包括名称带 release tag 的解压目录，例如 `MAA-macos-aarch64-v5.13.0`。对每个可用平台，脚本会构建 `lib/maa-framework-java.jar`，并复制完整的官方 release 目录树，包括 `bin/`、`include/`、`symbols/`、文档、示例、schema、许可证和 `share/MaaAgentBinary/`。每个 zip 写入：
 
 ```text
 build/distributions/maa-framework-java-${MAA_FRAMEWORK_VERSION}-${platform}.zip
@@ -78,23 +78,23 @@ tools/...
 
 `scripts/check-ffi-surface.sh` 会比较官方 C 头文件中的导出函数名、参数类型和返回类型与 JNA 接口方法。它覆盖 `MaaFramework`、`MaaToolkit`、`MaaAgentClient` 和 `MaaAgentServer`。`MaaControlUnit` 被有意排除，因为这些函数随独立插件库发布，不在官方 release 核心库中。
 
-同一检查既可用于源码检出，也可用于解压后的官方 release 目录。当指向较旧 release（例如 `v5.12.3`）时，current-main 中的新增 API `MaaLinuxControllerCreate` 和 `MaaToolkitPortalHelper*` 被视为已知的向前兼容扩展：release 中的每个符号仍必须被覆盖，但这些新增项不会导致检查失败。
+同一检查既可用于源码检出，也可用于解压后的官方 release 目录。当前 FFI 基线是 `v5.13.0`，检查按该版本的导出函数精确匹配。
 
 ```bash
 ./scripts/check-ffi-surface.sh /path/to/MaaFramework
 # or
 MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 # or an extracted release directory
-./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.12.3
+./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.13.0
 ```
 
 同样的检查也可以通过 `FfiSurfaceTest` 运行；只有设置了 `MAA_FRAMEWORK_SOURCE` 或 `maafw.maaFrameworkSource` 时才运行，否则跳过。
 
 ## 完整性与对齐
 
-本绑定以当前 MaaFramework 头文件、文档和 Python 绑定为跟踪目标：
+本绑定以 MaaFramework `v5.13.0` 头文件、文档和 Python 绑定为跟踪目标：
 
-- `check-ffi-surface.sh` 验证 `MaaFramework`、`MaaToolkit`、`MaaAgentClient` 和 `MaaAgentServer` 中的每个导出函数，包括参数和返回签名；`MaaControlUnit` 仅因这些函数随独立插件库发布而排除。针对较旧 release 时，`MaaLinuxControllerCreate` 和 `MaaToolkitPortalHelper*` 等 current-main 新增项按文档中的向前兼容扩展处理。
+- `check-ffi-surface.sh` 验证 `MaaFramework`、`MaaToolkit`、`MaaAgentClient` 和 `MaaAgentServer` 中的每个导出函数，包括参数和返回签名；`MaaControlUnit` 仅因这些函数随独立插件库发布而排除。
 - 高层封装对应 Python 绑定中的 `Resource`、`Tasker`、`Context`、controller 子类、`Toolkit`、buffer、事件 sink、自定义识别/动作/controller 回调，以及 `AgentClient`/`AgentServer` API。
 - `BlankController` 提供纯 Java 的无操作自定义 controller，用于在无设备时测试 resource/tasker，对应 Go 绑定的便捷 API。与 `DbgController` 不同，它不包装原生 debug controller。
 - `pipeline` 包将 project interface v2 的节点 JSON 解析为类型化识别和动作参数，包括嵌套 `And`/`Or`、`MultiSwipe`、wait-freezes、`focus` 和 `attach`，而不是只暴露原始 JSON。
@@ -106,7 +106,7 @@ MaaFramework 集成文档中的 Java 行描述的是较旧的第三方 v3 绑定
 
 `RuntimeSmokeTest` 会针对真实库目录验证 release ABI：版本查询、UTF-8 buffer、rect/image buffer、resource/tasker 创建、类型化直接识别/动作调用、资源生命周期操作、自定义 controller 回调、record/replay controller、toolkit 选项/设备辅助、AgentClient TCP 往返和 agent server 注册。未配置库目录时测试会跳过。
 
-该套件已针对官方 `v5.12.3` macOS aarch64 release 验证：16 个 suite 共 74 个测试全部通过，包括 `BlankController`、针对 current-main 源码的 FFI 签名检查，以及官方 release 打包路径。
+该套件已针对官方 `v5.13.0` macOS aarch64 release 验证：16 个 suite 共 81 个测试全部通过，包括针对 `v5.13.0` 源码的 FFI 签名检查。
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test

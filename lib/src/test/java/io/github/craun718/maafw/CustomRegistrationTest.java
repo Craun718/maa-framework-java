@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.sun.jna.Pointer;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,15 @@ class CustomRegistrationTest {
         assertMethod(Resource.class, "registerCustomAction", String.class, Class.class);
         assertMethod(AgentServer.class, "registerCustomRecognition", String.class, Class.class);
         assertMethod(AgentServer.class, "registerCustomAction", String.class, Class.class);
+    }
+
+    @Test
+    void rejectsBlankCustomNamesBeforeNativeRegistration() {
+        Resource resource = new Resource(new Pointer(1));
+        assertThrows(IllegalArgumentException.class, () -> resource.registerCustomRecognition("", new TestRecognition()));
+        assertThrows(IllegalArgumentException.class, () -> resource.registerCustomAction("", new TestAction()));
+        assertThrows(IllegalArgumentException.class, () -> AgentServer.registerCustomRecognition("", new TestRecognition()));
+        assertThrows(IllegalArgumentException.class, () -> AgentServer.registerCustomAction("", new TestAction()));
     }
 
     private static void assertMethod(Class<?> owner, String name, Class<?>... parameterTypes) throws NoSuchMethodException {

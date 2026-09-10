@@ -8,20 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-FORWARD_EXTRAS = {
-    "MaaFramework": {"MaaLinuxControllerCreate"},
-    "MaaToolkit": {
-        "MaaToolkitPortalHelperCreate",
-        "MaaToolkitPortalHelperDestroy",
-        "MaaToolkitPortalHelperGetPersist",
-        "MaaToolkitPortalHelperGetPipeWireFD",
-        "MaaToolkitPortalHelperGetPipeWireNodeID",
-        "MaaToolkitPortalHelperGetRestoreToken",
-        "MaaToolkitPortalHelperOpenStream",
-        "MaaToolkitPortalHelperSetPersist",
-        "MaaToolkitPortalHelperSetRestoreToken",
-    },
-}
+FORWARD_EXTRAS = {}
 
 MODULES = [
     (

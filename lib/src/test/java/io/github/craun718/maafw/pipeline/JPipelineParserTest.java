@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.craun718.maafw.MaaJson;
@@ -196,6 +197,21 @@ class JPipelineParserTest {
         JTemplateMatch template = assertInstanceOf(JTemplateMatch.class, orInline.param);
         assertEquals(List.of("a.png"), template.template);
         assertEquals(List.of(0.8), template.threshold);
+    }
+
+    @Test
+    void parsesNeuralNetworkExpectedScalarsAndMixedLists() {
+        JNeuralNetworkClassify scalarIndex = assertInstanceOf(JNeuralNetworkClassify.class,
+                parseRecognition(JRecognitionType.NEURAL_NETWORK_CLASSIFY, Map.of("model", "m", "expected", 3)));
+        assertEquals(List.of(3), scalarIndex.expected);
+
+        JNeuralNetworkDetect scalarLabel = assertInstanceOf(JNeuralNetworkDetect.class,
+                parseRecognition(JRecognitionType.NEURAL_NETWORK_DETECT, Map.of("model", "m", "expected", "person")));
+        assertEquals(List.of("person"), scalarLabel.expected);
+
+        JNeuralNetworkClassify mixed = assertInstanceOf(JNeuralNetworkClassify.class,
+                parseRecognition(JRecognitionType.NEURAL_NETWORK_CLASSIFY, Map.of("model", "m", "expected", List.of(1, "two", 3))));
+        assertEquals(List.of(1, "two", 3), mixed.expected);
     }
 
     @Test
