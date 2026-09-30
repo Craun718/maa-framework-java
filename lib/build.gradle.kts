@@ -10,6 +10,8 @@ plugins {
     `java-library`
 }
 
+group = "top.natsuu"
+
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()

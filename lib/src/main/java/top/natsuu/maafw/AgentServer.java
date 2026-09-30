@@ -1,0 +1,118 @@
+package top.natsuu.maafw;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
+
+/** Agent server hosting custom recognitions, actions and event sinks in a separate process. */
+public final class AgentServer {
+
+    private static final Map<String, CustomRecognition> CUSTOM_RECOGNITIONS = new HashMap<>();
+    private static final Map<String, CustomAction> CUSTOM_ACTIONS = new HashMap<>();
+    private static final Map<Long, EventSink> SINK_HOLDERS = new HashMap<>();
+
+    private AgentServer() {
+    }
+
+    public static boolean registerCustomRecognition(String name, CustomRecognition recognition) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Custom name must not be blank");
+        }
+        Objects.requireNonNull(recognition, "recognition");
+        boolean registered = MaaStringBuffer
+                .toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomRecognition(name, recognition.callback(), null));
+        if (registered) {
+            CUSTOM_RECOGNITIONS.put(name, recognition);
+        }
+        return registered;
+    }
+
+    /** Registers a recognizer created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
+    public static boolean registerCustomRecognition(String name, Supplier<? extends CustomRecognition> factory) {
+        Objects.requireNonNull(factory, "factory");
+        return registerCustomRecognition(name, factory.get());
+    }
+
+    /** Registers a recognizer instantiated from {@code recognitionClass}, matching class-based decorator bindings. */
+    public static boolean registerCustomRecognition(String name, Class<? extends CustomRecognition> recognitionClass) {
+        Objects.requireNonNull(recognitionClass, "recognitionClass");
+        return registerCustomRecognition(name, CustomRegistrations.newInstance(recognitionClass, "custom recognition"));
+    }
+
+    public static boolean registerCustomAction(String name, CustomAction action) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Custom name must not be blank");
+        }
+        Objects.requireNonNull(action, "action");
+        boolean registered = MaaStringBuffer
+                .toBoolean(MaaLibrary.agentServer().MaaAgentServerRegisterCustomAction(name, action.callback(), null));
+        if (registered) {
+            CUSTOM_ACTIONS.put(name, action);
+        }
+        return registered;
+    }
+
+    /** Registers an action created by {@code factory}, matching the factory pattern used by bindings with registration decorators. */
+    public static boolean registerCustomAction(String name, Supplier<? extends CustomAction> factory) {
+        Objects.requireNonNull(factory, "factory");
+        return registerCustomAction(name, factory.get());
+    }
+
+    /** Registers an action instantiated from {@code actionClass}, matching class-based decorator bindings. */
+    public static boolean registerCustomAction(String name, Class<? extends CustomAction> actionClass) {
+        Objects.requireNonNull(actionClass, "actionClass");
+        return registerCustomAction(name, CustomRegistrations.newInstance(actionClass, "custom action"));
+    }
+
+    public static Long addResourceSink(ResourceEventSink sink) {
+        Objects.requireNonNull(sink, "sink");
+        long sinkId = MaaLibrary.agentServer().MaaAgentServerAddResourceSink(sink.callback(), null);
+        return holdSink(sinkId, sink);
+    }
+
+    public static Long addControllerSink(ControllerEventSink sink) {
+        Objects.requireNonNull(sink, "sink");
+        long sinkId = MaaLibrary.agentServer().MaaAgentServerAddControllerSink(sink.callback(), null);
+        return holdSink(sinkId, sink);
+    }
+
+    public static Long addTaskerSink(TaskerEventSink sink) {
+        Objects.requireNonNull(sink, "sink");
+        long sinkId = MaaLibrary.agentServer().MaaAgentServerAddTaskerSink(sink.callback(), null);
+        return holdSink(sinkId, sink);
+    }
+
+    public static Long addContextSink(ContextEventSink sink) {
+        Objects.requireNonNull(sink, "sink");
+        long sinkId = MaaLibrary.agentServer().MaaAgentServerAddContextSink(sink.callback(), null);
+        return holdSink(sinkId, sink);
+    }
+
+    public static boolean startUp(String identifier) {
+        Objects.requireNonNull(identifier, "identifier");
+        return MaaStringBuffer.toBoolean(MaaLibrary.agentServer().MaaAgentServerStartUp(identifier));
+    }
+
+    public static void shutDown() {
+        MaaLibrary.agentServer().MaaAgentServerShutDown();
+    }
+
+    public static void join() {
+        MaaLibrary.agentServer().MaaAgentServerJoin();
+    }
+
+    public static void detach() {
+        MaaLibrary.agentServer().MaaAgentServerDetach();
+    }
+
+    private static Long holdSink(long sinkId, EventSink sink) {
+        if (sinkId == MaaDef.INVALID_ID) {
+            return null;
+        }
+        SINK_HOLDERS.put(sinkId, sink);
+        return sinkId;
+    }
+}

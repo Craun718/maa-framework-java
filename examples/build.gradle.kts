@@ -17,7 +17,7 @@ java {
 }
 
 application {
-    mainClass.set("io.github.craun718.maafw.examples.QuickStart")
+    mainClass.set("top.natsuu.maafw.examples.QuickStart")
 }
 
 fun registerExample(name: String, className: String) {
@@ -29,8 +29,8 @@ fun registerExample(name: String, className: String) {
     }
 }
 
-registerExample("QuickStart", "io.github.craun718.maafw.examples.QuickStart")
-registerExample("CustomRecognition", "io.github.craun718.maafw.examples.CustomRecognitionExample")
-registerExample("CustomAction", "io.github.craun718.maafw.examples.CustomActionExample")
-registerExample("AgentClient", "io.github.craun718.maafw.examples.AgentClientExample")
-registerExample("AgentServer", "io.github.craun718.maafw.examples.AgentServerExample")
+registerExample("QuickStart", "top.natsuu.maafw.examples.QuickStart")
+registerExample("CustomRecognition", "top.natsuu.maafw.examples.CustomRecognitionExample")
+registerExample("CustomAction", "top.natsuu.maafw.examples.CustomActionExample")
+registerExample("AgentClient", "top.natsuu.maafw.examples.AgentClientExample")
+registerExample("AgentServer", "top.natsuu.maafw.examples.AgentServerExample")

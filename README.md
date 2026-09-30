@@ -160,7 +160,7 @@ try (Controller controller =
 
 ## 类型化 Pipeline API
 
-绑定将 pipeline v2 节点以类型化类暴露在 `io.github.craun718.maafw.pipeline` 下。`Resource.getNodeData(String)` 返回原始节点 map，`Resource.getNodeObject(String)` 将其解析为 `JPipelineData`。`Context` 对当前运行时状态提供相同的两个方法。
+绑定将 pipeline v2 节点以类型化类暴露在 `top.natsuu.maafw.pipeline` 下。`Resource.getNodeData(String)` 返回原始节点 map，`Resource.getNodeObject(String)` 将其解析为 `JPipelineData`。`Context` 对当前运行时状态提供相同的两个方法。
 
 ```java
 JPipelineData node = resource.getNodeObject("Main");

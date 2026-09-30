@@ -204,7 +204,7 @@ try (Controller controller =
 ## Typed Pipeline API
 
 The binding exposes pipeline v2 nodes as typed classes under
-`io.github.craun718.maafw.pipeline`. `Resource.getNodeData(String)` returns the raw node map, and
+`top.natsuu.maafw.pipeline`. `Resource.getNodeData(String)` returns the raw node map, and
 `Resource.getNodeObject(String)` parses it into a `JPipelineData`. `Context` provides the same pair
 for the current runtime state.
 
