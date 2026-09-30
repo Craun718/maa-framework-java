@@ -34,3 +34,6 @@ build
 
 # Ignore Kotlin plugin data
 .kotlin
+
+# Ignore MacOS files system files
+.DS_Store
