@@ -8,9 +8,12 @@
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
+    `maven-publish`
+    signing
 }
 
 group = "top.natsuu"
+version = rootProject.file(".maa-framework-version").readText().trim().removePrefix("v")
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -31,6 +34,55 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications.create<MavenPublication>("maven") {
+        from(components["java"])
+
+        pom {
+            name.set("MaaFramework Java Binding")
+            description.set("JNA-based Java bindings for MaaFramework")
+            url.set("https://github.com/Craun718/maa-framework-java")
+            licenses {
+                license {
+                    name.set("MIT")
+                    url.set("https://opensource.org/licenses/MIT")
+                }
+            }
+            developers {
+                developer {
+                    id.set("craun718")
+                    name.set("Sander")
+                }
+            }
+            scm {
+                connection.set("scm:git:git://github.com/Craun718/maa-framework-java.git")
+                developerConnection.set("scm:git:ssh://git@github.com/Craun718/maa-framework-java.git")
+                url.set("https://github.com/Craun718/maa-framework-java")
+            }
+        }
+    }
+}
+
+signing {
+    val signingKeyId = providers.gradleProperty("signing.keyId")
+    val signingPassword = providers.gradleProperty("signing.password")
+    val signingKey = providers.gradleProperty("signing.key")
+    val signingSecretKeyRingFile = providers.gradleProperty("signing.secretKeyRingFile")
+
+    if (signingKeyId.isPresent) {
+        useInMemoryPgpKeys(signingKeyId.get(), signingKey.orNull, signingPassword.get())
+    } else if (signingKey.isPresent) {
+        useInMemoryPgpKeys(signingKey.get(), signingPassword.orNull)
+    } else if (signingSecretKeyRingFile.isPresent) {
+        useGpgCmd()
+    }
+
+    val shouldSign = providers.gradleProperty("signing.enabled").map { it.toBoolean() }.orElse(false)
+    isRequired = shouldSign.get()
 }
 
 tasks.named<Test>("test") {
