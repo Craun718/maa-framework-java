@@ -58,7 +58,7 @@ The MaaFramework version in distributed archives is anchored by the top-level `.
 
 The script recognizes `MAA-win-*`, `MAA-linux-*`, `MAA-macos-*`, and `MAA-android-*`
 directories, including extracted folders whose names carry a release tag such as
-`MAA-macos-aarch64-v5.13.0`. For every available platform it builds
+`MAA-macos-aarch64-v5.13.1`. For every available platform it builds
 `lib/maa-framework-java.jar` and copies the complete official release tree, including
 `bin/`, `include/`, `symbols/`, documentation, samples, schemas, licenses, and
 `share/MaaAgentBinary/`. Each zip is written to:
@@ -96,14 +96,14 @@ in the official C headers with the JNA interface methods. It covers `MaaFramewor
 functions ship in separate plugin libraries, not in the official release core libraries.
 
 The same check works against either a source checkout or an extracted official release directory.
-The current FFI baseline is `v5.13.0`, and exported functions are matched exactly against it.
+The current FFI baseline is `v5.13.1`, and exported functions are matched exactly against it.
 
 ```bash
 ./scripts/check-ffi-surface.sh /path/to/MaaFramework
 # or
 MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 # or an extracted release directory
-./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.13.0
+./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.13.1
 ```
 
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
@@ -113,7 +113,7 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 
 The top-level `.maa-framework-version` file is the single anchor for the tracked MaaFramework ABI/binary version.
 
-This binding is tracked against MaaFramework `v5.13.0` headers, documentation, and Python
+This binding is tracked against MaaFramework `v5.13.1` headers, documentation, and Python
 binding:
 
 - `check-ffi-surface.sh` verifies every exported function in `MaaFramework`, `MaaToolkit`,
@@ -143,8 +143,8 @@ resource lifecycle operations, custom controller callbacks, record/replay contro
 option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
 unless the library directory is configured:
 
-The suite was verified against the official `v5.13.0` macOS aarch64 release: 81 tests across 16
-suites pass, including exact FFI signature checks against the `v5.13.0` source.
+The suite was verified against the official `v5.13.1` macOS aarch64 release: 81 tests across 16
+suites pass, including exact FFI signature checks against the `v5.13.1` source.
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
