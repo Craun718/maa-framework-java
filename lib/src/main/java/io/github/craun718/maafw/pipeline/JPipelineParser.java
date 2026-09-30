@@ -260,6 +260,7 @@ public final class JPipelineParser {
                 param.target = target(values.get("target"), param.target);
                 param.targetOffset = rect(values.get("target_offset"), param.targetOffset);
                 param.pressure = integer(values.get("pressure"), param.pressure);
+                param.autoUp = booleanValue(values.get("auto_up"), param.autoUp);
                 yield param;
             }
             case TOUCH_UP -> {
@@ -281,6 +282,7 @@ public final class JPipelineParser {
             case KEY_DOWN, KEY_UP -> {
                 JKey param = new JKey();
                 param.key = keyCode(values);
+                param.autoUp = booleanValue(values.get("auto_up"), param.autoUp);
                 yield param;
             }
             case INPUT_TEXT -> {

@@ -11,4 +11,6 @@ public final class JTouch implements JActionParam {
     @JsonProperty("target_offset")
     public List<Integer> targetOffset = List.of(0, 0, 0, 0);
     public int pressure;
+    @JsonProperty("auto_up")
+    public boolean autoUp;
 }

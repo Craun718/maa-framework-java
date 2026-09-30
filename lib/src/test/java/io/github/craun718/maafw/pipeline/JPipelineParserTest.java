@@ -310,6 +310,28 @@ class JPipelineParserTest {
     }
 
     @Test
+    void parsesAutoUpActionsAndPreservesDefaults() {
+        JTouch touchDown = assertInstanceOf(JTouch.class, parseAction(JActionType.TOUCH_DOWN, Map.of("auto_up", true)));
+        assertTrue(touchDown.autoUp);
+
+        JTouch touchMove = assertInstanceOf(JTouch.class, parseAction(JActionType.TOUCH_MOVE, Map.of()));
+        assertFalse(touchMove.autoUp);
+
+        JKey keyDown = assertInstanceOf(JKey.class, parseAction(JActionType.KEY_DOWN, Map.of("key", 65, "auto_up", true)));
+        assertEquals(65, keyDown.key);
+        assertTrue(keyDown.autoUp);
+
+        JKey keyUp = assertInstanceOf(JKey.class, parseAction(JActionType.KEY_UP, Map.of("key", 65)));
+        assertEquals(65, keyUp.key);
+        assertFalse(keyUp.autoUp);
+
+        Map<String, Object> touchJson = MaaJson.parseObject(MaaJson.write(touchDown));
+        assertEquals(Boolean.TRUE, touchJson.get("auto_up"));
+        Map<String, Object> keyJson = MaaJson.parseObject(MaaJson.write(keyDown));
+        assertEquals(Boolean.TRUE, keyJson.get("auto_up"));
+    }
+
+    @Test
     void parseAllNormalizesStringAndListAnchors() {
         String json = """
                 {
