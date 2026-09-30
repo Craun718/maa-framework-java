@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.TimeUnit;
@@ -380,7 +381,7 @@ class RuntimeSmokeTest {
                           "SmokeTask": {
                             "pre_delay": 500,
                             "recognition": {"type": "DirectHit", "param": {}},
-                            "action": {"type": "Click", "param": {}},
+                            "action": {"type": "Click", "param": {"target": [0, 0, 1, 1]}},
                             "next": []
                           },
                           "ContextSmoke": {
@@ -424,6 +425,9 @@ class RuntimeSmokeTest {
             AtomicInteger clickCount = new AtomicInteger();
             try (CustomController controller = newSmokeController(clickCount); Tasker tasker = new Tasker()) {
                 assertTrue(controller.postConnection().waitFor().succeeded());
+                // v5.14.0 skips screencap for DirectHit tasks with no next nodes. Warm the cache
+                // so this smoke task still exercises a pipeline Click deterministically.
+                assertTrue(controller.postScreencap().waitFor().succeeded());
                 assertTrue(tasker.bind(resource, controller));
                 assertTrue(tasker.inited());
                 assertNotNull(tasker.resource());
@@ -613,6 +617,14 @@ class RuntimeSmokeTest {
                         "recognition": {"type": "DirectHit", "param": {}},
                         "action": {"type": "DoNothing", "param": {}},
                         "next": []
+                      },
+                      "StopEntry": {
+                        "recognition": {"type": "DirectHit", "param": {}},
+                        "action": {
+                          "type": "Custom",
+                          "param": {"custom_action": "JavaStopAction"}
+                        },
+                        "next": []
                       }
                     }
                     """);
@@ -687,7 +699,7 @@ class RuntimeSmokeTest {
                       },
                       "NestedTask": {
                         "recognition": {"type": "DirectHit", "param": {}},
-                        "action": {"type": "Click", "param": {}},
+                        "action": {"type": "Click", "param": {"target": [0, 0, 1, 1]}},
                         "next": []
                       },
                       "NestedRecognition": {
@@ -826,15 +838,32 @@ class RuntimeSmokeTest {
 
     private static void exerciseStopOverride(Path pipeline) throws Exception {
         try (Resource resource = new Resource(); CustomController controller = newRuntimeSmokeController(); Tasker tasker = new Tasker()) {
+            CountDownLatch stopActionStarted = new CountDownLatch(1);
+            CountDownLatch stopActionReleased = new CountDownLatch(1);
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(controller.setScreenshotUseRawSize(true));
+            assertTrue(resource.registerCustomAction("JavaStopAction", new CustomAction() {
+
+                @Override
+                public RunResult run(Context context, RunArg argv) {
+                    stopActionStarted.countDown();
+                    try {
+                        return new RunResult(stopActionReleased.await(5, TimeUnit.SECONDS));
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return new RunResult(false);
+                    }
+                }
+            }));
             assertTrue(resource.postPipeline(pipeline).waitFor().succeeded());
             assertTrue(tasker.bind(resource, controller));
 
-            TaskJob task = tasker.postTask("TaskJobEntry");
+            TaskJob task = tasker.postTask("StopEntry");
+            assertTrue(stopActionStarted.await(5, TimeUnit.SECONDS), "Stop action should start");
             assertTrue(tasker.running(), "Task should start before the stop request");
             Job stop = tasker.postStop();
             assertTrue(tasker.stopping(), "postStop should put the tasker in stopping state");
+            stopActionReleased.countDown();
             assertTrue(stop.waitFor().succeeded(), "Stop job should succeed");
             assertFalse(tasker.running(), "Tasker should not be running after stop");
             assertFalse(tasker.stopping(), "Tasker should not be stopping after stop");
