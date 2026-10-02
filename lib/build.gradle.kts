@@ -40,6 +40,7 @@ java {
 
 publishing {
     publications.create<MavenPublication>("maven") {
+        artifactId = "maa-framework-java"
         from(components["java"])
 
         pom {
@@ -69,14 +70,19 @@ publishing {
 
 signing {
     val signingKeyId = providers.gradleProperty("signing.keyId")
+        .orElse(providers.environmentVariable("CENTRAL_PORTAL_SIGNING_KEY_ID"))
+        .map(String::trim)
+        .filter { it.isNotEmpty() }
     val signingPassword = providers.gradleProperty("signing.password")
+        .orElse(providers.environmentVariable("CENTRAL_PORTAL_SIGNING_PASSWORD"))
     val signingKey = providers.gradleProperty("signing.key")
+        .orElse(providers.environmentVariable("CENTRAL_PORTAL_SIGNING_KEY"))
+        .map(String::trim)
+        .filter { it.isNotEmpty() }
     val signingSecretKeyRingFile = providers.gradleProperty("signing.secretKeyRingFile")
 
-    if (signingKeyId.isPresent) {
-        useInMemoryPgpKeys(signingKeyId.get(), signingKey.orNull, signingPassword.get())
-    } else if (signingKey.isPresent) {
-        useInMemoryPgpKeys(signingKey.get(), signingPassword.orNull)
+    if (signingKey.isPresent) {
+        useInMemoryPgpKeys(signingKeyId.orNull, signingKey.get(), signingPassword.orNull)
     } else if (signingSecretKeyRingFile.isPresent) {
         useGpgCmd()
     }

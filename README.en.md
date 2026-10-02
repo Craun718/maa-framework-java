@@ -377,4 +377,7 @@ automatically selected port.
 - In agent server mode, the official `MaaAgentServer` library is a stub for local resource,
   controller, and tasker creation and for plugin loading. Use that mode only to host callbacks
   and sinks.
-- The binding is not published to Maven Central yet; use it as an included Gradle project.
+- Maven Central publishing is triggered by `v*` tags, with the coordinates
+  `top.natsuu:maa-framework-java`. CI requires the `CENTRAL_PORTAL_USERNAME`,
+  `CENTRAL_PORTAL_PASSWORD`, `CENTRAL_PORTAL_SIGNING_KEY`, and
+  `CENTRAL_PORTAL_SIGNING_PASSWORD` secrets; `CENTRAL_PORTAL_SIGNING_KEY_ID` is optional.

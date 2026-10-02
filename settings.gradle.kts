@@ -8,8 +8,17 @@
 plugins {
     // Apply the foojay-resolver plugin to allow automatic download of JDKs
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    id("com.gradleup.nmcp.settings") version "1.6.2"
 }
 
 rootProject.name = "maa-framework-java"
 include("lib")
 include("examples")
+
+nmcpSettings {
+    centralPortal {
+        username = providers.environmentVariable("CENTRAL_PORTAL_USERNAME").orNull
+        password = providers.environmentVariable("CENTRAL_PORTAL_PASSWORD").orNull
+        publicationName = "maa-framework-java:${rootDir.resolve(".maa-framework-version").readText().trim()}"
+    }
+}

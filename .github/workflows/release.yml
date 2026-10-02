@@ -1,0 +1,131 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/test.yml
+
+  package:
+    name: package ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    needs: ci
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win-x86_64
+            source_dir: MAA-win-x86_64
+            maa_file_name: MAA-win-x86_64*
+          - platform: win-aarch64
+            source_dir: MAA-win-aarch64
+            maa_file_name: MAA-win-aarch64*
+          - platform: linux-x86_64
+            source_dir: MAA-linux-x86_64
+            maa_file_name: MAA-linux-x86_64*
+          - platform: linux-aarch64
+            source_dir: MAA-linux-aarch64
+            maa_file_name: MAA-linux-aarch64*
+          - platform: macos-x86_64
+            source_dir: MAA-macos-x86_64
+            maa_file_name: MAA-macos-x86_64*
+          - platform: macos-aarch64
+            source_dir: MAA-macos-aarch64
+            maa_file_name: MAA-macos-aarch64*
+          - platform: android-x86_64
+            source_dir: MAA-android-x86_64
+            maa_file_name: MAA-android-x86_64*
+          - platform: android-arm64-v8a
+            source_dir: MAA-android-aarch64
+            maa_file_name: MAA-android-aarch64*
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Read MaaFramework Version
+        id: maa_version
+        shell: bash
+        run: echo "tag=$(tr -d '[:space:]' < .maa-framework-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Download MaaFramework
+        uses: robinraju/release-downloader@v1.13
+        with:
+          repository: MaaXYZ/MaaFramework
+          tag: ${{ steps.maa_version.outputs.tag }}
+          fileName: "${{ matrix.maa_file_name }}"
+          out-file-path: deps
+          extract: true
+
+      - name: Stage Release Directory
+        shell: bash
+        run: |
+          mkdir -p releases
+          mv deps releases/${{ matrix.source_dir }}
+
+      - name: Build Official Release Archive
+        shell: bash
+        env:
+          MAA_FRAMEWORK_RELEASES: ${{ github.workspace }}/releases
+          MAA_FRAMEWORK_OUTPUT_DIR: ${{ github.workspace }}/dist
+        run: ./scripts/package-official-release.sh
+
+      - name: Upload Release Archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: maa-framework-java-${{ matrix.platform }}-ci
+          path: dist/*.zip
+
+  publish:
+    name: publish to Maven Central
+    needs: [ci, package]
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit
+
+  release:
+    needs: [ci, package, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download Release Archives
+        uses: actions/download-artifact@v8
+        with:
+          pattern: maa-framework-java-*-ci
+          path: dist
+          merge-multiple: true
+
+      - name: Download Java Library
+        uses: actions/download-artifact@v8
+        with:
+          name: maa-framework-java-lib
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
+          files: |
+            dist/*.zip
+            artifacts/maa-framework-java.jar
