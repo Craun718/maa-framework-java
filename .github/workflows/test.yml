@@ -43,7 +43,12 @@ jobs:
         shell: bash
         run: |
           mkdir -p staging
-          cp lib/build/libs/lib.jar staging/maa-framework-java.jar
+          main_jar="$(find lib/build/libs -maxdepth 1 -type f -name 'lib-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print -quit)"
+          if [[ -z "$main_jar" ]]; then
+            echo "::error::No main library jar found in lib/build/libs"
+            exit 1
+          fi
+          cp "$main_jar" staging/maa-framework-java.jar
 
       - name: Upload Java Library
         uses: actions/upload-artifact@v7

@@ -51,7 +51,7 @@ def main() -> int:
         )
         return 2
 
-    java_dir = repo_root / "lib/src/main/java/io/github/craun718/maafw"
+    java_dir = repo_root / "lib/src/main/java/top/natsuu/maafw"
     aliases = c_typedef_aliases(source_root / "include")
     failed = False
 
