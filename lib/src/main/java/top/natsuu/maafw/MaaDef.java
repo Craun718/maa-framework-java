@@ -113,8 +113,13 @@ public final class MaaDef {
     public static final int INFERENCE_EXECUTION_PROVIDER_AUTO = 0;
     public static final int INFERENCE_EXECUTION_PROVIDER_CPU = 1;
     public static final int INFERENCE_EXECUTION_PROVIDER_DIRECT_ML = 2;
+    /** @deprecated MaaFramework no longer ships the CoreML provider; the numeric value is retained for compatibility. */
+    @Deprecated
     public static final int INFERENCE_EXECUTION_PROVIDER_CORE_ML = 3;
     public static final int INFERENCE_EXECUTION_PROVIDER_CUDA = 4;
+    public static final int INFERENCE_EXECUTION_PROVIDER_WEB_GPU = 5;
+    /** Android only; available when MaaFramework is built with NCNN. */
+    public static final int INFERENCE_EXECUTION_PROVIDER_NCNN = 6;
 
     private MaaDef() {
     }

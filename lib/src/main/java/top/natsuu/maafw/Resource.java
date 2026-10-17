@@ -206,14 +206,38 @@ public class Resource implements AutoCloseable {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_DIRECT_ML, deviceId);
     }
 
+    /** @deprecated MaaFramework no longer ships the CoreML provider in its standard dependencies. */
+    @Deprecated
     public boolean useCoreml() {
         return useCoreml(MaaDef.INFERENCE_DEVICE_AUTO);
     }
 
+    /** @deprecated MaaFramework no longer ships the CoreML provider in its standard dependencies. */
+    @Deprecated
     public boolean useCoreml(int coremlFlag) {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_CORE_ML, coremlFlag);
     }
 
+    /** Selects the WebGPU inference provider and device id. */
+    public boolean useWebgpu(int deviceId) {
+        return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_WEB_GPU, deviceId);
+    }
+
+    /** Selects the WebGPU inference provider with its default device. */
+    public boolean useWebgpu() {
+        return useWebgpu(MaaDef.INFERENCE_DEVICE_AUTO);
+    }
+
+    /**
+     * Selects the NCNN CPU provider. This is available only on MaaFramework builds with NCNN
+     * support (Android release builds). Choose the provider before posting any resource load;
+     * switching to or from NCNN after loading starts fails until {@link #clear()} succeeds.
+     */
+    public boolean useNcnn() {
+        return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_NCNN, MaaDef.INFERENCE_DEVICE_AUTO);
+    }
+
+    /** Uses MaaFramework's automatic provider selection, falling back to CPU when needed. */
     public boolean useAutoEp() {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_AUTO, MaaDef.INFERENCE_DEVICE_AUTO);
     }
@@ -368,13 +392,18 @@ public class Resource implements AutoCloseable {
         MaaLibrary.framework().MaaResourceWait(handle, id);
     }
 
-    public boolean setInference(int executionProvider, int deviceId) {
+    /**
+     * Selects a provider and device, serializing inference selections on this wrapper.
+     * A rejected provider leaves the device unchanged. The native device setter accepts
+     * every integer device id when given the fixed-size value used here; device availability
+     * is checked by MaaFramework when loading models.
+     */
+    public synchronized boolean setInference(int executionProvider, int deviceId) {
         try (Memory executionProviderValue = intMemory(executionProvider); Memory deviceValue = intMemory(deviceId)) {
             boolean providerOk = MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
                     MaaDef.ResOption.INFERENCE_EXECUTION_PROVIDER.code(), executionProviderValue, Integer.BYTES));
-            boolean deviceOk = MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
+            return providerOk && MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
                     MaaDef.ResOption.INFERENCE_DEVICE.code(), deviceValue, Integer.BYTES));
-            return providerOk && deviceOk;
         }
     }
 
