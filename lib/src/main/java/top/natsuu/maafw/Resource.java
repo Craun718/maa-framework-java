@@ -392,13 +392,18 @@ public class Resource implements AutoCloseable {
         MaaLibrary.framework().MaaResourceWait(handle, id);
     }
 
-    public boolean setInference(int executionProvider, int deviceId) {
+    /**
+     * Selects a provider and device, serializing inference selections on this wrapper.
+     * A rejected provider leaves the device unchanged. The native device setter accepts
+     * every integer device id when given the fixed-size value used here; device availability
+     * is checked by MaaFramework when loading models.
+     */
+    public synchronized boolean setInference(int executionProvider, int deviceId) {
         try (Memory executionProviderValue = intMemory(executionProvider); Memory deviceValue = intMemory(deviceId)) {
             boolean providerOk = MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
                     MaaDef.ResOption.INFERENCE_EXECUTION_PROVIDER.code(), executionProviderValue, Integer.BYTES));
-            boolean deviceOk = MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
+            return providerOk && MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceSetOption(handle,
                     MaaDef.ResOption.INFERENCE_DEVICE.code(), deviceValue, Integer.BYTES));
-            return providerOk && deviceOk;
         }
     }
 
