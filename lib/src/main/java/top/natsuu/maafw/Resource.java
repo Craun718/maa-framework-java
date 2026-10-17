@@ -206,14 +206,38 @@ public class Resource implements AutoCloseable {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_DIRECT_ML, deviceId);
     }
 
+    /** @deprecated MaaFramework no longer ships the CoreML provider in its standard dependencies. */
+    @Deprecated
     public boolean useCoreml() {
         return useCoreml(MaaDef.INFERENCE_DEVICE_AUTO);
     }
 
+    /** @deprecated MaaFramework no longer ships the CoreML provider in its standard dependencies. */
+    @Deprecated
     public boolean useCoreml(int coremlFlag) {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_CORE_ML, coremlFlag);
     }
 
+    /** Selects the WebGPU inference provider and device id. */
+    public boolean useWebgpu(int deviceId) {
+        return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_WEB_GPU, deviceId);
+    }
+
+    /** Selects the WebGPU inference provider with its default device. */
+    public boolean useWebgpu() {
+        return useWebgpu(MaaDef.INFERENCE_DEVICE_AUTO);
+    }
+
+    /**
+     * Selects the NCNN CPU provider. This is available only on MaaFramework builds with NCNN
+     * support (Android release builds). Choose the provider before posting any resource load;
+     * switching to or from NCNN after loading starts fails until {@link #clear()} succeeds.
+     */
+    public boolean useNcnn() {
+        return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_NCNN, MaaDef.INFERENCE_DEVICE_AUTO);
+    }
+
+    /** Uses MaaFramework's automatic provider selection, falling back to CPU when needed. */
     public boolean useAutoEp() {
         return setInference(MaaDef.INFERENCE_EXECUTION_PROVIDER_AUTO, MaaDef.INFERENCE_DEVICE_AUTO);
     }
