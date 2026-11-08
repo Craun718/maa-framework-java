@@ -15,6 +15,24 @@ import org.junit.jupiter.api.Test;
 class JPipelineParserTest {
 
     @Test
+    void recognitionIndicesRejectFractionalAndOutOfRangeValues() {
+        for (JRecognitionType type : List.of(JRecognitionType.CUSTOM, JRecognitionType.OCR)) {
+            Map<String, Object> base = type == JRecognitionType.CUSTOM ? Map.of("custom_recognition", "test") : Map.of();
+            for (Object invalid : List.of(1.8, 2147483648L, -2147483649L, "1.8", true)) {
+                Map<String, Object> values = new java.util.HashMap<>(base);
+                values.put("index", invalid);
+                assertThrows(IllegalArgumentException.class, () -> parseRecognition(type, values), type + " index=" + invalid);
+            }
+        }
+        assertEquals(-1, ((JCustomRecognition) parseRecognition(JRecognitionType.CUSTOM,
+                Map.of("custom_recognition", "test", "index", "-1"))).index);
+        assertEquals(Integer.MAX_VALUE, ((JOCR) parseRecognition(JRecognitionType.OCR, Map.of("index", Integer.MAX_VALUE))).index);
+        assertEquals(0, ((JOCR) parseRecognition(JRecognitionType.OCR, Map.of())).index);
+        assertThrows(IllegalArgumentException.class,
+                () -> parseRecognition(JRecognitionType.AND, Map.of("all_of", List.of("A"), "box_index", 1.5)));
+    }
+
+    @Test
     void parsesTypedNodeSectionsAndAttributes() {
         String json = """
                 {

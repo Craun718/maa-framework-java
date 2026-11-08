@@ -60,6 +60,20 @@ class JPipelineTest {
     }
 
     @Test
+    void customRecognitionIndexRoundTrips() {
+        JCustomRecognition param = new JCustomRecognition();
+        param.customRecognition = "MyReco";
+        param.index = -1;
+        JPipeline pipeline = new JPipeline();
+        pipeline.add("Custom", new JPipelineData().recognition(JRecognition.custom(param)));
+
+        String json = pipeline.toJson();
+        assertEquals(-1, map(map(map(MaaJson.parseObject(json).get("Custom")).get("recognition")).get("param")).get("index"));
+        JCustomRecognition parsed = (JCustomRecognition) JPipeline.fromJson(json).get("Custom").recognition.param;
+        assertEquals(-1, parsed.index);
+    }
+
+    @Test
     void factoriesCreateTypedRecognitionAndActionSections() {
         JRecognition directHit = JRecognition.directHit();
         assertEquals(JRecognitionType.DIRECT_HIT, directHit.type);

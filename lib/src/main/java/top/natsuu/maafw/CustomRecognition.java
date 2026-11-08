@@ -16,6 +16,11 @@ public abstract class CustomRecognition {
             MaaImage image, MaaRect roi) {
     }
 
+    /**
+     * A callback result. For multiple results, detail may contain the reserved {@code $all} and
+     * {@code $filtered} arrays, whose entries contain a {@code box} array and optional
+     * {@code detail}. The non-null box signals a successful recognition.
+     */
     public record AnalyzeResult(MaaRect box, Map<String, Object> detail) {
 
         public static AnalyzeResult hit(MaaRect box) {

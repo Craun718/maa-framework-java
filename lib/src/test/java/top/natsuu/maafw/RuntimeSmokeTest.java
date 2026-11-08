@@ -366,6 +366,17 @@ class RuntimeSmokeTest {
                         return RunResult.ok();
                     }
                 }));
+                assertTrue(resource.registerCustomRecognition("JavaMultiReco", new CustomRecognition() {
+
+                    @Override
+                    public AnalyzeResult analyze(Context context, AnalyzeArg argv) {
+                        return new AnalyzeResult(MaaRect.of(1, 2, 3, 4),
+                            Map.of("$all",
+                                    List.of(Map.of("box", List.of(1, 2, 3, 4), "detail", "first"),
+                                            Map.of("box", List.of(10, 20, 30, 40), "detail", "second")),
+                                    "$filtered", List.of(Map.of("box", List.of(10, 20, 30, 40), "detail", "filtered"))));
+                    }
+                }));
 
                 Files.writeString(pipeline, """
                         {
@@ -394,6 +405,10 @@ class RuntimeSmokeTest {
                               "param": {"custom_action": "JavaContextAction"}
                             },
                             "next": []
+                          },
+                          "MultiSmoke": {
+                            "recognition": {"type": "Custom", "param": {"custom_recognition": "JavaMultiReco", "index": -1}},
+                            "action": {"type": "DoNothing", "param": {}}
                           }
                         }
                         """);
@@ -457,6 +472,15 @@ class RuntimeSmokeTest {
                 assertTrue(contextChecksOk.get(), "Context.clone/anchor: taskerSame=" + taskerSame.get() + " setAnchor=" + setAnchorOk.get()
                     + " node=" + nodeName.get() + " anchorGot=" + anchorGot.get());
                 assertTrue(waitFreezesOk.get(), "Typed JWaitFreezes should be accepted by MaaContextWaitFreezes");
+
+                assertTrue(tasker.postTask("MultiSmoke").waitFor().get().status().succeeded());
+                RecognitionDetail multi = tasker.getLatestNode("MultiSmoke").recognition();
+                assertEquals(MaaRect.of(10, 20, 30, 40), multi.box());
+                assertEquals(2, multi.allResults().size());
+                assertEquals(1, multi.filteredResults().size());
+                assertEquals(MaaRect.of(1, 2, 3, 4), multi.allResults().getFirst().box());
+                assertEquals(MaaRect.of(10, 20, 30, 40), multi.filteredResults().getFirst().box());
+                assertEquals("filtered", multi.filteredResults().getFirst().detail());
 
                 assertTrue(resource.unregisterCustomRecognition("JavaContextReco"));
                 assertFalse(resource.customRecognitionList().contains("JavaContextReco"));

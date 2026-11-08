@@ -96,14 +96,14 @@ in the official C headers with the JNA interface methods. It covers `MaaFramewor
 functions ship in separate plugin libraries, not in the official release core libraries.
 
 The same check works against either a source checkout or an extracted official release directory.
-The current FFI baseline is `v5.15.0-beta.1`, and exported functions are matched exactly against it.
+The current FFI baseline is `v5.15.0`, and exported functions are matched exactly against it.
 
 ```bash
 ./scripts/check-ffi-surface.sh /path/to/MaaFramework
 # or
 MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 # or an extracted release directory
-./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.15.0-beta.1
+./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.15.0
 ```
 
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
@@ -113,7 +113,7 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 
 The top-level `.maa-framework-version` file is the single anchor for the tracked MaaFramework ABI/binary version.
 
-This binding is tracked against MaaFramework `v5.15.0-beta.1` headers, documentation, and Python
+This binding is tracked against MaaFramework `v5.15.0` headers, documentation, and Python
 binding:
 
 - `check-ffi-surface.sh` verifies every exported function in `MaaFramework`, `MaaToolkit`,
@@ -128,6 +128,12 @@ binding:
 - The `pipeline` package parses project interface v2 node JSON into typed recognition and action
   parameters, including nested `And`/`Or`, `MultiSwipe`, wait-freezes, `focus`, and `attach`
   values, instead of exposing only raw JSON.
+- Custom recognition can return multiple results in `AnalyzeResult.detail` using `$all` and
+  `$filtered` arrays of objects with a `box` array and optional `detail`.
+  `JCustomRecognition.index` selects a result and supports negative indices; the callback
+  `box` must still be non-null to signal success.
+- The typed Pipeline parser requires recognition `index` and `box_index` values to be 32-bit
+  integers; fractional and out-of-range values now raise an exception instead of being truncated.
 - `MaaDef` and `Resource` expose the WebGPU and Android NCNN inference providers. Select NCNN
   before starting resource loading; switching to or from NCNN after loading starts requires
   clearing the resource first.
@@ -146,8 +152,8 @@ resource lifecycle operations, custom controller callbacks, record/replay contro
 option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
 unless the library directory is configured:
 
-The suite was previously verified against the official `v5.14.2` macOS aarch64 release: 82 tests across 16
-suites passed, including exact FFI signature checks against the `v5.14.2` source.
+The suite was verified against the official `v5.15.0` macOS aarch64 release: all 86 tests passed,
+including exact FFI signature checks against the release headers.
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
