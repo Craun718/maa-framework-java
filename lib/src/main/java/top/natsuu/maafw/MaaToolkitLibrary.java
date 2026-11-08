@@ -1,5 +1,6 @@
 package top.natsuu.maafw;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 
@@ -31,6 +32,31 @@ public interface MaaToolkitLibrary extends Library {
     long MaaToolkitAdbDeviceGetInputMethods(Pointer device);
 
     String MaaToolkitAdbDeviceGetConfig(Pointer device);
+
+    Pointer MaaToolkitIOSDeviceListCreate();
+
+    void MaaToolkitIOSDeviceListDestroy(Pointer list);
+
+    byte MaaToolkitIOSDeviceFind(Pointer list);
+
+    byte MaaToolkitIOSDeviceFindWithOptions(int connectionMethod, String optionsJson, IOSDeviceCancelCallback callback, Pointer userdata,
+            Pointer list);
+
+    long MaaToolkitIOSDeviceListSize(Pointer list);
+
+    Pointer MaaToolkitIOSDeviceListAt(Pointer list, long index);
+
+    String MaaToolkitIOSDeviceGetName(Pointer device);
+
+    String MaaToolkitIOSDeviceGetUdid(Pointer device);
+
+    String MaaToolkitIOSDeviceGetState(Pointer device);
+
+    String MaaToolkitIOSDeviceGetConnections(Pointer device);
+
+    long MaaToolkitIOSDeviceGetScreencapMethods(Pointer device);
+
+    String MaaToolkitIOSDeviceListGetWarnings(Pointer list);
 
     Pointer MaaToolkitDesktopWindowListCreate();
 
@@ -87,4 +113,10 @@ public interface MaaToolkitLibrary extends Library {
     String MaaToolkitPortalHelperGetRestoreToken(Pointer helper);
 
     void MaaToolkitPortalHelperSetRestoreToken(Pointer helper, String token);
+
+    interface IOSDeviceCancelCallback extends Callback {
+
+        byte invoke(Pointer userdata);
+    }
+
 }

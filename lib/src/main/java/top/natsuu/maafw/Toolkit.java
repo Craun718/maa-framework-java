@@ -76,6 +76,39 @@ public final class Toolkit {
         return findAdbDevices(specifiedAdb.toString());
     }
 
+    /** Discovers iOS devices without pairing them or starting media. */
+    public static List<IOSDevice> findIOSDevices() {
+        return findIOSDevices(MaaDef.IOS_CONNECTION_AUTO, Map.of());
+    }
+
+    /** Options may include timeout_ms and server_port; discovery failures include native warnings. */
+    public static List<IOSDevice> findIOSDevices(int connectionMethod, Map<String, Object> options) {
+        MaaToolkitLibrary api = MaaLibrary.toolkit();
+        Pointer list = api.MaaToolkitIOSDeviceListCreate();
+        if (list == null || list == Pointer.NULL) {
+            throw new IllegalStateException("Failed to create iOS device list");
+        }
+        try {
+            if (!MaaStringBuffer.toBoolean(api.MaaToolkitIOSDeviceFindWithOptions(connectionMethod,
+                    MaaJson.write(options == null ? Map.of() : options), null, null, list))) {
+                throw new IllegalStateException(
+                    "Failed to find iOS devices: " + stringOrEmpty(api.MaaToolkitIOSDeviceListGetWarnings(list)));
+            }
+            long size = api.MaaToolkitIOSDeviceListSize(list);
+            List<IOSDevice> devices = new ArrayList<>((int) Math.min(size, Integer.MAX_VALUE));
+            for (long i = 0; i < size; i++) {
+                Pointer device = api.MaaToolkitIOSDeviceListAt(list, i);
+                devices.add(new IOSDevice(stringOrEmpty(api.MaaToolkitIOSDeviceGetName(device)),
+                    stringOrEmpty(api.MaaToolkitIOSDeviceGetUdid(device)), api.MaaToolkitIOSDeviceGetScreencapMethods(device),
+                    MaaJson.parseObjectList(api.MaaToolkitIOSDeviceGetConnections(device)),
+                    stringOrEmpty(api.MaaToolkitIOSDeviceGetState(device))));
+            }
+            return List.copyOf(devices);
+        } finally {
+            api.MaaToolkitIOSDeviceListDestroy(list);
+        }
+    }
+
     public static List<DesktopWindow> findDesktopWindows() {
         Pointer list = MaaLibrary.toolkit().MaaToolkitDesktopWindowListCreate();
         if (list == null || list == Pointer.NULL) {
