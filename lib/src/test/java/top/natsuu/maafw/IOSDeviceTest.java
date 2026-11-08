@@ -23,4 +23,27 @@ class IOSDeviceTest {
         assertThrows(IllegalArgumentException.class, () -> new IOSController(""));
         assertThrows(IllegalArgumentException.class, () -> new IOSController("a\0b"));
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void deviceCopiesNestedConnectionData() {
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("address", "original");
+        nested.put("optional", null);
+        List<Object> candidates = new ArrayList<>();
+        candidates.add(nested);
+        candidates.add(null);
+        IOSDevice device = new IOSDevice("phone", "id", 1, List.of(Map.of("candidates", candidates)), "paired");
+
+        nested.put("address", "changed");
+        candidates.clear();
+        List<Object> snapshot = (List<Object>) device.connections().get(0).get("candidates");
+        Map<String, Object> snapshotNested = (Map<String, Object>) snapshot.get(0);
+        assertEquals("original", snapshotNested.get("address"));
+        assertNull(snapshotNested.get("optional"));
+        assertNull(snapshot.get(1));
+        assertThrows(UnsupportedOperationException.class, () -> snapshot.add("new"));
+        assertThrows(UnsupportedOperationException.class, () -> snapshotNested.put("address", "changed"));
+    }
+
 }
