@@ -192,6 +192,7 @@ public final class JPipelineParser {
             case CUSTOM -> {
                 JCustomRecognition param = new JCustomRecognition();
                 param.customRecognition = requiredString(values.get("custom_recognition"));
+                param.index = integer(values.get("index"), param.index);
                 param.roi = target(values.get("roi"), param.roi);
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.customRecognitionParam = values.get("custom_recognition_param");
