@@ -96,14 +96,14 @@ in the official C headers with the JNA interface methods. It covers `MaaFramewor
 functions ship in separate plugin libraries, not in the official release core libraries.
 
 The same check works against either a source checkout or an extracted official release directory.
-The current FFI baseline is `v5.16.0-beta.1`, and exported functions are matched exactly against it.
+The current FFI baseline is `v5.16.0-beta.2`, and exported functions are matched exactly against it.
 
 ```bash
 ./scripts/check-ffi-surface.sh /path/to/MaaFramework
 # or
 MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 # or an extracted release directory
-./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.16.0-beta.1
+./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.16.0-beta.2
 ```
 
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
@@ -113,7 +113,7 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 
 The top-level `.maa-framework-version` file is the single anchor for the tracked MaaFramework ABI/binary version.
 
-This binding is tracked against MaaFramework `v5.16.0-beta.1` headers, documentation, and Python
+This binding is tracked against MaaFramework `v5.16.0-beta.2` headers, documentation, and Python
 binding:
 
 - `check-ffi-surface.sh` verifies every exported function in `MaaFramework`, `MaaToolkit`,
@@ -153,7 +153,7 @@ resource lifecycle operations, custom controller callbacks, record/replay contro
 option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
 unless the library directory is configured:
 
-The suite was verified against the official `v5.16.0-beta.1` macOS aarch64 release: all 86 tests passed,
+The suite was verified against the official `v5.16.0-beta.2` macOS aarch64 release: all 88 tests passed,
 including exact FFI signature checks against the release headers.
 
 ```bash
