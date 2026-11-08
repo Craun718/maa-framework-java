@@ -102,6 +102,7 @@ MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 - `BlankController` 提供纯 Java 的无操作自定义 controller，用于在无设备时测试 resource/tasker，对应 Go 绑定的便捷 API。与 `DbgController` 不同，它不包装原生 debug controller。
 - `pipeline` 包将 project interface v2 的节点 JSON 解析为类型化识别和动作参数，包括嵌套 `And`/`Or`、`MultiSwipe`、wait-freezes、`focus` 和 `attach`，而不是只暴露原始 JSON。
 - 自定义识别可在 `AnalyzeResult.detail` 中通过 `$all` 和 `$filtered` 返回多个结果；每项包含 `box` 数组和可选的 `detail`。`JCustomRecognition.index` 选择结果，支持负索引；回调的 `box` 仍须非空以表示成功。
+- 类型化 Pipeline 解析器对识别结果的 `index` 和 `box_index` 要求 32 位整数；小数或越界值会抛出异常，不再静默截断。
 - `MaaDef` 和 `Resource` 暴露 WebGPU 与 Android NCNN 推理后端；NCNN 必须在开始资源加载前选择，加载开始后切换到或切离 NCNN 需先清理资源。
 - `package-official-release.sh` 构建与官方 MaaFramework release 相同顶层结构的分发包，包括 `bin/`、controller 插件、`include/`、`symbols/`、文档/示例/schema 和 `share/MaaAgentBinary/`。
 
@@ -111,7 +112,7 @@ MaaFramework 集成文档中的 Java 行描述的是较旧的第三方 v3 绑定
 
 `RuntimeSmokeTest` 会针对真实库目录验证 release ABI：版本查询、UTF-8 buffer、rect/image buffer、resource/tasker 创建、类型化直接识别/动作调用、资源生命周期操作、自定义 controller 回调、record/replay controller、toolkit 选项/设备辅助、AgentClient TCP 往返和 agent server 注册。未配置库目录时测试会跳过。
 
-该套件已针对官方 `v5.15.0` macOS aarch64 release 验证：85 个测试全部通过，包括正式版头文件的 FFI 签名检查。
+该套件已针对官方 `v5.15.0` macOS aarch64 release 验证：86 个测试全部通过，包括正式版头文件的 FFI 签名检查。
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test

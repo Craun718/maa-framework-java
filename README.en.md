@@ -132,6 +132,8 @@ binding:
   `$filtered` arrays of objects with a `box` array and optional `detail`.
   `JCustomRecognition.index` selects a result and supports negative indices; the callback
   `box` must still be non-null to signal success.
+- The typed Pipeline parser requires recognition `index` and `box_index` values to be 32-bit
+  integers; fractional and out-of-range values now raise an exception instead of being truncated.
 - `MaaDef` and `Resource` expose the WebGPU and Android NCNN inference providers. Select NCNN
   before starting resource loading; switching to or from NCNN after loading starts requires
   clearing the resource first.
@@ -150,7 +152,7 @@ resource lifecycle operations, custom controller callbacks, record/replay contro
 option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
 unless the library directory is configured:
 
-The suite was verified against the official `v5.15.0` macOS aarch64 release: all 85 tests passed,
+The suite was verified against the official `v5.15.0` macOS aarch64 release: all 86 tests passed,
 including exact FFI signature checks against the release headers.
 
 ```bash

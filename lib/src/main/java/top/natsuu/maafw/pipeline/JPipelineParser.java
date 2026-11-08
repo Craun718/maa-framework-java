@@ -1,6 +1,7 @@
 package top.natsuu.maafw.pipeline;
 
 import top.natsuu.maafw.MaaJson;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -121,7 +122,7 @@ public final class JPipelineParser {
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.threshold = doubleList(values.get("threshold"), param.threshold);
                 param.orderBy = string(values.get("order_by"), param.orderBy);
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 param.method = integer(values.get("method"), param.method);
                 param.greenMask = booleanValue(values.get("green_mask"), param.greenMask);
                 yield param;
@@ -134,7 +135,7 @@ public final class JPipelineParser {
                 param.detector = string(values.get("detector"), param.detector);
                 param.orderBy = string(values.get("order_by"), param.orderBy);
                 param.count = integer(values.get("count"), param.count);
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 param.greenMask = booleanValue(values.get("green_mask"), param.greenMask);
                 param.ratio = doubleValue(values.get("ratio"), param.ratio);
                 yield param;
@@ -148,7 +149,7 @@ public final class JPipelineParser {
                 param.orderBy = string(values.get("order_by"), param.orderBy);
                 param.method = integer(values.get("method"), param.method);
                 param.count = integer(values.get("count"), param.count);
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 param.connected = booleanValue(values.get("connected"), param.connected);
                 yield param;
             }
@@ -160,7 +161,7 @@ public final class JPipelineParser {
                 param.threshold = doubleValue(values.get("threshold"), param.threshold);
                 param.replace = stringListList(values.get("replace"), param.replace);
                 param.orderBy = string(values.get("order_by"), param.orderBy);
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 param.onlyRec = booleanValue(values.get("only_rec"), param.onlyRec);
                 param.model = string(values.get("model"), param.model);
                 param.colorFilter = string(values.get("color_filter"), param.colorFilter);
@@ -174,7 +175,7 @@ public final class JPipelineParser {
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.labels = stringList(values.get("labels"), param.labels);
                 param.orderBy = string(values.get("order_by"), param.orderBy);
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 yield param;
             }
             case NEURAL_NETWORK_DETECT -> {
@@ -186,13 +187,13 @@ public final class JPipelineParser {
                 param.labels = stringList(values.get("labels"), param.labels);
                 param.threshold = doubleList(values.get("threshold"), param.threshold);
                 param.orderBy = string(values.get("order_by"), param.orderBy);
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 yield param;
             }
             case CUSTOM -> {
                 JCustomRecognition param = new JCustomRecognition();
                 param.customRecognition = requiredString(values.get("custom_recognition"));
-                param.index = integer(values.get("index"), param.index);
+                param.index = index(values.get("index"), param.index);
                 param.roi = target(values.get("roi"), param.roi);
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.customRecognitionParam = values.get("custom_recognition_param");
@@ -201,7 +202,7 @@ public final class JPipelineParser {
             case AND -> {
                 JAnd param = new JAnd();
                 param.allOf = subRecognitionList(values.get("all_of"), param.allOf);
-                param.boxIndex = integer(values.get("box_index"), param.boxIndex);
+                param.boxIndex = index(values.get("box_index"), param.boxIndex);
                 yield param;
             }
             case OR -> {
@@ -455,6 +456,20 @@ public final class JPipelineParser {
             throw new IllegalArgumentException("Missing required string parameter");
         }
         return result;
+    }
+
+    private static int index(Object value, int fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        if (value instanceof Number || value instanceof String) {
+            try {
+                return new BigDecimal(value.toString()).intValueExact();
+            } catch (NumberFormatException | ArithmeticException ignored) {
+                // Invalid or out-of-range index.
+            }
+        }
+        throw new IllegalArgumentException("Recognition index must be an integer in the 32-bit range: " + value);
     }
 
     private static int integer(Object value, int fallback) {
