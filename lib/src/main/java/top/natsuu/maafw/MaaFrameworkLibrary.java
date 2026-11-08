@@ -171,6 +171,8 @@ public interface MaaFrameworkLibrary extends Library {
     Pointer MaaAdbControllerCreate(String adbPath, String address, long screencapMethods, long inputMethods, String config,
             String agentPath);
 
+    Pointer MaaIOSControllerCreate(String udid, long screencapMethods, int connectionMethod, String configJson);
+
     Pointer MaaWin32ControllerCreate(Pointer windowHandle, long screencapMethod, long mouseMethod, long keyboardMethod);
 
     Pointer MaaMacOSControllerCreate(int windowId, long screencapMethod, long inputMethod);

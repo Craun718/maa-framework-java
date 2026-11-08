@@ -28,6 +28,15 @@ public final class MaaDef {
     public static final long ADB_INPUT_ALL = -1L;
     public static final long ADB_INPUT_DEFAULT = ADB_INPUT_ALL & ~ADB_INPUT_EMULATOR_EXTRAS;
 
+    public static final long IOS_SCREENCAP_NONE = 0L;
+    public static final long IOS_SCREENCAP_STREAM = 1L;
+    public static final long IOS_SCREENCAP_SCREENSHOT_SERVICE = 1L << 1;
+    public static final long IOS_SCREENCAP_ALL = -1L;
+    public static final long IOS_SCREENCAP_DEFAULT = IOS_SCREENCAP_ALL;
+    public static final int IOS_CONNECTION_AUTO = 0;
+    public static final int IOS_CONNECTION_USB = 1;
+    public static final int IOS_CONNECTION_WIFI = 2;
+
     public static final long WIN32_SCREENCAP_NONE = 0L;
     public static final long WIN32_SCREENCAP_GDI = 1L;
     public static final long WIN32_SCREENCAP_FRAME_POOL = 1L << 1;
