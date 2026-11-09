@@ -73,6 +73,7 @@ The output layout mirrors the official release scope:
 lib/maa-framework-java.jar
 lib/README.md
 lib/README.en.md
+lib/LICENSE.md
 LICENSE.md
 README.md
 README.en.md
@@ -391,3 +392,7 @@ automatically selected port.
   `top.natsuu:maa-framework-java`. CI requires the `CENTRAL_PORTAL_USERNAME`,
   `CENTRAL_PORTAL_PASSWORD`, `CENTRAL_PORTAL_SIGNING_KEY`, and
   `CENTRAL_PORTAL_SIGNING_PASSWORD` secrets; `CENTRAL_PORTAL_SIGNING_KEY_ID` is optional.
+
+## License
+
+This project is licensed under [LGPL-3.0](LICENSE.md).
