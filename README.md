@@ -61,6 +61,7 @@ build/distributions/maa-framework-java-<MaaFramework版本>-${platform}.zip
 lib/maa-framework-java.jar
 lib/README.md
 lib/README.en.md
+lib/LICENSE.md
 LICENSE.md
 README.md
 README.en.md
@@ -307,3 +308,7 @@ try (AgentClient client = new AgentClient("my-agent");
 - 自定义识别和动作回调在调用 Java 代码前会解析当前 task/recognition 详情。自定义动作收到可空的 recognition 详情，因为仅含动作的 pipeline 节点使用零识别 id；任务详情缺失时回调会在不调用 Java 方法的情况下返回失败。
 - 在 agent server 模式下，官方 `MaaAgentServer` 库对本地 resource、controller、tasker 创建和插件加载是 stub。该模式只应用于承载回调和 sink。
 - Maven Central 发布由 `v*` 标签触发，发布坐标为 `top.natsuu:maa-framework-java`。CI 需要配置 `CENTRAL_PORTAL_USERNAME`、`CENTRAL_PORTAL_PASSWORD`、`CENTRAL_PORTAL_SIGNING_KEY` 和 `CENTRAL_PORTAL_SIGNING_PASSWORD` Secrets；可选配置 `CENTRAL_PORTAL_SIGNING_KEY_ID`。
+
+## 许可证
+
+本项目采用 [LGPL-3.0](LICENSE.md) 许可证。
