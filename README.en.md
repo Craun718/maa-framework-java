@@ -97,14 +97,15 @@ in the official C headers with the JNA interface methods. It covers `MaaFramewor
 functions ship in separate plugin libraries, not in the official release core libraries.
 
 The same check works against either a source checkout or an extracted official release directory.
-The current FFI baseline is `v5.16.0`, and exported functions are matched exactly against it.
+The FFI baseline is anchored by the top-level `.maa-framework-version` file, and exported functions
+are matched exactly against the currently anchored release.
 
 ```bash
 ./scripts/check-ffi-surface.sh /path/to/MaaFramework
 # or
 MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 # or an extracted release directory
-./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v5.16.0
+./scripts/check-ffi-surface.sh /path/to/MAA-macos-aarch64-v<x.y.z>
 ```
 
 The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOURCE` or
@@ -114,8 +115,8 @@ The same check is available as `FfiSurfaceTest`; it runs when `MAA_FRAMEWORK_SOU
 
 The top-level `.maa-framework-version` file is the single anchor for the tracked MaaFramework ABI/binary version.
 
-This binding is tracked against MaaFramework `v5.16.0` headers, documentation, and Python
-binding:
+This binding is tracked against the headers, documentation, and Python binding of the current
+MaaFramework release anchored by `.maa-framework-version`:
 
 - `check-ffi-surface.sh` verifies every exported function in `MaaFramework`, `MaaToolkit`,
   `MaaAgentClient`, and `MaaAgentServer`, including parameter and return signatures;
@@ -154,8 +155,8 @@ resource lifecycle operations, custom controller callbacks, record/replay contro
 option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
 unless the library directory is configured:
 
-The suite was verified against the official `v5.16.0` macOS aarch64 release: all 88 tests passed,
-including exact FFI signature checks against the release headers.
+The suite was verified against the official macOS aarch64 release for the currently anchored
+version: all 88 tests passed, including exact FFI signature checks against the release headers.
 
 ```bash
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
