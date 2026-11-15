@@ -89,6 +89,10 @@ signing {
 
     val shouldSign = providers.gradleProperty("signing.enabled").map { it.toBoolean() }.orElse(false)
     isRequired = shouldSign.get()
+
+    if (shouldSign.get()) {
+        sign(publishing.publications["maven"])
+    }
 }
 
 tasks.named<Test>("test") {
