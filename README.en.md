@@ -147,28 +147,6 @@ MaaFramework release anchored by `.maa-framework-version`:
 The Java row in MaaFramework's integration documentation describes an older third-party v3
 binding; this repository targets the current API and covers the surfaces listed above.
 
-## v6.0.0-beta.1 Support
-
-The target is [MaaFramework v6.0.0-beta.1](https://github.com/MaaXYZ/MaaFramework/releases/tag/v6.0.0-beta.1), pinned to commit [`12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c`](https://github.com/MaaXYZ/MaaFramework/tree/12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c). This is a beta prerelease. MaaAgent uses protocol 9: upgrade the host's AgentClient and child process's AgentServer together.
-
-- `JOCR.condition` defaults to an empty string. Expressions such as `$1 < 50` or `$1 == $2` compare numeric regex captures from `expected`. Typed Pipeline construction, parsing and serialization preserve the expression; the native runtime validates its syntax.
-- `Resource.getLoadDetail(resId)` returns a completed load snapshot, or `null` for unknown, pending or cleared IDs. `Tasker.getRecognitionImageStatus(recoId)` queries current image retention, or returns `null` for unknown IDs.
-- `Tasker.setRecoImageRaw`, `setRecoImageDraws`, `setRecoImageCacheBytes` and `setCaptureConfig` control input images, annotations, the image byte budget per tasker and event configuration snapshots. A zero byte budget disables new image caching.
-- `Tasker.getPluginList`, `flushPlugins` and `shutdownPlugins` expose plugin management. Load plugins before creating framework objects, flush from a normal host thread, and destroy all framework objects before shutdown. Shutdown retains the dynamic libraries.
-- Events support `CANCELLED`, `ContextEventSink.onContextTask` (nested `Context.runTask`), `onNodeTransition`, execution correlation, next-list selection details and optional `pipeline` snapshots. Resource terminal events include optional `status` and `errors`. Existing event record constructors remain available; absent additions are `null`.
-- ModAVD `EmulatorExtras` screenshots and input, VBox emulator ADB discovery and compressed log maintenance after tasks are implemented by the native runtime. Device discovery continues to use `Toolkit.findAdbDevices`.
-
-WeChatOCR supports Windows x64 and Linux x64. Configure a local `Resource` before any `post*` call; `clear()` resets the configuration. An empty configuration enables SDK/runtime discovery. Explicit paths must be absolute, and `runtime_dir` and `ocr_path` must be provided together. See [WeChatOCR-SDK](https://github.com/MaaXYZ/WeChatOCR-SDK#readme) for configuration keys.
-
-```java
-resource.configureWeChatOcr();
-JOCR ocr = new JOCR();
-ocr.engine = "WeChatOCR";
-ocr.threshold = 0;
-```
-
-`onlyRec` must be `false` and `model` must be empty. Unknown confidence (`-1`) passes only with `threshold = 0`. The default engine remains `Default` (PPOCR). macOS validation covers configuration arguments and Pipeline round trips; it does not run the WeChatOCR engine. Refer to the pinned [MaaDef.h](https://github.com/MaaXYZ/MaaFramework/blob/12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c/include/MaaFramework/MaaDef.h) and [Pipeline schema](https://github.com/MaaXYZ/MaaFramework/blob/12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c/tools/pipeline.schema.json) for constraints.
-
 ## Runtime Smoke Tests
 
 `RuntimeSmokeTest` exercises the release ABI against a real library directory: version lookup,
