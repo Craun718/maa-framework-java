@@ -159,6 +159,7 @@ public final class JPipelineParser {
                 param.roi = target(values.get("roi"), param.roi);
                 param.roiOffset = rect(values.get("roi_offset"), param.roiOffset);
                 param.threshold = doubleValue(values.get("threshold"), param.threshold);
+                param.condition = string(values.get("condition"), param.condition);
                 param.replace = stringListList(values.get("replace"), param.replace);
                 param.orderBy = string(values.get("order_by"), param.orderBy);
                 param.index = index(values.get("index"), param.index);

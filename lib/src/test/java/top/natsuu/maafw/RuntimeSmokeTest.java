@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 import top.natsuu.maafw.pipeline.JActionType;
 import top.natsuu.maafw.pipeline.JClick;
 import top.natsuu.maafw.pipeline.JDirectHit;
+import top.natsuu.maafw.pipeline.JOCR;
+import top.natsuu.maafw.pipeline.JRecognition;
 import top.natsuu.maafw.pipeline.JRecognitionType;
 import top.natsuu.maafw.pipeline.JWaitFreezes;
 
@@ -55,6 +57,7 @@ class RuntimeSmokeTest {
         assertFalse(MaaLibrary.version().isBlank(), "MaaVersion should return a release version");
 
         exerciseGlobalOptions();
+        exerciseOcrConditions();
         exerciseRuntimeObservation();
         exerciseBuffers();
         exerciseResourceAndTasker();
@@ -70,6 +73,33 @@ class RuntimeSmokeTest {
         assertTrue(Tasker.flushPlugins());
         assertTrue(Tasker.shutdownPlugins());
         assertTrue(Tasker.shutdownPlugins(), "Plugin shutdown should be idempotent");
+    }
+
+    private static void exerciseOcrConditions() {
+        try (Resource resource = new Resource()) {
+            assertEquals("", resource.getDefaultRecognitionParam("OCR").get("condition"));
+            JOCR ocr = new JOCR();
+            ocr.expected = List.of("(\\d+)/(\\d+)");
+            for (String condition : List.of("$1 < 50", "$1 <= 50", "$1 > 0", "$1 >= 0", "$1 == $2", "$1 != $2", "$0 >= -1.5e2", "")) {
+                ocr.condition = condition;
+                assertTrue(resource.overridePipeline(Map.of("NumericOCR", Map.of("recognition", JRecognition.ocr(ocr)))),
+                        "Native parser should accept condition: " + condition);
+                JOCR restored = (JOCR) resource.getNodeObject("NumericOCR").recognition.param;
+                assertEquals(condition, restored.condition);
+                assertEquals(ocr.expected, restored.expected);
+            }
+            assertTrue(resource.overridePipeline(Map.of("NumericOCR", Map.of("recognition", "OCR", "condition", "$2 > 50"))),
+                    "Flat pipeline syntax should accept condition overrides");
+            assertEquals("$2 > 50", ((JOCR) resource.getNodeObject("NumericOCR").recognition.param).condition);
+            ocr.condition = "$1 < 50 && $2 > 0";
+            assertFalse(resource.overridePipeline(Map.of("NumericOCR", Map.of("recognition", JRecognition.ocr(ocr)))),
+                    "Native parser should reject unsupported logical expressions");
+            assertEquals("$2 > 50", ((JOCR) resource.getNodeObject("NumericOCR").recognition.param).condition,
+                    "Invalid condition overrides should preserve the previous node");
+            ocr.condition = "";
+            assertTrue(resource.overridePipeline(Map.of("NumericOCR", Map.of("recognition", JRecognition.ocr(ocr)))));
+            assertEquals("", ((JOCR) resource.getNodeObject("NumericOCR").recognition.param).condition);
+        }
     }
 
     private static void exerciseGlobalOptions() {

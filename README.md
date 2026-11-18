@@ -110,15 +110,16 @@ MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 
 MaaFramework 集成文档中的 Java 行描述的是较旧的第三方 v3 绑定；本仓库面向当前 API，并覆盖上述范围。
 
-## v6.0.0-alpha.1 适配
+## v6.0.0-beta.1 适配
 
-当前目标为 [MaaFramework v6.0.0-alpha.1](https://github.com/MaaXYZ/MaaFramework/releases/tag/v6.0.0-alpha.1)，上游源码锁定到 [`f498555e09526f200c8840d6eecce9c30e942ec4`](https://github.com/MaaXYZ/MaaFramework/tree/f498555e09526f200c8840d6eecce9c30e942ec4)。这是 alpha 预发布版；MaaAgent 协议升级至 9，主进程的 AgentClient 与子进程的 AgentServer 必须一起升级。
+当前目标为 [MaaFramework v6.0.0-beta.1](https://github.com/MaaXYZ/MaaFramework/releases/tag/v6.0.0-beta.1)，上游源码锁定到 [`12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c`](https://github.com/MaaXYZ/MaaFramework/tree/12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c)。这是 beta 预发布版；MaaAgent 协议升级至 9，主进程的 AgentClient 与子进程的 AgentServer 必须一起升级。
 
+- OCR 数值条件：`JOCR.condition` 默认为空字符串；可填写 `$1 < 50`、`$1 == $2` 等表达式，对 `expected` 正则捕获组进行数值比较。支持类型化 Pipeline 构建、解析及往返序列化；条件语法由原生库校验。
 - 运行时观测：`Resource.getLoadDetail(resId)` 返回已完成加载的诊断快照，未知、未完成或已清理的 ID 返回 `null`。`Tasker.getRecognitionImageStatus(recoId)` 查询当前图像保留状态，未知 ID 返回 `null`。
 - 图像与配置采集：`Tasker.setRecoImageRaw`、`setRecoImageDraws`、`setRecoImageCacheBytes` 和 `setCaptureConfig` 分别控制原图、标注图、每个 tasker 的图像字节预算和事件配置快照。字节预算为零时禁用新图像缓存。
 - 插件管理：`Tasker.getPluginList`、`flushPlugins` 和 `shutdownPlugins`。在创建 framework 对象前加载插件；从普通宿主线程刷新插件；销毁所有 framework 对象后关闭插件。关闭插件不会卸载其动态库。
 - 事件：支持 `CANCELLED`、`ContextEventSink.onContextTask`（嵌套 `Context.runTask`）、`onNodeTransition`、执行关联字段、next-list 选择详情和可选 `pipeline` 快照。资源终止事件包含可选 `status` 和 `errors`。保留旧事件记录的构造器，缺失的新增字段为 `null`。
-- VBox 模拟器 ADB 地址发现和任务结束后的压缩日志维护由目标原生库实现，无需新增 Java 方法；设备发现继续使用 `Toolkit.findAdbDevices`。
+- ModAVD 的 `EmulatorExtras` 截图与输入、VBox 模拟器 ADB 地址发现和任务结束后的压缩日志维护由目标原生库实现，无需新增 Java 方法；设备发现继续使用 `Toolkit.findAdbDevices`。
 
 WeChatOCR 支持 Windows x64 和 Linux x64。需在本地 `Resource` 的任何 `post*` 调用前配置，`clear()` 会重置配置。空配置启用 SDK/runtime 自动发现；显式路径必须为绝对路径，`runtime_dir` 和 `ocr_path` 必须同时提供。配置键见 [WeChatOCR-SDK](https://github.com/MaaXYZ/WeChatOCR-SDK#readme)。
 
@@ -129,7 +130,7 @@ ocr.engine = "WeChatOCR";
 ocr.threshold = 0;
 ```
 
-`onlyRec` 必须为 `false`，`model` 必须为空；WeChatOCR 返回未知置信度 `-1` 时，仅 `threshold = 0` 可通过。默认引擎仍为 `Default`（PPOCR）。macOS 验证覆盖配置传参和 Pipeline 往返，未运行 WeChatOCR 引擎。配置和引擎约束以目标版本的 [MaaDef.h](https://github.com/MaaXYZ/MaaFramework/blob/f498555e09526f200c8840d6eecce9c30e942ec4/include/MaaFramework/MaaDef.h) 和 [Pipeline schema](https://github.com/MaaXYZ/MaaFramework/blob/f498555e09526f200c8840d6eecce9c30e942ec4/tools/pipeline.schema.json) 为准。
+`onlyRec` 必须为 `false`，`model` 必须为空；WeChatOCR 返回未知置信度 `-1` 时，仅 `threshold = 0` 可通过。默认引擎仍为 `Default`（PPOCR）。macOS 验证覆盖配置传参和 Pipeline 往返，未运行 WeChatOCR 引擎。配置和引擎约束以目标版本的 [MaaDef.h](https://github.com/MaaXYZ/MaaFramework/blob/12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c/include/MaaFramework/MaaDef.h) 和 [Pipeline schema](https://github.com/MaaXYZ/MaaFramework/blob/12df52b7ed87eb8e2c6a6f43a9fd2da8e420544c/tools/pipeline.schema.json) 为准。
 
 ## 运行时冒烟测试
 

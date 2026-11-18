@@ -7,6 +7,8 @@ import java.util.List;
 public final class JOCR implements JRecognitionParam {
 
     public List<String> expected = List.of();
+    /** Numeric comparison of regex captures, such as {@code $1 < 50}; empty disables comparison. */
+    public String condition = "";
     public Object roi = List.of(0, 0, 0, 0);
     @JsonProperty("roi_offset")
     public List<Integer> roiOffset = List.of(0, 0, 0, 0);
