@@ -226,7 +226,7 @@ public final class MaaDef {
 
     public enum ResOption {
 
-        INVALID(0), INFERENCE_DEVICE(1), INFERENCE_EXECUTION_PROVIDER(2);
+        INVALID(0), INFERENCE_DEVICE(1), INFERENCE_EXECUTION_PROVIDER(2), WECHAT_OCR(3);
 
         private final int code;
 

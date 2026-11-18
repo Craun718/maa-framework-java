@@ -11,6 +11,8 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +35,26 @@ class ResourceInferenceTest {
     @AfterEach
     void restoreFramework() throws Exception {
         frameworkField.set(null, originalFramework);
+    }
+
+    @Test
+    void weChatConfigurationUsesUtf8ByteLengthAndDiscoveryObject() throws Exception {
+        List<String> payloads = new ArrayList<>();
+        installFramework((proxy, method, args) -> {
+            assertEquals("MaaResourceSetOption", method.getName());
+            assertEquals(MaaDef.ResOption.WECHAT_OCR.code(), args[1]);
+            byte[] bytes = ((Pointer) args[2]).getByteArray(0, Math.toIntExact((Long) args[3]));
+            payloads.add(new String(bytes, StandardCharsets.UTF_8));
+            return payloads.size() == 1 ? (byte) 0 : (byte) 1;
+        });
+        Resource resource = new Resource(new Pointer(1));
+        Map<String, Object> config = Map.of("sdk_path", "/路径/sdk");
+        assertFalse(resource.configureWeChatOcr(config));
+        assertEquals(config, MaaJson.parseObject(payloads.getFirst()));
+        assertTrue(resource.configureWeChatOcr());
+        assertEquals("{}", payloads.get(1));
+        assertTrue(resource.configureWeChatOcr(null));
+        assertEquals("{}", payloads.get(2));
     }
 
     @Test

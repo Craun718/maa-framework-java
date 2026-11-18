@@ -163,6 +163,7 @@ public final class JPipelineParser {
                 param.orderBy = string(values.get("order_by"), param.orderBy);
                 param.index = index(values.get("index"), param.index);
                 param.onlyRec = booleanValue(values.get("only_rec"), param.onlyRec);
+                param.engine = string(values.get("engine"), param.engine);
                 param.model = string(values.get("model"), param.model);
                 param.colorFilter = string(values.get("color_filter"), param.colorFilter);
                 yield param;

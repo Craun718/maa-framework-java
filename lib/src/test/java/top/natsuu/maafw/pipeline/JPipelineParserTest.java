@@ -15,6 +15,21 @@ import org.junit.jupiter.api.Test;
 class JPipelineParserTest {
 
     @Test
+    void ocrEngineSurvivesTypedRoundTrip() {
+        assertEquals("Default", ((JOCR) parseRecognition(JRecognitionType.OCR, Map.of())).engine);
+        JOCR param = (JOCR) parseRecognition(JRecognitionType.OCR, Map.of("engine", "WeChatOCR", "threshold", 0));
+        assertEquals("WeChatOCR", param.engine);
+        assertEquals(0, param.threshold);
+        JPipeline pipeline = new JPipeline();
+        pipeline.add("Wechat", new JPipelineData().recognition(JRecognition.ocr(param)));
+        JOCR restored = (JOCR) JPipeline.fromJson(pipeline.toJson()).get("Wechat").recognition.param;
+        assertEquals("WeChatOCR", restored.engine);
+        assertEquals(0, restored.threshold);
+        assertFalse(restored.onlyRec);
+        assertEquals("", restored.model);
+    }
+
+    @Test
     void recognitionIndicesRejectFractionalAndOutOfRangeValues() {
         for (JRecognitionType type : List.of(JRecognitionType.CUSTOM, JRecognitionType.OCR)) {
             Map<String, Object> base = type == JRecognitionType.CUSTOM ? Map.of("custom_recognition", "test") : Map.of();
