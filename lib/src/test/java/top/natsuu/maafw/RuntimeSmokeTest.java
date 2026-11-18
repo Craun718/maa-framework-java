@@ -67,6 +67,9 @@ class RuntimeSmokeTest {
         exerciseRecordAndReplay();
         exerciseToolkit();
         exerciseAgentClient();
+        assertTrue(Tasker.flushPlugins());
+        assertTrue(Tasker.shutdownPlugins());
+        assertTrue(Tasker.shutdownPlugins(), "Plugin shutdown should be idempotent");
     }
 
     private static void exerciseGlobalOptions() {
@@ -104,7 +107,8 @@ class RuntimeSmokeTest {
             assertTrue(tasker.bind(resource, controller));
             AtomicReference<ContextEventSink.ContextTaskDetail> contextEvent = new AtomicReference<>();
             AtomicReference<ContextEventSink.NodeRecognitionDetail> recognitionEvent = new AtomicReference<>();
-            CountDownLatch observed = new CountDownLatch(3);
+            CountDownLatch observed = new CountDownLatch(2);
+            CountDownLatch transitionObserved = new CountDownLatch(1);
             tasker.addContextSink(new ContextEventSink() {
 
                 @Override
@@ -125,11 +129,12 @@ class RuntimeSmokeTest {
 
                 @Override
                 public void onNodeTransition(Context context, Map<String, Object> details) {
-                    observed.countDown();
+                    transitionObserved.countDown();
                 }
             });
             assertTrue(tasker.postTask("Probe").waitFor().succeeded());
-            assertTrue(observed.await(5, TimeUnit.SECONDS), "v6 context, recognition and transition events should arrive");
+            assertTrue(observed.await(5, TimeUnit.SECONDS), "v6 context and recognition events should arrive");
+            assertTrue(transitionObserved.await(5, TimeUnit.SECONDS), "v6 transition events should arrive");
             assertNotNull(contextEvent.get().contextId());
             assertNotNull(recognitionEvent.get().pipeline());
             assertEquals(contextEvent.get().contextId(), recognitionEvent.get().contextId());
@@ -1245,6 +1250,7 @@ class RuntimeSmokeTest {
     }
 
     private static void exerciseAgentClient() throws Exception {
+        assertTrue(Tasker.setCaptureConfig(true));
         try (AgentClient client = AgentClient.createTcp(0)) {
             String identifier = client.identifier();
             assertNotNull(identifier);
@@ -1338,6 +1344,8 @@ class RuntimeSmokeTest {
                     Files.deleteIfExists(pipeline);
                 }
             }
+        } finally {
+            Tasker.setCaptureConfig(false);
         }
     }
 
@@ -1348,7 +1356,8 @@ class RuntimeSmokeTest {
             if (Files.exists(sinkLog)) {
                 content = Files.readString(sinkLog);
                 if (content.contains("resource\t") && content.contains("controller\t") && content.contains("tasker\t")
-                    && content.contains("context\t")) {
+                    && content.contains("context\t") && content.contains("RecognitionImageStatus") && content.contains("ResourceLoadDetail")
+                    && content.contains("CapturedPipeline")) {
                     return;
                 }
             }

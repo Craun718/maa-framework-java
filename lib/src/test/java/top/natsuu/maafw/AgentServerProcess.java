@@ -41,6 +41,14 @@ public final class AgentServerProcess {
 
                 @Override
                 public RunResult run(Context context, RunArg argv) {
+                    if (argv.recoDetail() == null) {
+                        return RunResult.failed();
+                    }
+                    String status = context.tasker().getRecognitionImageStatus(argv.recoDetail().recoId());
+                    if (status == null || context.tasker().getRecognitionImageStatus(0) != null) {
+                        return RunResult.failed();
+                    }
+                    record("observation", "RecognitionImageStatus", status);
                     return RunResult.ok();
                 }
             })) {
@@ -52,6 +60,12 @@ public final class AgentServerProcess {
                 public void onResourceLoading(Resource resource, MaaDef.NotificationType notificationType,
                         ResourceEventSink.ResourceLoadingDetail detail) {
                     record("resource", "Resource.Loading", detail);
+                    if (notificationType == MaaDef.NotificationType.SUCCEEDED) {
+                        var snapshot = resource.getLoadDetail(detail.resId());
+                        if (snapshot != null) {
+                            record("observation", "ResourceLoadDetail", snapshot);
+                        }
+                    }
                 }
             }));
             requireSink("controller", AgentServer.addControllerSink(new ControllerEventSink() {
@@ -75,6 +89,9 @@ public final class AgentServerProcess {
                 public void onNodeRecognition(Context context, MaaDef.NotificationType notificationType,
                         ContextEventSink.NodeRecognitionDetail detail) {
                     record("context", "Node.Recognition", detail);
+                    if (detail.contextId() != null && detail.pipeline() != null) {
+                        record("observation", "CapturedPipeline", detail.pipeline());
+                    }
                 }
 
                 @Override
