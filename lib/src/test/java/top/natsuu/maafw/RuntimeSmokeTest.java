@@ -55,6 +55,7 @@ class RuntimeSmokeTest {
         assertFalse(MaaLibrary.version().isBlank(), "MaaVersion should return a release version");
 
         exerciseGlobalOptions();
+        exerciseRuntimeObservation();
         exerciseBuffers();
         exerciseResourceAndTasker();
         exerciseResourcePostApis();
@@ -66,12 +67,97 @@ class RuntimeSmokeTest {
         exerciseRecordAndReplay();
         exerciseToolkit();
         exerciseAgentClient();
+        assertTrue(Tasker.flushPlugins());
+        assertTrue(Tasker.shutdownPlugins());
+        assertTrue(Tasker.shutdownPlugins(), "Plugin shutdown should be idempotent");
     }
 
     private static void exerciseGlobalOptions() {
         assertTrue(Tasker.setRecoImageCacheLimit(512), "RecoImageCacheLimit should accept a size_t value");
         assertTrue(Tasker.setSaveDraw(false));
         assertTrue(Tasker.setSaveOnError(false));
+    }
+
+    private static void exerciseRuntimeObservation() throws Exception {
+        assertNotNull(Tasker.getPluginList());
+        assertTrue(Tasker.flushPlugins());
+        assertTrue(Tasker.setRecoImageRaw(true));
+        assertTrue(Tasker.setRecoImageDraws(false));
+        assertTrue(Tasker.setCaptureConfig(true));
+        assertTrue(Tasker.setRecoImageCacheBytes(1024 * 1024));
+        Path pipeline = Files.createTempFile("maa-observation-", ".json");
+        try (Resource resource = new Resource(); BlankController controller = new BlankController(); Tasker tasker = new Tasker()) {
+            Files.writeString(pipeline, """
+                    {"Probe":{"recognition":"DirectHit","action":"Custom","custom_action":"ObservedNestedTask"},
+                     "Nested":{"recognition":"DirectHit","action":"DoNothing"}}
+                    """);
+            assertTrue(resource.registerCustomAction("ObservedNestedTask", new CustomAction() {
+
+                @Override
+                public RunResult run(Context context, RunArg argv) {
+                    TaskDetail nested = context.runTask("Nested");
+                    return new RunResult(nested != null && nested.status().succeeded());
+                }
+            }));
+            Job load = resource.postPipeline(pipeline).waitFor();
+            assertTrue(load.succeeded());
+            assertNotNull(resource.getLoadDetail(load.jobId()));
+            assertNull(resource.getLoadDetail(0));
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+            AtomicReference<ContextEventSink.ContextTaskDetail> contextEvent = new AtomicReference<>();
+            AtomicReference<ContextEventSink.NodeRecognitionDetail> recognitionEvent = new AtomicReference<>();
+            CountDownLatch observed = new CountDownLatch(2);
+            CountDownLatch transitionObserved = new CountDownLatch(1);
+            tasker.addContextSink(new ContextEventSink() {
+
+                @Override
+                public void onContextTask(Context context, MaaDef.NotificationType type, ContextTaskDetail detail) {
+                    if (type == MaaDef.NotificationType.SUCCEEDED) {
+                        contextEvent.set(detail);
+                        observed.countDown();
+                    }
+                }
+
+                @Override
+                public void onNodeRecognition(Context context, MaaDef.NotificationType type, NodeRecognitionDetail detail) {
+                    if (type == MaaDef.NotificationType.SUCCEEDED && "Nested".equals(detail.name())) {
+                        recognitionEvent.set(detail);
+                        observed.countDown();
+                    }
+                }
+
+                @Override
+                public void onNodeTransition(Context context, Map<String, Object> details) {
+                    transitionObserved.countDown();
+                }
+            });
+            assertTrue(tasker.postTask("Probe").waitFor().succeeded());
+            assertTrue(observed.await(5, TimeUnit.SECONDS), "v6 context and recognition events should arrive");
+            assertTrue(transitionObserved.await(5, TimeUnit.SECONDS), "v6 transition events should arrive");
+            assertNotNull(contextEvent.get().contextId());
+            assertNotNull(recognitionEvent.get().pipeline());
+            assertEquals(contextEvent.get().contextId(), recognitionEvent.get().contextId());
+            tasker.clearContextSinks();
+            TaskDetail task = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(4)).waitFor().get();
+            long recoId = task.nodes().getFirst().recognition().recoId();
+            assertEquals("available", tasker.getRecognitionImageStatus(recoId));
+            assertTrue(tasker.getRecognitionDetail(recoId).rawImage().data().length > 0);
+            assertTrue(Tasker.setRecoImageCacheBytes(0));
+            task = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(4)).waitFor().get();
+            assertEquals("disabled", tasker.getRecognitionImageStatus(task.nodes().getFirst().recognition().recoId()));
+            assertNull(tasker.getRecognitionImageStatus(0));
+            assertTrue(tasker.clearCache());
+            assertNull(tasker.getRecognitionImageStatus(recoId));
+            assertTrue(resource.clear());
+            assertNull(resource.getLoadDetail(load.jobId()));
+        } finally {
+            Files.deleteIfExists(pipeline);
+            Tasker.setRecoImageRaw(false);
+            Tasker.setRecoImageDraws(false);
+            Tasker.setCaptureConfig(false);
+            Tasker.setRecoImageCacheBytes(Long.MAX_VALUE);
+        }
     }
 
     @Test
@@ -1164,6 +1250,7 @@ class RuntimeSmokeTest {
     }
 
     private static void exerciseAgentClient() throws Exception {
+        assertTrue(Tasker.setCaptureConfig(true));
         try (AgentClient client = AgentClient.createTcp(0)) {
             String identifier = client.identifier();
             assertNotNull(identifier);
@@ -1257,6 +1344,8 @@ class RuntimeSmokeTest {
                     Files.deleteIfExists(pipeline);
                 }
             }
+        } finally {
+            Tasker.setCaptureConfig(false);
         }
     }
 
@@ -1267,7 +1356,8 @@ class RuntimeSmokeTest {
             if (Files.exists(sinkLog)) {
                 content = Files.readString(sinkLog);
                 if (content.contains("resource\t") && content.contains("controller\t") && content.contains("tasker\t")
-                    && content.contains("context\t")) {
+                    && content.contains("context\t") && content.contains("RecognitionImageStatus") && content.contains("ResourceLoadDetail")
+                    && content.contains("CapturedPipeline")) {
                     return;
                 }
             }

@@ -17,6 +17,7 @@ public final class JOCR implements JRecognitionParam {
     public int index;
     @JsonProperty("only_rec")
     public boolean onlyRec;
+    public String engine = "Default";
     public String model = "";
     @JsonProperty("color_filter")
     public String colorFilter = "";

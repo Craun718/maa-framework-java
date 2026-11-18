@@ -9,6 +9,7 @@ import top.natsuu.maafw.pipeline.JPipelineParser;
 import top.natsuu.maafw.pipeline.JRecognitionParam;
 import top.natsuu.maafw.pipeline.JRecognitionType;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,35 @@ public class Resource implements AutoCloseable {
 
     public Pointer handle() {
         return handle;
+    }
+
+    /** Returns a completed load's diagnostic snapshot, or null for unknown, pending or cleared IDs. */
+    public Map<String, Object> getLoadDetail(long resId) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceGetLoadDetail(handle, resId, buffer.handle()))) {
+                return null;
+            }
+            return MaaJson.parseObject(buffer.get());
+        }
+    }
+
+    /** Enables automatic WeChatOCR SDK/runtime discovery on supported Windows/Linux x64 hosts. */
+    public boolean configureWeChatOcr() {
+        return configureWeChatOcr(Map.of());
+    }
+
+    /**
+     * Configures WeChatOCR on a local resource before any post operation. Explicit paths must
+     * be absolute; runtime_dir and ocr_path must be supplied together. clear() resets this option.
+     * See the WeChatOCR-SDK configuration for additional keys.
+     */
+    public boolean configureWeChatOcr(Map<String, Object> config) {
+        byte[] bytes = MaaJson.write(config == null ? Map.of() : config).getBytes(StandardCharsets.UTF_8);
+        try (Memory memory = new Memory(bytes.length)) {
+            memory.write(0, bytes, 0, bytes.length);
+            return MaaStringBuffer.toBoolean(
+                    MaaLibrary.framework().MaaResourceSetOption(handle, MaaDef.ResOption.WECHAT_OCR.code(), memory, bytes.length));
+        }
     }
 
     public Job postBundle(Path path) {

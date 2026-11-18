@@ -194,7 +194,8 @@ public final class MaaDef {
 
     public enum GlobalOption {
 
-        INVALID(0), LOG_DIR(1), SAVE_DRAW(2), STDOUT_LEVEL(4), DEBUG_MODE(6), SAVE_ON_ERROR(7), DRAW_QUALITY(8), RECO_IMAGE_CACHE_LIMIT(9);
+        INVALID(0), LOG_DIR(1), SAVE_DRAW(2), STDOUT_LEVEL(4), DEBUG_MODE(6), SAVE_ON_ERROR(7), DRAW_QUALITY(8), RECO_IMAGE_CACHE_LIMIT(
+                9), RECO_IMAGE_RAW(10), RECO_IMAGE_DRAWS(11), RECO_IMAGE_CACHE_BYTES(12), CAPTURE_CONFIG(13);
 
         private final int code;
 
@@ -225,7 +226,7 @@ public final class MaaDef {
 
     public enum ResOption {
 
-        INVALID(0), INFERENCE_DEVICE(1), INFERENCE_EXECUTION_PROVIDER(2);
+        INVALID(0), INFERENCE_DEVICE(1), INFERENCE_EXECUTION_PROVIDER(2), WECHAT_OCR(3);
 
         private final int code;
 
@@ -309,7 +310,7 @@ public final class MaaDef {
 
     public enum NotificationType {
 
-        UNKNOWN, STARTING, SUCCEEDED, FAILED;
+        UNKNOWN, STARTING, SUCCEEDED, FAILED, CANCELLED;
 
         public static NotificationType of(String message) {
             if (message == null) {
@@ -324,6 +325,9 @@ public final class MaaDef {
             }
             if (lower.endsWith(".failed")) {
                 return FAILED;
+            }
+            if (lower.endsWith(".cancelled")) {
+                return CANCELLED;
             }
             return UNKNOWN;
         }
