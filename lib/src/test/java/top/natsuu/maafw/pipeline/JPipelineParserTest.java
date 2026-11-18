@@ -15,6 +15,25 @@ import org.junit.jupiter.api.Test;
 class JPipelineParserTest {
 
     @Test
+    void ocrConditionSurvivesTypedRoundTrips() {
+        assertEquals("", ((JOCR) parseRecognition(JRecognitionType.OCR, Map.of())).condition);
+        for (String condition : List.of("", "$1 < 50", "$1 == $2", "$0 >= -1.5e2")) {
+            JOCR param = assertInstanceOf(JOCR.class,
+                    parseRecognition(JRecognitionType.OCR, Map.of("expected", "(\\d+)/(\\d+)", "condition", condition)));
+            assertEquals(condition, param.condition);
+            assertEquals(List.of("(\\d+)/(\\d+)"), param.expected);
+
+            JPipeline pipeline = new JPipeline();
+            pipeline.add("NumericOCR", new JPipelineData().recognition(JRecognition.ocr(param)));
+            Map<String, Object> node = map(MaaJson.parseObject(pipeline.toJson()).get("NumericOCR"));
+            assertEquals(condition, map(map(node.get("recognition")).get("param")).get("condition"));
+            JOCR restored = assertInstanceOf(JOCR.class, JPipeline.fromJson(pipeline.toJson()).get("NumericOCR").recognition.param);
+            assertEquals(condition, restored.condition);
+            assertEquals(param.expected, restored.expected);
+        }
+    }
+
+    @Test
     void ocrEngineSurvivesTypedRoundTrip() {
         assertEquals("Default", ((JOCR) parseRecognition(JRecognitionType.OCR, Map.of())).engine);
         JOCR param = (JOCR) parseRecognition(JRecognitionType.OCR, Map.of("engine", "WeChatOCR", "threshold", 0));
