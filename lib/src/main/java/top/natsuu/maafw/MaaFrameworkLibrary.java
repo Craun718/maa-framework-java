@@ -15,6 +15,12 @@ public interface MaaFrameworkLibrary extends Library {
 
     byte MaaGlobalLoadPlugin(String libraryPath);
 
+    byte MaaGlobalGetPluginList(Pointer buffer);
+
+    byte MaaGlobalFlushPlugins();
+
+    byte MaaGlobalShutdownPlugins();
+
     byte MaaSetGlobalOption(int key, Pointer value, long valueSize);
 
     Pointer MaaStringBufferCreate();
@@ -155,6 +161,8 @@ public interface MaaFrameworkLibrary extends Library {
     byte MaaResourceLoaded(Pointer resource);
 
     byte MaaResourceSetOption(Pointer resource, int key, Pointer value, long valueSize);
+
+    byte MaaResourceGetLoadDetail(Pointer resource, long resId, Pointer buffer);
 
     byte MaaResourceGetHash(Pointer resource, Pointer buffer);
 
@@ -310,6 +318,8 @@ public interface MaaFrameworkLibrary extends Library {
     byte MaaTaskerClearCache(Pointer tasker);
 
     byte MaaTaskerOverridePipeline(Pointer tasker, long taskId, String pipelineOverride);
+
+    byte MaaTaskerGetRecognitionImageStatus(Pointer tasker, long recoId, Pointer buffer);
 
     byte MaaTaskerGetRecognitionDetail(Pointer tasker, long recoId, Pointer nodeName, Pointer algorithm, ByteByReference hit, Pointer box,
             Pointer detailJson, Pointer raw, Pointer draws);

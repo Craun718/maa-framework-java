@@ -55,6 +55,7 @@ class RuntimeSmokeTest {
         assertFalse(MaaLibrary.version().isBlank(), "MaaVersion should return a release version");
 
         exerciseGlobalOptions();
+        exerciseRuntimeObservation();
         exerciseBuffers();
         exerciseResourceAndTasker();
         exerciseResourcePostApis();
@@ -72,6 +73,43 @@ class RuntimeSmokeTest {
         assertTrue(Tasker.setRecoImageCacheLimit(512), "RecoImageCacheLimit should accept a size_t value");
         assertTrue(Tasker.setSaveDraw(false));
         assertTrue(Tasker.setSaveOnError(false));
+    }
+
+    private static void exerciseRuntimeObservation() throws Exception {
+        assertNotNull(Tasker.getPluginList());
+        assertTrue(Tasker.flushPlugins());
+        assertTrue(Tasker.setRecoImageRaw(true));
+        assertTrue(Tasker.setRecoImageDraws(false));
+        assertTrue(Tasker.setCaptureConfig(true));
+        assertTrue(Tasker.setRecoImageCacheBytes(1024 * 1024));
+        Path pipeline = Files.createTempFile("maa-observation-", ".json");
+        try (Resource resource = new Resource(); BlankController controller = new BlankController(); Tasker tasker = new Tasker()) {
+            Files.writeString(pipeline, "{\"Probe\":{\"recognition\":\"DirectHit\",\"action\":\"DoNothing\"}}");
+            Job load = resource.postPipeline(pipeline).waitFor();
+            assertTrue(load.succeeded());
+            assertNotNull(resource.getLoadDetail(load.jobId()));
+            assertNull(resource.getLoadDetail(0));
+            assertTrue(controller.postConnection().waitFor().succeeded());
+            assertTrue(tasker.bind(resource, controller));
+            TaskDetail task = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(4)).waitFor().get();
+            long recoId = task.nodes().getFirst().recognition().recoId();
+            assertEquals("available", tasker.getRecognitionImageStatus(recoId));
+            assertTrue(tasker.getRecognitionDetail(recoId).rawImage().data().length > 0);
+            assertTrue(Tasker.setRecoImageCacheBytes(0));
+            task = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(4)).waitFor().get();
+            assertEquals("disabled", tasker.getRecognitionImageStatus(task.nodes().getFirst().recognition().recoId()));
+            assertNull(tasker.getRecognitionImageStatus(0));
+            assertTrue(tasker.clearCache());
+            assertNull(tasker.getRecognitionImageStatus(recoId));
+            assertTrue(resource.clear());
+            assertNull(resource.getLoadDetail(load.jobId()));
+        } finally {
+            Files.deleteIfExists(pipeline);
+            Tasker.setRecoImageRaw(false);
+            Tasker.setRecoImageDraws(false);
+            Tasker.setCaptureConfig(false);
+            Tasker.setRecoImageCacheBytes(Long.MAX_VALUE);
+        }
     }
 
     @Test

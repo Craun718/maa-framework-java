@@ -45,6 +45,16 @@ public class Resource implements AutoCloseable {
         return handle;
     }
 
+    /** Returns a completed load's diagnostic snapshot, or null for unknown, pending or cleared IDs. */
+    public Map<String, Object> getLoadDetail(long resId) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaResourceGetLoadDetail(handle, resId, buffer.handle()))) {
+                return null;
+            }
+            return MaaJson.parseObject(buffer.get());
+        }
+    }
+
     public Job postBundle(Path path) {
         return postBundle(path.toString());
     }

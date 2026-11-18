@@ -162,6 +162,16 @@ public class Tasker implements AutoCloseable {
         return overridePipeline(taskId, MaaJson.write(pipelineOverride == null ? Map.of() : pipelineOverride));
     }
 
+    /** Returns available, not_captured, disabled, budget_exceeded or evicted; null for unknown IDs. */
+    public String getRecognitionImageStatus(long recoId) {
+        try (MaaStringBuffer buffer = new MaaStringBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaTaskerGetRecognitionImageStatus(handle, recoId, buffer.handle()))) {
+                return null;
+            }
+            return buffer.get();
+        }
+    }
+
     public RecognitionDetail getRecognitionDetail(long recoId) {
         try (MaaStringBuffer name = new MaaStringBuffer();
                 MaaStringBuffer algorithm = new MaaStringBuffer();
@@ -343,6 +353,43 @@ public class Tasker implements AutoCloseable {
         return setGlobalSizeTOption(MaaDef.GlobalOption.RECO_IMAGE_CACHE_LIMIT, limit);
     }
 
+    public static boolean setRecoImageRaw(boolean enabled) {
+        return setGlobalBooleanOption(MaaDef.GlobalOption.RECO_IMAGE_RAW, enabled);
+    }
+
+    public static boolean setRecoImageDraws(boolean enabled) {
+        return setGlobalBooleanOption(MaaDef.GlobalOption.RECO_IMAGE_DRAWS, enabled);
+    }
+
+    public static boolean setRecoImageCacheBytes(long limit) {
+        return setGlobalSizeTOption(MaaDef.GlobalOption.RECO_IMAGE_CACHE_BYTES, limit);
+    }
+
+    public static boolean setCaptureConfig(boolean enabled) {
+        return setGlobalBooleanOption(MaaDef.GlobalOption.CAPTURE_CONFIG, enabled);
+    }
+
+    /** Includes paths of libraries retained after plugin shutdown. */
+    public static List<String> getPluginList() {
+        try (MaaStringListBuffer buffer = new MaaStringListBuffer()) {
+            if (!MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalGetPluginList(buffer.handle()))) {
+                throw new IllegalStateException("Failed to get plugin list");
+            }
+            return buffer.get();
+        }
+    }
+
+    /** Call from a normal host thread, never from a callback. */
+    public static boolean flushPlugins() {
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalFlushPlugins());
+    }
+
+    /** Destroy all framework objects before shutting down plugins. Libraries remain loaded. */
+    public static boolean shutdownPlugins() {
+        return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalShutdownPlugins());
+    }
+
+    /** Load plugins before creating Resource, Controller or Tasker instances. */
     public static boolean loadPlugin(String path) {
         return MaaStringBuffer.toBoolean(MaaLibrary.framework().MaaGlobalLoadPlugin(path));
     }
