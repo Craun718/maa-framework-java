@@ -2,6 +2,8 @@ package top.natsuu.maafw;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.jna.Pointer;
@@ -104,6 +106,113 @@ class EventSinkTest {
         assertEquals("Node", sink.detail.name());
         assertEquals("f", sink.detail.focus());
         assertEquals("a", sink.detail.anchor());
+    }
+
+    @Test
+    void routesCancellationAndExecutionCorrelation() {
+        class Sink extends ContextEventSink {
+
+            ContextTaskDetail task;
+            NodeNextListDetail next;
+            MaaDef.NotificationType type;
+            Map<String, Object> transition;
+
+            @Override
+            public void onContextTask(Context context, MaaDef.NotificationType type, ContextTaskDetail detail) {
+                this.task = detail;
+                this.type = type;
+            }
+
+            @Override
+            public void onNodeNextList(Context context, MaaDef.NotificationType type, NodeNextListDetail detail) {
+                this.next = detail;
+            }
+
+            @Override
+            public void onNodeTransition(Context context, Map<String, Object> details) {
+                this.transition = details;
+            }
+        }
+        Sink sink = new Sink();
+        Map<String, Object> payload = MaaJson.parseObject("""
+                {"task_id":10,"entry":"Main","context_id":20,"parent_task_id":0,
+                 "task_parent":null,"parent":{"kind":"node","id":30},"reason":"cancelled"}
+                """);
+        sink.onRawNotification(new Pointer(1), "Context.Task.Cancelled", payload);
+        assertEquals(MaaDef.NotificationType.CANCELLED, sink.type);
+        assertEquals(20L, sink.task.contextId());
+        assertEquals(0L, sink.task.parentTaskId());
+        assertNull(sink.task.taskParent());
+        assertEquals(Map.of("kind", "node", "id", 30), sink.task.parent());
+        assertEquals("cancelled", sink.task.reason());
+        sink.onRawNotification(new Pointer(1), "Node.NextList.Succeeded", MaaJson.parseObject("""
+                {"task_id":10,"name":"Main","list":[],"list_id":40,"node_id":30,
+                 "list_type":"next","round":2,"selected_index":0,"reco_id":50,"context_id":20}
+                """));
+        assertEquals(40L, sink.next.listId());
+        assertEquals(30L, sink.next.nodeId());
+        assertEquals("next", sink.next.listType());
+        assertEquals(2L, sink.next.round());
+        assertEquals(0L, sink.next.selectedIndex());
+        assertEquals(50L, sink.next.recoId());
+        assertEquals(20L, sink.next.contextId());
+        Map<String, Object> transition = Map.of("from_node_id", 30, "to_node_id", 31, "reason", "next");
+        sink.onRawNotification(new Pointer(1), "Node.Transition", transition);
+        assertSame(transition, sink.transition);
+    }
+
+    @Test
+    void preservesCapturedPipelineAndActionRecognitionId() {
+        class Sink extends ContextEventSink {
+
+            NodeRecognitionDetail recognition;
+            NodeActionDetail action;
+
+            @Override
+            public void onNodeRecognition(Context context, MaaDef.NotificationType type, NodeRecognitionDetail detail) {
+                recognition = detail;
+            }
+
+            @Override
+            public void onNodeAction(Context context, MaaDef.NotificationType type, NodeActionDetail detail) {
+                action = detail;
+            }
+        }
+        Sink sink = new Sink();
+        Map<String, Object> payload = Map.of("task_id", 1, "reco_id", 2, "action_id", 3, "context_id", 4, "pipeline",
+                Map.of("recognition", "DirectHit"));
+        sink.onRawNotification(new Pointer(1), "Node.Recognition.Succeeded", payload);
+        sink.onRawNotification(new Pointer(1), "Node.Action.Succeeded", payload);
+        assertEquals(payload.get("pipeline"), sink.recognition.pipeline());
+        assertEquals(payload.get("pipeline"), sink.action.pipeline());
+        assertEquals(2L, sink.action.recoId());
+        assertEquals(4L, sink.action.contextId());
+        // Legacy notifications and existing record constructors keep absent additions null.
+        sink.onRawNotification(new Pointer(1), "Node.Action.Starting", Map.of("task_id", 1));
+        assertNull(sink.action.pipeline());
+        assertNull(sink.action.contextId());
+        assertNull(new ContextEventSink.NodeRecognitionDetail(1, 2, "Node", null, null).contextId());
+    }
+
+    @Test
+    void preservesResourceTerminalDiagnostics() {
+        class Sink extends ResourceEventSink {
+
+            ResourceLoadingDetail detail;
+
+            @Override
+            public void onResourceLoading(Resource resource, MaaDef.NotificationType type, ResourceLoadingDetail detail) {
+                this.detail = detail;
+            }
+        }
+        Sink sink = new Sink();
+        List<Map<String, Object>> errors = List.of(Map.of("message", "invalid pipeline"));
+        sink.onRawNotification(new Pointer(1), "Resource.Loading.Failed", Map.of("res_id", 7, "status", 4, "errors", errors));
+        assertEquals(4L, sink.detail.status());
+        assertEquals(errors, sink.detail.errors());
+        sink.onRawNotification(new Pointer(1), "Resource.Loading.Starting", Map.of("res_id", 7));
+        assertNull(sink.detail.status());
+        assertNull(sink.detail.errors());
     }
 
     @Test

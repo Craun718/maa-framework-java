@@ -310,7 +310,7 @@ public final class MaaDef {
 
     public enum NotificationType {
 
-        UNKNOWN, STARTING, SUCCEEDED, FAILED;
+        UNKNOWN, STARTING, SUCCEEDED, FAILED, CANCELLED;
 
         public static NotificationType of(String message) {
             if (message == null) {
@@ -325,6 +325,9 @@ public final class MaaDef {
             }
             if (lower.endsWith(".failed")) {
                 return FAILED;
+            }
+            if (lower.endsWith(".cancelled")) {
+                return CANCELLED;
             }
             return UNKNOWN;
         }

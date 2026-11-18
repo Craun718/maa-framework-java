@@ -84,13 +84,56 @@ class RuntimeSmokeTest {
         assertTrue(Tasker.setRecoImageCacheBytes(1024 * 1024));
         Path pipeline = Files.createTempFile("maa-observation-", ".json");
         try (Resource resource = new Resource(); BlankController controller = new BlankController(); Tasker tasker = new Tasker()) {
-            Files.writeString(pipeline, "{\"Probe\":{\"recognition\":\"DirectHit\",\"action\":\"DoNothing\"}}");
+            Files.writeString(pipeline, """
+                    {"Probe":{"recognition":"DirectHit","action":"Custom","custom_action":"ObservedNestedTask"},
+                     "Nested":{"recognition":"DirectHit","action":"DoNothing"}}
+                    """);
+            assertTrue(resource.registerCustomAction("ObservedNestedTask", new CustomAction() {
+
+                @Override
+                public RunResult run(Context context, RunArg argv) {
+                    TaskDetail nested = context.runTask("Nested");
+                    return new RunResult(nested != null && nested.status().succeeded());
+                }
+            }));
             Job load = resource.postPipeline(pipeline).waitFor();
             assertTrue(load.succeeded());
             assertNotNull(resource.getLoadDetail(load.jobId()));
             assertNull(resource.getLoadDetail(0));
             assertTrue(controller.postConnection().waitFor().succeeded());
             assertTrue(tasker.bind(resource, controller));
+            AtomicReference<ContextEventSink.ContextTaskDetail> contextEvent = new AtomicReference<>();
+            AtomicReference<ContextEventSink.NodeRecognitionDetail> recognitionEvent = new AtomicReference<>();
+            CountDownLatch observed = new CountDownLatch(3);
+            tasker.addContextSink(new ContextEventSink() {
+
+                @Override
+                public void onContextTask(Context context, MaaDef.NotificationType type, ContextTaskDetail detail) {
+                    if (type == MaaDef.NotificationType.SUCCEEDED) {
+                        contextEvent.set(detail);
+                        observed.countDown();
+                    }
+                }
+
+                @Override
+                public void onNodeRecognition(Context context, MaaDef.NotificationType type, NodeRecognitionDetail detail) {
+                    if (type == MaaDef.NotificationType.SUCCEEDED && "Nested".equals(detail.name())) {
+                        recognitionEvent.set(detail);
+                        observed.countDown();
+                    }
+                }
+
+                @Override
+                public void onNodeTransition(Context context, Map<String, Object> details) {
+                    observed.countDown();
+                }
+            });
+            assertTrue(tasker.postTask("Probe").waitFor().succeeded());
+            assertTrue(observed.await(5, TimeUnit.SECONDS), "v6 context, recognition and transition events should arrive");
+            assertNotNull(contextEvent.get().contextId());
+            assertNotNull(recognitionEvent.get().pipeline());
+            assertEquals(contextEvent.get().contextId(), recognitionEvent.get().contextId());
+            tasker.clearContextSinks();
             TaskDetail task = tasker.postRecognition(JRecognitionType.DIRECT_HIT, new JDirectHit(), gradientBgrImage(4)).waitFor().get();
             long recoId = task.nodes().getFirst().recognition().recoId();
             assertEquals("available", tasker.getRecognitionImageStatus(recoId));
