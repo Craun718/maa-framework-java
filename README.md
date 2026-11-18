@@ -25,7 +25,7 @@ dependencies {
 
 ## 示例
 
-`examples` Gradle 项目包含可运行的 Java 示例，源码位于 `examples/src/main/java/io/github/craun718/maafw/examples`。第一个参数是 MaaFramework release 的 `bin` 目录；agent server 示例还会接收第二个参数作为连接标识。
+`examples` Gradle 项目包含可运行的 Java 示例，源码位于 `examples/src/main/java/io/github/craun718/maafw/examples`。第一个参数是 MaaFramework release 的 `bin` 目录；AgentServer 示例还会接收第二个参数作为连接标识。
 
 ```bash
 ./gradlew :examples:run --args="/path/to/MaaFramework/bin"
@@ -99,12 +99,12 @@ MAA_FRAMEWORK_SOURCE=/path/to/MaaFramework ./scripts/check-ffi-surface.sh
 本绑定以 `.maa-framework-version` 锚定的当前 MaaFramework 版本的头文件、文档和 Python 绑定为跟踪目标：
 
 - `check-ffi-surface.sh` 验证 `MaaFramework`、`MaaToolkit`、`MaaAgentClient` 和 `MaaAgentServer` 中的每个导出函数，包括参数和返回签名；`MaaControlUnit` 仅因这些函数随独立插件库发布而排除。
-- 高层封装对应 Python 绑定中的 `Resource`、`Tasker`、`Context`、controller 子类、`Toolkit`、buffer、事件 sink、自定义识别/动作/controller 回调，以及 `AgentClient`/`AgentServer` API。
+- 高级 API 对应 Python 绑定中的 `Resource`、`Tasker`、`Context`、controller 子类、`Toolkit`、buffer、事件 sink、自定义识别/动作/controller 回调，以及 `AgentClient`/`AgentServer` API。
 - `IOSController` 和 `Toolkit.findIOSDevices` 支持通过运行中的 XDeviceBridge 服务器连接和发现 iOS 设备；配对和 DDI 准备由 XDeviceBridge 负责。macOS 和 PlayCover 可使用 `postStartApp`，macOS 还支持 `postStopApp`。
 - `BlankController` 提供纯 Java 的无操作自定义 controller，用于在无设备时测试 resource/tasker，对应 Go 绑定的便捷 API。与 `DbgController` 不同，它不包装原生 debug controller。
-- `pipeline` 包将 project interface v2 的节点 JSON 解析为类型化识别和动作参数，包括嵌套 `And`/`Or`、`MultiSwipe`、wait-freezes、`focus` 和 `attach`，而不是只暴露原始 JSON。
+- `pipeline` 包将 Pipeline v2 节点 JSON 解析为类型化识别和动作参数，包括嵌套 `And`/`Or`、`MultiSwipe`、`wait_freezes`、`focus` 和 `attach`，而不是只暴露原始 JSON。
 - 自定义识别可在 `AnalyzeResult.detail` 中通过 `$all` 和 `$filtered` 返回多个结果；每项包含 `box` 数组和可选的 `detail`。`JCustomRecognition.index` 选择结果，支持负索引；回调的 `box` 仍须非空以表示成功。
-- 类型化 Pipeline 解析器对识别结果的 `index` 和 `box_index` 要求 32 位整数；小数或越界值会抛出异常，不再静默截断。
+- Pipeline v2 模型解析器对识别结果的 `index` 和 `box_index` 要求 32 位整数；小数或越界值会抛出异常，不再静默截断。
 - `MaaDef` 和 `Resource` 暴露 WebGPU 与 Android NCNN 推理后端；NCNN 必须在开始资源加载前选择，加载开始后切换到或切离 NCNN 需先清理资源。
 - `package-official-release.sh` 构建与官方 MaaFramework release 相同顶层结构的分发包，包括 `bin/`、controller 插件、`include/`、`symbols/`、文档/示例/schema 和 `share/MaaAgentBinary/`。
 
@@ -112,7 +112,7 @@ MaaFramework 集成文档中的 Java 行描述的是较旧的第三方 v3 绑定
 
 ## 运行时冒烟测试
 
-`RuntimeSmokeTest` 会针对真实库目录验证 release ABI：版本查询、UTF-8 buffer、rect/image buffer、resource/tasker 创建、类型化直接识别/动作调用、资源生命周期操作、自定义 controller 回调、record/replay controller、toolkit 选项/设备辅助、AgentClient TCP 往返和 agent server 注册。未配置库目录时测试会跳过。
+`RuntimeSmokeTest` 会针对真实库目录验证 release ABI：版本查询、UTF-8 buffer、rect/image buffer、resource/tasker 创建、类型化 direct recognition/action API、资源生命周期操作、自定义 controller 回调、record/replay controller、toolkit 选项/设备辅助、AgentClient TCP 往返和 AgentServer 注册。未配置库目录时测试会跳过。
 
 该套件使用当前锚定版本的官方 macOS aarch64 release 验证，包括发布头文件的 FFI 签名检查、运行时观测和 Agent 协议 9 跨进程调用。
 
@@ -120,26 +120,26 @@ MaaFramework 集成文档中的 Java 行描述的是较旧的第三方 v3 绑定
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
 ```
 
-## 加载原生库
+## 加载运行时库
 
-使用高层封装前，先调用一次 `MaaLibrary.open(Path, boolean)`：
+使用高级 API 前，先调用一次 `MaaLibrary.open(Path, boolean)`：
 
-- `MaaLibrary.open(path, false)` 加载客户端模式库：`MaaFramework`、`MaaToolkit` 和 `MaaAgentClient`。
-- `MaaLibrary.open(path, true)` 仅加载 agent server 模式：`MaaAgentServer`。此模式下 `MaaLibrary.framework()` 返回 agent server 库，`MaaToolkit` 和 `MaaAgentClient` 不可用。
+- `MaaLibrary.open(path, false)` 加载默认运行时库组合：`MaaFramework`、`MaaToolkit` 和 `MaaAgentClient`。
+- `MaaLibrary.open(path, true)` 加载 AgentServer 模式：`MaaAgentServer`。此模式下 `MaaLibrary.framework()` 返回 AgentServer 库，`MaaToolkit` 和 `MaaAgentClient` 不可用。
 
 官方 release 文件名会自动解析：
 
-| 平台 | 客户端文件 | agent server 文件 |
+| 平台 | 默认运行时库 | AgentServer 模式运行时库 |
 | --- | --- | --- |
 | Windows | `MaaFramework.dll`、`MaaToolkit.dll`、`MaaAgentClient.dll` | `MaaAgentServer.dll` |
 | macOS | `libMaaFramework.dylib`、`libMaaToolkit.dylib`、`libMaaAgentClient.dylib` | `libMaaAgentServer.dylib` |
 | Linux | `libMaaFramework.so`、`libMaaToolkit.so`、`libMaaAgentClient.so` | `libMaaAgentServer.so` |
 
-`MaaLibrary.close()` 会释放已加载的库引用，用于测试或在不同 release 二进制之间切换。调用前请先关闭所有 resource、controller、tasker、agent client/server、buffer 和 sink 封装。
+`MaaLibrary.close()` 会释放已加载的库引用，用于测试或在不同 release 二进制之间切换。调用前请先关闭所有 resource、controller、tasker、AgentClient/AgentServer、buffer 和 sink 对象。
 
 `MaaLibrary.libraryDirectory()` 返回传给 `open` 的目录。当目录是官方 release 布局中的 `bin/` 时，`MaaLibrary.defaultAgentBinaryPath()` 会自动解析同级 `share/MaaAgentBinary/` 目录。默认的 `AdbController` 构造器使用解析出的路径；接受显式 `Path agentPath` 的重载可以覆盖它。
 
-## 客户端模式
+## 快速开始
 
 ```java
 MaaLibrary.open(Path.of("bin"), false);
@@ -163,9 +163,9 @@ try (Controller controller =
 }
 ```
 
-## 类型化 Pipeline API
+## Pipeline v2 模型 API
 
-绑定将 pipeline v2 节点以类型化类暴露在 `top.natsuu.maafw.pipeline` 下。`Resource.getNodeData(String)` 返回原始节点 map，`Resource.getNodeObject(String)` 将其解析为 `JPipelineData`。`Context` 对当前运行时状态提供相同的两个方法。
+绑定将 Pipeline v2 节点以类型化类暴露在 `top.natsuu.maafw.pipeline` 下。`Resource.getNodeData(String)` 返回原始 Pipeline v2 节点数据，`Resource.getNodeObject(String)` 将其解析为 `JPipelineData`。`Context` 对当前运行时状态提供相同的两个方法。
 
 ```java
 JPipelineData node = resource.getNodeObject("Main");
@@ -191,7 +191,7 @@ RecognitionDetail reco = context.runRecognitionDirect(JRecognitionType.OCR, ocrP
 ActionDetail action = context.runActionDirect(JActionType.SHELL, shellParam, box, recoJson);
 ```
 
-构建器 API 对应 Go 绑定的 `Pipeline`/`Node` 模型。`JPipeline` 按名称保存节点，`JPipelineData.name` 不写入 JSON，`JPipeline.toJson()` 输出原生 pipeline map 形式：
+类型化构造器 API 对应 Go binding 的 `Pipeline`/`Node` 模型。`JPipeline` 按名称保存节点，`JPipelineData.name` 不写入 JSON，`JPipeline.toJson()` 输出 MaaFramework 原生 Pipeline JSON：
 
 ```java
 JTemplateMatch match = new JTemplateMatch();
@@ -216,9 +216,9 @@ pipeline.add("Idle", new JPipelineData().action(JAction.doNothing()));
 String pipelineJson = pipeline.toJson();
 ```
 
-`JPipeline.fromJson(String)` 和 `JPipelineParser.parseAll(String)` 会将同一完整节点 map 解析回类型化节点。`JRecognition` 和 `JAction` 工厂方法覆盖全部 pipeline v2 识别/动作类型。
+`JPipeline.fromJson(String)` 和 `JPipelineParser.parseAll(String)` 会将同一完整节点 map 解析回类型化节点。`JRecognition` 和 `JAction` 工厂方法覆盖全部 Pipeline v2 识别/动作类型。
 
-类型化参数类使用 MaaFramework 期望的 snake_case JSON 键序列化，`JRecognitionType`/`JActionType` 使用 `TemplateMatch`、`Click` 等原生名称序列化。`RuntimeSmokeTest` 也使用 release 二进制覆盖了直接 tasker/context 调用。
+类型化参数类使用 MaaFramework 期望的 snake_case JSON 键序列化，`JRecognitionType`/`JActionType` 使用 `TemplateMatch`、`Click` 等原生名称序列化。`RuntimeSmokeTest` 也使用 release 二进制覆盖了 `Tasker`/`Context` 的 direct recognition/action API。
 
 ## Buffer 与事件 Sink
 
@@ -245,20 +245,20 @@ TaskerEventSink sink = new TaskerEventSink() {
 };
 
 Long sinkId = tasker.addSink(sink);
-// tasker.addContextSink(new ContextEventSink() { ... }) for pipeline node events
+// tasker.addContextSink(new ContextEventSink() { ... }) for Pipeline node events
 // resource.addSink(...) and controller.addSink(...) follow the same pattern
 tasker.removeSink(sinkId);
 ```
 
 结果模型是纯 Java 值：`RecognitionDetail`、`RecognitionResult`、`ActionDetail`、`ActionResult`、`TaskDetail`、`NodeDetail` 和 `WaitFreezesDetail` 可以在任务完成后直接检查，或在回调中检查，而无需保持原生 buffer 打开。
 
-## Agent 模式
+## Agent
 
-Agent 模式把自定义逻辑与主进程分离。主进程创建 `AgentClient`，独立 server 进程使用 `AgentServer` 注册自定义识别、自定义动作和事件 sink。
+Agent 将自定义逻辑与主流程分离。AgentClient 负责与 AgentServer 通信；主流程执行到自定义节点时，AgentClient 将请求交给 AgentServer，并在收到结果后继续执行主流程。
 
-### Server 进程
+### AgentServer
 
-在调用 `startUp` 前注册自定义实现。server 进程加载 `MaaAgentServer`，不创建本地 `Resource`、`Controller` 或 `Tasker` 对象。
+AgentServer 用于注册并执行自定义识别、自定义动作和事件 sink。在调用 `startUp` 前注册自定义实现。AgentServer 进程加载 `MaaAgentServer`，不创建本地 `Resource`、`Controller` 或 `Tasker` 对象。
 
 ```java
 MaaLibrary.open(Path.of("bin"), true);
@@ -279,7 +279,7 @@ AgentServer.shutDown();
 
 `identifier` 可以是具名 IPC socket，也可以是 `"12345"` 这样的数字字符串，表示 `127.0.0.1` 上的 TCP 端口。
 
-### Client 进程
+### AgentClient
 
 ```java
 MaaLibrary.open(Path.of("bin"), false);
@@ -300,13 +300,13 @@ try (AgentClient client = new AgentClient("my-agent");
 }
 ```
 
-`AgentClient.createTcp(0)` 创建自动选择端口的 TCP client。server 进程应使用 `client.identifier()` 返回的端口作为标识。传给 `AgentClient.createTcp(int)` 的端口会在任何原生调用前校验为 `0..65535`；使用 `0` 表示自动选择端口。
+`AgentClient.createTcp(0)` 创建自动选择端口的 TCP AgentClient。AgentServer 进程应使用 `client.identifier()` 返回的端口作为标识。传给 `AgentClient.createTcp(int)` 的端口会在任何原生调用前校验为 `0..65535`；使用 `0` 表示自动选择端口。
 
 ## 注意事项
 
 - `AgentServer` 会在内部持有已注册的回调和 sink，避免 JVM 垃圾回收移除原生回调。`AgentClient` 同样持有传入的 resource 和 sink。
-- 自定义识别和动作回调在调用 Java 代码前会解析当前 task/recognition 详情。自定义动作收到可空的 recognition 详情，因为仅含动作的 pipeline 节点使用零识别 id；任务详情缺失时回调会在不调用 Java 方法的情况下返回失败。
-- 在 agent server 模式下，官方 `MaaAgentServer` 库对本地 resource、controller、tasker 创建和插件加载是 stub。该模式只应用于承载回调和 sink。
+- 自定义识别和动作回调在调用 Java 代码前会解析当前 task/recognition 详情。自定义动作收到可空的 recognition 详情，因为仅含动作的 Pipeline 节点使用零识别 id；任务详情缺失时回调会在不调用 Java 方法的情况下返回失败。
+- 在 AgentServer 模式下，官方 `MaaAgentServer` 库对本地 resource、controller、tasker 创建和插件加载是 stub。该模式只应用于承载回调和 sink。
 - Maven Central 发布由 `v*` 标签触发，发布坐标为 `top.natsuu:maa-framework-java`。CI 需要配置 `CENTRAL_PORTAL_USERNAME`、`CENTRAL_PORTAL_PASSWORD`、`CENTRAL_PORTAL_SIGNING_KEY` 和 `CENTRAL_PORTAL_SIGNING_PASSWORD` Secrets；可选配置 `CENTRAL_PORTAL_SIGNING_KEY_ID`。
 
 ## 许可证

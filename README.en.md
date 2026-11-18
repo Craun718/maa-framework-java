@@ -27,7 +27,7 @@ dependencies {
 
 The `examples` Gradle project contains runnable Java samples under
 `examples/src/main/java/io/github/craun718/maafw/examples`. The first argument is the MaaFramework
-release `bin` directory; the agent server example also accepts the connection identifier as the
+release `bin` directory; the AgentServer example also accepts the connection identifier as the
 second argument.
 
 ```bash
@@ -121,21 +121,21 @@ MaaFramework release anchored by `.maa-framework-version`:
 - `check-ffi-surface.sh` verifies every exported function in `MaaFramework`, `MaaToolkit`,
   `MaaAgentClient`, and `MaaAgentServer`, including parameter and return signatures;
   `MaaControlUnit` is excluded only because those functions ship in separate plugin libraries.
-- The high-level wrappers mirror the Python binding's `Resource`, `Tasker`, `Context`, controller
+- The high-level APIs mirror the Python binding's `Resource`, `Tasker`, `Context`, controller
   subclasses, `Toolkit`, buffers, event sinks, custom recognition/action/controller callbacks,
   and `AgentClient`/`AgentServer` APIs.
 - `IOSController` and `Toolkit.findIOSDevices` connect to and discover iOS devices through a running XDeviceBridge server. Pairing and DDI setup are handled by XDeviceBridge. macOS and PlayCover support `postStartApp`, and macOS also supports `postStopApp`.
 - `BlankController` provides a pure-Java no-op custom controller for resource/tasker testing without
   a device, matching the Go binding's convenience API. Unlike `DbgController`, it does not wrap the
   native debug controller.
-- The `pipeline` package parses project interface v2 node JSON into typed recognition and action
-  parameters, including nested `And`/`Or`, `MultiSwipe`, wait-freezes, `focus`, and `attach`
+- The `pipeline` package parses Pipeline v2 node JSON into typed recognition and action
+  parameters, including nested `And`/`Or`, `MultiSwipe`, `wait_freezes`, `focus`, and `attach`
   values, instead of exposing only raw JSON.
 - Custom recognition can return multiple results in `AnalyzeResult.detail` using `$all` and
   `$filtered` arrays of objects with a `box` array and optional `detail`.
   `JCustomRecognition.index` selects a result and supports negative indices; the callback
   `box` must still be non-null to signal success.
-- The typed Pipeline parser requires recognition `index` and `box_index` values to be 32-bit
+- The Pipeline v2 model parser requires recognition `index` and `box_index` values to be 32-bit
   integers; fractional and out-of-range values now raise an exception instead of being truncated.
 - `MaaDef` and `Resource` expose the WebGPU and Android NCNN inference providers. Select NCNN
   before starting resource loading; switching to or from NCNN after loading starts requires
@@ -150,9 +150,9 @@ binding; this repository targets the current API and covers the surfaces listed 
 ## Runtime Smoke Tests
 
 `RuntimeSmokeTest` exercises the release ABI against a real library directory: version lookup,
-UTF-8 buffers, rect/image buffers, resource/tasker creation, typed direct recognition/action calls,
+UTF-8 buffers, rect/image buffers, resource/tasker creation, typed direct recognition/action APIs,
 resource lifecycle operations, custom controller callbacks, record/replay controllers, toolkit
-option/device helpers, an AgentClient TCP round-trip, and agent server registration. It is skipped
+option/device helpers, an AgentClient TCP round-trip, and AgentServer registration. It is skipped
 unless the library directory is configured:
 
 The suite was verified against the official macOS aarch64 release for the currently anchored
@@ -163,26 +163,26 @@ and cross-process Agent protocol 9 requests.
 MAA_FRAMEWORK_LIB_DIR=/path/to/release/bin ./gradlew :lib:test
 ```
 
-## Loading Native Libraries
+## Loading Runtime Libraries
 
-Call `MaaLibrary.open(Path, boolean)` once before using high-level wrappers:
+Call `MaaLibrary.open(Path, boolean)` once before using the high-level APIs:
 
-- `MaaLibrary.open(path, false)` loads client mode libraries: `MaaFramework`, `MaaToolkit`, and
+- `MaaLibrary.open(path, false)` loads the default runtime libraries: `MaaFramework`, `MaaToolkit`, and
   `MaaAgentClient`.
-- `MaaLibrary.open(path, true)` loads agent server mode only: `MaaAgentServer`. In this mode,
-  `MaaLibrary.framework()` returns the agent server library, while `MaaToolkit` and
+- `MaaLibrary.open(path, true)` loads AgentServer mode: `MaaAgentServer`. In this mode,
+  `MaaLibrary.framework()` returns the AgentServer library, while `MaaToolkit` and
   `MaaAgentClient` are not available.
 
 Official release file names are resolved automatically:
 
-| Platform | Client files | Agent server file |
+| Platform | Default runtime libraries | AgentServer mode runtime library |
 | --- | --- | --- |
 | Windows | `MaaFramework.dll`, `MaaToolkit.dll`, `MaaAgentClient.dll` | `MaaAgentServer.dll` |
 | macOS | `libMaaFramework.dylib`, `libMaaToolkit.dylib`, `libMaaAgentClient.dylib` | `libMaaAgentServer.dylib` |
 | Linux | `libMaaFramework.so`, `libMaaToolkit.so`, `libMaaAgentClient.so` | `libMaaAgentServer.so` |
 
 `MaaLibrary.close()` drops the loaded library references for tests or for swapping release
-binaries. Close all resource, controller, tasker, agent client/server, buffer, and sink wrappers
+binaries. Close all resource, controller, tasker, AgentClient/AgentServer, buffer, and sink objects
 before calling it.
 
 `MaaLibrary.libraryDirectory()` returns the directory passed to `open`. When the directory is the
@@ -190,7 +190,7 @@ official release layout's `bin/`, `MaaLibrary.defaultAgentBinaryPath()` resolves
 `share/MaaAgentBinary/` directory automatically. The default `AdbController` constructors use
 that resolved path; the overload taking an explicit `Path agentPath` overrides it.
 
-## Client Mode
+## Quick Start
 
 ```java
 MaaLibrary.open(Path.of("bin"), false);
@@ -214,10 +214,10 @@ try (Controller controller =
 }
 ```
 
-## Typed Pipeline API
+## Pipeline v2 Model API
 
-The binding exposes pipeline v2 nodes as typed classes under
-`top.natsuu.maafw.pipeline`. `Resource.getNodeData(String)` returns the raw node map, and
+The binding exposes Pipeline v2 nodes as typed classes under
+`top.natsuu.maafw.pipeline`. `Resource.getNodeData(String)` returns the raw Pipeline v2 node data, and
 `Resource.getNodeObject(String)` parses it into a `JPipelineData`. `Context` provides the same pair
 for the current runtime state.
 
@@ -246,9 +246,9 @@ RecognitionDetail reco = context.runRecognitionDirect(JRecognitionType.OCR, ocrP
 ActionDetail action = context.runActionDirect(JActionType.SHELL, shellParam, box, recoJson);
 ```
 
-The builder API mirrors the Go binding's `Pipeline`/`Node` model. `JPipeline` keeps nodes by
-name, `JPipelineData.name` is excluded from JSON, and `JPipeline.toJson()` emits the native
-pipeline map form:
+The typed builder APIs mirror the Go binding's `Pipeline`/`Node` model. `JPipeline` keeps nodes by
+name, `JPipelineData.name` is excluded from JSON, and `JPipeline.toJson()` emits native
+MaaFramework Pipeline JSON:
 
 ```java
 JTemplateMatch match = new JTemplateMatch();
@@ -274,13 +274,13 @@ String pipelineJson = pipeline.toJson();
 ```
 
 `JPipeline.fromJson(String)` and `JPipelineParser.parseAll(String)` parse the same full node map
-back into typed nodes. The `JRecognition` and `JAction` factory methods cover every pipeline v2
+back into typed nodes. The `JRecognition` and `JAction` factory methods cover every Pipeline v2
 recognition/action type.
 
 The typed parameter classes serialize with the same snake_case JSON keys expected by MaaFramework,
 and `JRecognitionType`/`JActionType` serialize using native names such as `TemplateMatch` and
-`Click`. The direct tasker/context calls are also covered by `RuntimeSmokeTest` against release
-binaries.
+`Click`. The direct recognition/action APIs on `Tasker` and `Context` are also covered by
+`RuntimeSmokeTest` against release binaries.
 
 ## Buffers and Event Sinks
 
@@ -313,7 +313,7 @@ TaskerEventSink sink = new TaskerEventSink() {
 };
 
 Long sinkId = tasker.addSink(sink);
-// tasker.addContextSink(new ContextEventSink() { ... }) for pipeline node events
+// tasker.addContextSink(new ContextEventSink() { ... }) for Pipeline node events
 // resource.addSink(...) and controller.addSink(...) follow the same pattern
 tasker.removeSink(sinkId);
 ```
@@ -322,16 +322,17 @@ Result models are pure Java values: `RecognitionDetail`, `RecognitionResult`, `A
 `ActionResult`, `TaskDetail`, `NodeDetail`, and `WaitFreezesDetail` can be inspected directly
 after a job completes or from a callback without holding a native buffer open.
 
-## Agent Mode
+## Agent
 
-Agent mode splits custom logic from the main process. The main process creates an `AgentClient`,
-while a separate server process registers custom recognitions, custom actions, and event sinks
-with `AgentServer`.
+Agent separates custom logic from the main flow. `AgentClient` communicates with `AgentServer`;
+when the main flow reaches a custom node, `AgentClient` sends the request to `AgentServer` and
+continues the main flow with the result.
 
-### Server Process
+### AgentServer
 
-Register custom implementations before calling `startUp`. The server process loads
-`MaaAgentServer` and does not create local `Resource`, `Controller`, or `Tasker` objects.
+`AgentServer` registers and executes custom recognitions, custom actions, and event sinks. Register
+custom implementations before calling `startUp`. The AgentServer process loads `MaaAgentServer`
+and does not create local `Resource`, `Controller`, or `Tasker` objects.
 
 ```java
 MaaLibrary.open(Path.of("bin"), true);
@@ -353,7 +354,7 @@ AgentServer.shutDown();
 `identifier` may be a named IPC socket, or a numeric string such as `"12345"` for a TCP port on
 `127.0.0.1`.
 
-### Client Process
+### AgentClient
 
 ```java
 MaaLibrary.open(Path.of("bin"), false);
@@ -374,8 +375,8 @@ try (AgentClient client = new AgentClient("my-agent");
 }
 ```
 
-`AgentClient.createTcp(0)` creates a TCP client with an automatically selected port. The server
-process should use the port returned by `client.identifier()` as its identifier. Ports passed to
+`AgentClient.createTcp(0)` creates a TCP AgentClient with an automatically selected port. The
+AgentServer process should use the port returned by `client.identifier()` as its identifier. Ports passed to
 `AgentClient.createTcp(int)` are validated as `0..65535` before any native call; use `0` for an
 automatically selected port.
 
@@ -384,10 +385,10 @@ automatically selected port.
 - `AgentServer` holds registered callbacks and sinks internally so JVM garbage collection cannot
   remove native callbacks. `AgentClient` similarly holds the resource and sinks passed to it.
 - Custom recognition and action callbacks resolve current task/recognition details before invoking
-  Java code. Custom actions receive a nullable recognition detail because action-only pipeline
+  Java code. Custom actions receive a nullable recognition detail because action-only Pipeline
   nodes use a zero recognition id; missing task details still cause the callback to return failure
   without calling the Java method.
-- In agent server mode, the official `MaaAgentServer` library is a stub for local resource,
+- In AgentServer mode, the official `MaaAgentServer` library is a stub for local resource,
   controller, and tasker creation and for plugin loading. Use that mode only to host callbacks
   and sinks.
 - Maven Central publishing is triggered by `v*` tags, with the coordinates
